@@ -27,7 +27,7 @@ jobs:
       # Public by design (ADR section 6). Empty means the form runs in demo mode.
       PUBLIC_FORM_ENDPOINT: ${{ vars.PUBLIC_FORM_ENDPOINT }}
       PUBLIC_FORM_ACCESS_KEY: ${{ vars.PUBLIC_FORM_ACCESS_KEY }}
-      # Leave unset. "true" removes noindex, and the build fails while NEEDS DATA items remain.
+      # Leave unset. "true" removes the noindex meta. There is no NEEDS DATA build gate: clear content.ts first, and drop X-Robots-Tag from vercel.json.
       PUBLIC_INDEXABLE: ${{ vars.PUBLIC_INDEXABLE }}
     steps:
       - name: Checkout
