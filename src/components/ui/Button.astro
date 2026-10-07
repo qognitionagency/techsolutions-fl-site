@@ -1,81 +1,134 @@
 ---
 /**
- * CTA link. Variants carry the CTA hierarchy (cro-spec §2):
- * book = sunset (the only sunset element), primary = signal, outline = secondary, ghost = tertiary.
- * Takes a content.ts Link so label, href and tracking stay in one place.
+ * Every CTA on the page (Iron Sound port). Renders content.ts `Cta` objects with the
+ * analytics attributes (ADR §6, cro-spec §5) and the prefill attributes form.ts reads
+ * (data-prefill-services / -property-type / -wires / -role → snake-cased field names).
+ * Variants carry the CTA hierarchy: primary = sunset Book (the only sunset button),
+ * secondary = signal outline (Text), text = link, inverse/ghost-inverse = on the slate band.
  */
-import type { Link } from '../../data/content';
+import type { Cta } from '../../data/content';
 import { withBase } from '../../lib/url';
 
 interface Props {
-  link: Link;
-  variant?: 'book' | 'primary' | 'outline' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
-  /** form.ts prefill contract: { services: 'tv', wires: 'in_wall' } → data-prefill-services … */
-  prefill?: Record<string, string>;
-  service?: string;
+  cta: Cta;
+  /** Section key for data-track-location (cro-spec §5). */
+  location: string;
+  variant?: 'primary' | 'secondary' | 'inverse' | 'ghost-inverse' | 'text';
+  size?: 'md' | 'sm';
   magnetic?: boolean;
-  block?: boolean;
+  icon?: 'arrow' | 'phone' | 'text' | 'none';
   class?: string;
-  [key: `data-${string}`]: string | undefined;
+  /** Override the visible label (e.g. compact nav button). */
+  label?: string;
+  /** Disambiguates the description id when one CTA renders more than once in a section (e.g. per tab panel). */
+  uid?: string;
 }
-const { link, variant = 'primary', size = 'md', prefill = {}, service, magnetic = false, block = false, class: cls, ...rest } = Astro.props;
-const href = link.href.startsWith('#') ? withBase(link.href) : link.href;
-const prefillAttrs = Object.fromEntries(Object.entries(prefill).map(([k, v]) => [`data-prefill-${k.replace(/_/g, '-')}`, v]));
+
+const { cta, location, variant = 'primary', size = 'md', magnetic = false, icon, class: cls = '', label, uid } = Astro.props;
+const href = withBase(cta.href);
+const glyph =
+  icon ??
+  (cta.href.startsWith('tel:') ? 'phone' : cta.href.startsWith('sms:') ? 'text' : variant === 'text' || cta.kind === 'contextual' || cta.kind === 'trade' ? 'arrow' : 'none');
+const p = cta.prefill;
+const visible = label ?? cta.label;
+// WCAG 2.5.3 Label in Name: the accessible name must contain the visible text.
+// A longer aria-label that does not is demoted to a description instead.
+const nameOk = !cta.ariaLabel || cta.ariaLabel.toLowerCase().includes(visible.toLowerCase());
+const descId = !nameOk ? `d-${cta.trackId}-${location}${uid ? `-${uid}` : ''}` : undefined;
 ---
 <a
   href={href}
-  class:list={['btn', `btn-${variant}`, `btn-${size}`, { 'btn-block': block }, cls]}
-  data-track={link.track}
-  data-track-id={link.trackId}
-  data-service={service}
+  class:list={['btn', `btn--${variant}`, `btn--${size}`, cls]}
+  data-track={cta.track}
+  data-track-id={cta.trackId}
+  data-track-type={cta.kind}
+  data-track-location={location}
+  data-prefill-services={p?.services?.join(',')}
+  data-prefill-property-type={p?.propertyType}
+  data-prefill-wires={p?.wires}
+  data-prefill-role={p?.role}
   data-magnetic={magnetic ? '' : undefined}
-  aria-label={link.ariaLabel}
-  target={link.external ? '_blank' : undefined}
-  rel={link.external ? 'noopener' : undefined}
-  {...prefillAttrs}
-  {...rest}
-><span class="btn-label" data-magnetic-inner={magnetic ? '' : undefined}><slot name="icon" />{link.label}<slot /></span></a>
+  aria-label={nameOk ? cta.ariaLabel : undefined}
+  aria-describedby={descId}
+  target={cta.external ? '_blank' : undefined}
+  rel={cta.external ? 'noopener' : undefined}
+>
+  {glyph === 'phone' && (
+    <svg class="btn__icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+      <path d="M4.2 1.8 6 4.6 4.7 6.2c.8 1.9 2.2 3.3 4.1 4.1l1.6-1.3 2.8 1.8-.7 2.6c-.2.6-.8 1-1.4.9C5.9 13.6 2.4 10.1 1.8 4.9c-.1-.6.3-1.2.9-1.4l1.5-1.7Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
+    </svg>
+  )}
+  {glyph === 'text' && (
+    <svg class="btn__icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+      <path d="M2.5 3.5h11v7.5h-6L4.5 13.5V11h-2z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
+    </svg>
+  )}
+  <span class="btn__label">{visible}</span>
+  {descId && <span id={descId} class="visually-hidden">{cta.ariaLabel}</span>}
+  {glyph === 'arrow' && (
+    <svg class="btn__icon btn__icon--arrow" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+      <path d="M2 8h11M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  )}
+</a>
 
 <style>
   .btn {
-    --btn-h: var(--space-7);
+    --btn-bg: transparent;
+    --btn-fg: var(--color-heading);
+    --btn-border: transparent;
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: var(--btn-h);
-    padding-inline: var(--space-5);
+    gap: var(--space-2);
+    min-height: 3rem;
+    padding: var(--space-3) var(--space-5);
+    border: 1px solid var(--btn-border);
     border-radius: var(--radius-pill);
+    background: var(--btn-bg);
+    color: var(--btn-fg);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
     font-weight: var(--font-weight-label);
-    font-size: var(--text-base);
-    line-height: 1.1;
+    line-height: 1.2;
     text-decoration: none;
-    text-align: center;
     white-space: nowrap;
     transition:
       background-color var(--duration-fast) var(--ease-standard),
-      box-shadow var(--duration-base) var(--ease-standard),
+      border-color var(--duration-fast) var(--ease-standard),
       color var(--duration-fast) var(--ease-standard),
-      transform var(--duration-base) var(--ease-out-quart);
+      box-shadow var(--duration-base) var(--ease-standard);
     will-change: transform;
   }
-  .btn-label { display: inline-flex; align-items: center; gap: var(--space-2); }
-  .btn:active { transform: translateY(1px); }
-  .btn-sm { --btn-h: calc(var(--spacing) * 10); padding-inline: var(--space-4); font-size: var(--text-sm); }
-  .btn-lg { --btn-h: calc(var(--spacing) * 14); padding-inline: var(--space-6); font-size: var(--text-lg); }
-  .btn-block { display: flex; width: 100%; white-space: normal; }
+  .btn--sm { min-height: 2.5rem; padding: var(--space-2) var(--space-4); }
+  .btn:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
 
-  .btn-book { background: var(--color-book); color: var(--color-on-book); box-shadow: var(--shadow-book); }
-  .btn-book:hover { background: var(--color-book-hover); color: var(--color-on-book); }
+  /* Book: sunset with slate text (5.64:1). White on sunset fails (2.56:1). */
+  .btn--primary { --btn-bg: var(--color-book); --btn-fg: var(--color-on-book); box-shadow: var(--shadow-book); }
+  .btn--primary:hover { --btn-bg: var(--color-book-hover); --btn-fg: var(--color-on-book); }
 
-  .btn-primary { background: var(--color-accent); color: var(--color-on-accent); box-shadow: var(--shadow-cta); }
-  .btn-primary:hover { background: var(--color-accent-hover); color: var(--color-on-accent); }
+  .btn--secondary { --btn-bg: var(--color-surface); --btn-border: var(--color-signal-500); --btn-fg: var(--color-signal-700); }
+  .btn--secondary:hover { --btn-bg: var(--color-signal-50); --btn-fg: var(--color-signal-700); --btn-border: var(--color-signal-600); }
 
-  .btn-outline { background: var(--color-surface); color: var(--color-signal-700); box-shadow: inset 0 0 0 1.5px var(--color-signal-500); }
-  .btn-outline:hover { background: var(--color-signal-50); color: var(--color-signal-700); }
+  /* On the slate band: cloud button, slate text (13.60:1). */
+  .btn--inverse { --btn-bg: var(--color-cloud); --btn-fg: var(--color-slate); }
+  .btn--inverse:hover { --btn-bg: var(--color-surface); --btn-fg: var(--color-slate); box-shadow: var(--shadow-signal-glow); }
+  .btn--ghost-inverse { --btn-border: color-mix(in srgb, var(--color-cloud) 40%, transparent); --btn-fg: var(--color-cloud); }
+  .btn--ghost-inverse:hover { --btn-border: var(--color-cloud); --btn-fg: var(--color-cloud); }
+  .btn--inverse:focus-visible, .btn--ghost-inverse:focus-visible { box-shadow: 0 0 0 2px var(--color-slate), 0 0 0 4px var(--color-cloud); }
 
-  .btn-ghost { background: transparent; color: var(--color-slate); box-shadow: inset 0 0 0 1px var(--color-border-strong); }
-  .btn-ghost:hover { background: var(--color-mist); color: var(--color-slate); }
+  .btn--text { min-height: 2.75rem; padding: 0; gap: var(--space-2); color: var(--color-link); border-radius: 0; }
+  .btn--text .btn__label {
+    background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+    transition: background-size var(--duration-base) var(--ease-out-quart);
+    padding-bottom: 2px;
+  }
+  .btn--text:hover { color: var(--color-link-hover); }
+  .btn--text:hover .btn__label, .btn--text:focus-visible .btn__label { background-size: 100% 1px; }
+  .btn--text:focus-visible { box-shadow: none; outline: 2px solid var(--color-focus); outline-offset: 4px; }
 
-  .btn:focus-visible { outline: none; box-shadow: var(--shadow-focus); border-radius: var(--radius-pill); }
+  .btn__icon { flex: none; }
+  .btn__icon--arrow { transition: transform var(--duration-base) var(--ease-out-quart); }
+  .btn:hover .btn__icon--arrow, .btn:focus-visible .btn__icon--arrow { transform: translateX(3px); }
 </style>

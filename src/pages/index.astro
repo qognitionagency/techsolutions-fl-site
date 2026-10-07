@@ -1,42 +1,39 @@
 ---
-/** Composes sections only. No copy, no logic (ADR §2). */
+/** Composes sections only. No copy, no logic (ADR §2). Section order follows the Iron Sound build. */
 import Base from '../layouts/Base.astro';
 import Nav from '../components/sections/Nav.astro';
 import Hero from '../components/sections/Hero.astro';
-import Promises from '../components/sections/Promises.astro';
+import Partners from '../components/sections/Partners.astro';
 import Services from '../components/sections/Services.astro';
-import Band from '../components/sections/Band.astro';
-import BeforeAfter from '../components/sections/BeforeAfter.astro';
-import HowItWorks from '../components/sections/HowItWorks.astro';
-import RecentWork from '../components/sections/RecentWork.astro';
-import Reviews from '../components/sections/Reviews.astro';
+import Signature from '../components/sections/Signature.astro';
+import Sectors from '../components/sections/Sectors.astro';
+import Process from '../components/sections/Process.astro';
+import Gallery from '../components/sections/Gallery.astro';
+import Testimonials from '../components/sections/Testimonials.astro';
 import ServiceArea from '../components/sections/ServiceArea.astro';
 import Faq from '../components/sections/Faq.astro';
-import Booking from '../components/sections/Booking.astro';
+import Consult from '../components/sections/Consult.astro';
 import Footer from '../components/sections/Footer.astro';
-import StickyBar from '../components/sections/StickyBar.astro';
-import { getImage } from 'astro:assets';
-import { poster } from '../lib/media';
-
-// Preload the LCP poster with the same params <Img> uses, so the URLs match the <picture> AVIF source.
-const lcp = await getImage({ src: poster('hero-tv-wall'), format: 'avif', widths: [480, 768, 1080, 1440, 1920] });
-const preloadImage = { srcset: lcp.srcSet.attribute, sizes: '(min-width: 1024px) 58vw, 100vw', type: 'image/avif' };
+import MobileBar from '../components/sections/MobileBar.astro';
+import Band from '../components/ui/Band.astro';
 ---
-<Base preloadImage={preloadImage}>
+<Base>
   <Nav />
-  <main id="main" tabindex="-1">
+  <main id="main">
     <Hero />
-    <Promises />
+    <Partners />
     <Services />
-    <Band slot="band-bay" position="50% 55%" />
-    <BeforeAfter />
-    <HowItWorks />
-    <RecentWork />
-    <Reviews />
+    <Signature />
+    <Band back="band-skyline" front="band-detail-mount" side="right" />
+    <Sectors />
+    <Process />
+    <Band back="band-biscayne" front="band-detail-doorbell" side="left" />
+    <Gallery />
+    <Testimonials />
     <ServiceArea />
     <Faq />
-    <Booking />
+    <Consult />
   </main>
   <Footer />
-  <StickyBar />
+  <MobileBar />
 </Base>

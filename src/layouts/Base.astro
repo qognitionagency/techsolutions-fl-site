@@ -1,33 +1,26 @@
 ---
 /**
- * <head>, meta/OG, JSON-LD, font preload, concept ribbon (ADR §2).
- * Every string comes from content.ts.
+ * <head>, meta/OG, JSON-LD, font preload, skip link (ADR §2; Iron Sound port).
+ * Indexing: noindex,nofollow unless PUBLIC_INDEXABLE=true (ADR §5). Every string from content.ts.
+ * The concept ribbon lives in Nav.astro (fixed header), as on Iron Sound.
  */
 import '../styles/global.css';
 import geistLatin from '@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url';
-import { meta, ribbon } from '../data/content';
+import { meta, nav } from '../data/content';
 import { absolute, withBase } from '../lib/url';
 import { indexable } from '../lib/indexing';
 import { buildSchema } from '../lib/schema';
 
-interface Props {
-  /** LCP image to preload (srcset from getImage) */
-  preloadImage?: { srcset: string; sizes: string; type: string };
-}
-const { preloadImage } = Astro.props;
 const site = Astro.site;
 const canonical = absolute('/', site);
 const ogImage = absolute(meta.ogImage, site);
-const schema = JSON.stringify(buildSchema(site)).replace(/</g, '\\u003c');
+const graph = JSON.stringify(buildSchema(site)).replace(/</g, '\\u003c');
 ---
 <!doctype html>
 <html lang={meta.lang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    {preloadImage && (
-      <link rel="preload" as="image" imagesrcset={preloadImage.srcset} imagesizes={preloadImage.sizes} type={preloadImage.type} fetchpriority="high" />
-    )}
     <title>{meta.title}</title>
     <meta name="description" content={meta.description} />
     <meta name="robots" content={indexable ? 'index,follow' : 'noindex,nofollow'} />
@@ -35,6 +28,7 @@ const schema = JSON.stringify(buildSchema(site)).replace(/</g, '\\u003c');
     <meta name="theme-color" content="#F5F8FC" />
     <meta name="color-scheme" content="light" />
 
+    <!-- One font preload: the latin Geist face (display + body). Geist Mono loads from the inline CSS. -->
     <link rel="preload" href={geistLatin} as="font" type="font/woff2" crossorigin />
 
     <link rel="icon" href={withBase('brand/favicon.svg')} type="image/svg+xml" />
@@ -43,7 +37,7 @@ const schema = JSON.stringify(buildSchema(site)).replace(/</g, '\\u003c');
 
     <meta property="og:type" content={meta.ogType} />
     <meta property="og:locale" content={meta.ogLocale} />
-    <meta property="og:site_name" content={meta.siteName} />
+    <meta property="og:site_name" content={meta.ogSiteName} />
     <meta property="og:title" content={meta.ogTitle} />
     <meta property="og:description" content={meta.ogDescription} />
     <meta property="og:url" content={canonical} />
@@ -56,42 +50,36 @@ const schema = JSON.stringify(buildSchema(site)).replace(/</g, '\\u003c');
     <meta name="twitter:description" content={meta.ogDescription} />
     <meta name="twitter:image" content={ogImage} />
 
-    <script type="application/ld+json" set:html={schema} />
-    <!-- Initial state set by JS (ADR §7): hold the desktop hero H1 until motion.ts splits it; 2.5 s fallback. -->
-    <script is:inline>
-      if (matchMedia('(min-width: 768px) and (prefers-reduced-motion: no-preference)').matches) {
-        document.documentElement.classList.add('motion-pending');
-        setTimeout(function () { document.documentElement.classList.remove('motion-pending'); }, 2500);
-      }
-    </script>
+    <script type="application/ld+json" set:html={graph} />
   </head>
   <body>
-    <div class="ribbon" role="note" aria-label={ribbon.ariaLabel}>
-      <p aria-hidden="true">{ribbon.text}</p>
-    </div>
+    <a class="skip" href="#main">{nav.skipLink}</a>
     <slot />
     <script>
       import '../scripts/analytics';
       import '../scripts/video';
-      // GSAP + Lenis (~54 KB gz) load after `load` so they never compete with the LCP poster.
+      // Motion (GSAP + Lenis, ~55 KB gzip) is not needed for first paint: fetch it after load
+      // so it never competes with the LCP poster or the font.
       const motion = () => import('../scripts/motion');
       if (document.readyState === 'complete') motion();
-      else addEventListener('load', () => motion(), { once: true });
+      else window.addEventListener('load', motion, { once: true });
     </script>
   </body>
 </html>
 
 <style>
-  .ribbon {
-    position: relative;
-    z-index: var(--z-ribbon);
-    background: var(--color-signal-50);
-    border-bottom: 1px solid var(--color-signal-100);
-    color: var(--color-slate);
-    text-align: center;
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    letter-spacing: var(--tracking-label);
-    padding: var(--space-2) var(--space-gutter);
+  .skip {
+    position: fixed;
+    top: var(--space-3);
+    left: var(--space-3);
+    z-index: var(--z-overlay);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-slate);
+    color: var(--color-cloud);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    transform: translateY(-200%);
+    transition: transform var(--duration-fast) var(--ease-standard);
   }
+  .skip:focus-visible { transform: none; color: var(--color-cloud); }
 </style>

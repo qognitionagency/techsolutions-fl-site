@@ -6,16 +6,19 @@ A one-page concept site Qognition built for **TechSolutions FL** (Jay, Miami: TV
 
 ## What's on the page
 
-- **Hero "What do you need?" picker.** TV, Wi-Fi, cameras or smart home. Shows a starting price and prefills the booking form.
-- **Promises strip.** Sample promises, no invented stats.
-- **Services.** Each card carries a starting price.
-- **Before/after slider.** Drag, or use the keyboard.
-- **How it works.**
-- **Recent work.** Links to [@tech_solutionsfl](https://www.instagram.com/tech_solutionsfl/).
+Section order follows the Iron Sound build (`src/pages/index.astro`).
+
+- **Hero.** Service-led H1, poster image with a lazy background video and a pause control.
+- **Gear strip.** "Gear we install and set up", labelled sample.
+- **Services bento.** Six tiles with sample starting prices. "Add to my booking" prefills the form.
+- **Before/after slider.** Same wall, wires gone. Drag, or use the keyboard.
+- **Condo · House · Office tabs.** Each panel's CTA prefills the property type.
+- **How it works.** Pinned horizontal steps on desktop. Then the multi-unit band.
+- **Gallery.** Stock frames labelled "Stock image, sample". Links to [@tech_solutionsfl](https://www.instagram.com/tech_solutionsfl/).
 - **Reviews.** Labelled sample.
-- **Service area.**
+- **Service area.** County map and a sample neighborhood list.
 - **FAQ.** Includes FAQPage JSON-LD.
-- **Booking form.** Four steps, with unchecked SMS and email consent boxes.
+- **Booking form.** Five steps, with unchecked SMS and email consent boxes.
 - **Sticky Call / Text / Book bar** on mobile.
 - **Motion.** GSAP ScrollTrigger and Lenis. All of it is off under `prefers-reduced-motion`.
 

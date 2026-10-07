@@ -1,0 +1,508 @@
+---
+/**
+ * Booking form (#book), Iron Sound's multi-step card on Luke's form.ts (docs/form-module.md).
+ * Steps: service (photo cards) → details → property (photo cards) → when → contact.
+ * Without JS every step renders and the form posts natively (https endpoint only, Anton).
+ * Five states: idle, invalid (inline + summary), submitting, success (+ demo notice), error.
+ */
+import { anchors, contact, form } from '../../data/content';
+import Button from '../ui/Button.astro';
+import Choices from '../ui/Choices.astro';
+
+const rawEndpoint = (import.meta.env.PUBLIC_FORM_ENDPOINT ?? '').trim();
+// Native (no-JS) post only to an https endpoint, matching form.ts's live-mode rule (Anton, 2026-10-07).
+const endpoint = /^https:\/\/[^/\s]/i.test(rawEndpoint) ? rawEndpoint : undefined;
+
+const tpl = (s: string) => s.replace('{current}', '{n}').replace('{step}', '{title}');
+const svcImage: Record<string, string> = { tv: 'svc-tv', theater: 'svc-theater', wifi: 'svc-wifi', cameras: 'svc-cameras', smart: 'svc-smart', office: 'svc-office' };
+const svcCards = form.service.options.filter((o) => svcImage[o.key]).map((o) => ({ ...o, image: svcImage[o.key] }));
+const svcOther = form.service.options.filter((o) => !svcImage[o.key]);
+const propImage: Record<string, string> = { condo: 'env-condo', house: 'env-house', townhouse: 'env-townhouse', office: 'env-office' };
+const propCards = form.property.options.map((o) => ({ ...o, image: propImage[o.key] }));
+const d = form.details;
+const c = form.contact;
+const parts = (s: string) => s.split(/(\{\w+\})/).filter(Boolean);
+// Error fallback sentence with live links for the email and phone it names (email first).
+const fb = form.error.fallback;
+const iE = fb.indexOf(contact.email);
+const iP = fb.indexOf(contact.phoneDisplay);
+const fallbackOk = iE >= 0 && iP > iE;
+---
+<section id={anchors.consult} class="section consult" aria-labelledby="consult-heading">
+  <div class="frame consult__grid">
+    <div class="consult__intro">
+      <p class="display consult__display" data-split>{form.display}</p>
+      <h2 id="consult-heading" class="consult__h2">{form.heading}</h2>
+      <p class="consult__lede">{form.intro}</p>
+      <p class="consult__alt">
+        <span>{form.callAlt.prefix}</span>
+        <Button cta={form.callAlt.cta} location="form" variant="text" />
+        <Button cta={form.callAlt.call} location="form" variant="text" icon="none" />
+      </p>
+    </div>
+
+    <form id="book-form" class="card" action={endpoint} method="post" novalidate data-consult data-mailto-subject={form.error.mailtoSubject}>
+      <div class="card__top" data-js-only hidden>
+        <p class="card__progress-text" data-progress-text data-template={tpl(form.progress)}></p>
+        <div class="card__progress" data-progress aria-hidden="true"><span></span></div>
+      </div>
+      <p class="visually-hidden" data-live aria-live="polite" data-live-step={tpl(form.progressLive)} data-live-errors={form.errorSummary}></p>
+
+      <input type="hidden" name="submission_id" />
+      <input type="hidden" name="entry_point" />
+      <input type="hidden" name="page_variant" value="control" />
+      <input type="hidden" name="utm_source" /><input type="hidden" name="utm_medium" /><input type="hidden" name="utm_campaign" />
+      <div class="visually-hidden" aria-hidden="true">
+        <label>{c.honeypot.label} <input name={c.honeypot.name} tabindex="-1" autocomplete="off" /></label>
+      </div>
+
+      <!-- 1 · service -->
+      <fieldset class="step" data-step="service">
+        <legend class="step__legend">{form.service.legend}</legend>
+        <p class="step__help">{form.service.helper}</p>
+        <ul class="err-summary" data-error-summary role="alert" hidden></ul>
+        <div data-field data-required-group data-error={form.service.error}>
+          <Choices name={form.service.name} type="checkbox" options={svcCards} variant="cards" columns={3} idPrefix="f-svc" />
+          <div class="step__other"><Choices name={form.service.name} type="checkbox" options={svcOther} idPrefix="f-svc" /></div>
+        </div>
+        <div class="step__nav"><button type="button" class="btn-next" data-next data-js-only hidden>{form.service.next}</button></div>
+      </fieldset>
+
+      <!-- 2 · details -->
+      <fieldset class="step" data-step="details">
+        <legend class="step__legend">{d.legend}</legend>
+        <p class="step__help">{d.helper}</p>
+        <ul class="err-summary" data-error-summary role="alert" hidden></ul>
+
+        <div class="group" data-show-if="services=tv">
+          <div class="row">
+            <div class="field field--narrow">
+              <label for="f-tv_count">{d.tv.tvCount.label}</label>
+              <input id="f-tv_count" name={d.tv.tvCount.name} type="number" inputmode="numeric" min="1" max="5" value="1" />
+            </div>
+            <div class="field">
+              <label for="f-tv_size">{d.tv.tvSize.label}</label>
+              <select id="f-tv_size" name={d.tv.tvSize.name}>
+                {d.tv.tvSize.options.map((o) => <option value={o.key}>{o.label}</option>)}
+              </select>
+            </div>
+          </div>
+          <fieldset class="sub"><legend class="sub__legend">{d.tv.wallType.label}</legend><p class="field__hint">{d.tv.wallType.helper}</p><Choices name={d.tv.wallType.name} type="radio" options={d.tv.wallType.options} idPrefix="f-wall" /></fieldset>
+          <fieldset class="sub"><legend class="sub__legend">{d.tv.wires.label}</legend><p class="field__hint">{d.tv.wires.helper}</p><Choices name={d.tv.wires.name} type="radio" options={d.tv.wires.options} idPrefix="f-wires" /></fieldset>
+          <fieldset class="sub"><legend class="sub__legend">{d.tv.hasMount.label}</legend><Choices name={d.tv.hasMount.name} type="radio" options={d.tv.hasMount.options} idPrefix="f-mount" /></fieldset>
+          <label class="check"><input type="checkbox" name={d.tv.soundbar.name} value="yes" /><span>{d.tv.soundbar.label}</span></label>
+        </div>
+
+        <div class="group" data-show-if="services=theater">
+          <fieldset class="sub"><legend class="sub__legend">{d.theater.theaterScope.label}</legend><Choices name={d.theater.theaterScope.name} type="checkbox" options={d.theater.theaterScope.options} idPrefix="f-theater" /></fieldset>
+        </div>
+
+        <div class="group" data-show-if="services=wifi">
+          <fieldset class="sub"><legend class="sub__legend">{d.wifi.homeSize.label}</legend><Choices name={d.wifi.homeSize.name} type="radio" options={d.wifi.homeSize.options} idPrefix="f-size" /></fieldset>
+          <fieldset class="sub"><legend class="sub__legend">{d.wifi.wifiIssue.label}</legend><Choices name={d.wifi.wifiIssue.name} type="checkbox" options={d.wifi.wifiIssue.options} idPrefix="f-wifi" /></fieldset>
+        </div>
+
+        <div class="group" data-show-if="services=cameras">
+          <fieldset class="sub"><legend class="sub__legend">{d.cameras.cameraCount.label}</legend><Choices name={d.cameras.cameraCount.name} type="radio" options={d.cameras.cameraCount.options} idPrefix="f-camn" /></fieldset>
+          <fieldset class="sub"><legend class="sub__legend">{d.cameras.cameraLocation.label}</legend><Choices name={d.cameras.cameraLocation.name} type="radio" options={d.cameras.cameraLocation.options} idPrefix="f-caml" /></fieldset>
+          <fieldset class="sub"><legend class="sub__legend">{d.cameras.cameraEquipment.label}</legend><Choices name={d.cameras.cameraEquipment.name} type="radio" options={d.cameras.cameraEquipment.options} variant="list" idPrefix="f-came" /></fieldset>
+          <label class="check"><input type="checkbox" name={d.cameras.doorbell.name} value="yes" /><span>{d.cameras.doorbell.label}</span></label>
+        </div>
+
+        <div class="group" data-show-if="services=smart">
+          <fieldset class="sub"><legend class="sub__legend">{d.smart.smartDevices.label}</legend><Choices name={d.smart.smartDevices.name} type="checkbox" options={d.smart.smartDevices.options} idPrefix="f-smart" /></fieldset>
+          <label class="check"><input type="checkbox" name={d.smart.rental.name} value="yes" /><span>{d.smart.rental.label}</span></label>
+        </div>
+
+        <div class="group" data-show-if="services=office">
+          <fieldset class="sub"><legend class="sub__legend">{d.office.officeSize.label}</legend><Choices name={d.office.officeSize.name} type="radio" options={d.office.officeSize.options} idPrefix="f-osize" /></fieldset>
+          <fieldset class="sub"><legend class="sub__legend">{d.office.officeScope.label}</legend><Choices name={d.office.officeScope.name} type="checkbox" options={d.office.officeScope.options} idPrefix="f-oscope" /></fieldset>
+        </div>
+
+        <div class="field" data-field data-show-if="services=other">
+          <label for="f-other">{d.other.otherDesc.label}</label>
+          <textarea id="f-other" name={d.other.otherDesc.name} rows="3" required minlength="10" maxlength="500" data-error-required={d.other.otherDesc.error} data-error-length={d.other.rangeError}></textarea>
+        </div>
+
+        <div class="field" data-field>
+          <label for="f-notes">{d.notes.label}</label>
+          <textarea id="f-notes" name={d.notes.name} rows="3" maxlength="500" aria-describedby="f-notes-count" data-error-length={d.notes.error}></textarea>
+          <p class="field__hint field__hint--right"><span id="f-notes-count" data-counter data-template={d.notes.counter} data-js-only hidden></span></p>
+        </div>
+
+        <div class="step__nav">
+          <button type="button" class="btn-back" data-back data-js-only hidden>{form.back}</button>
+          <button type="button" class="btn-next" data-next data-js-only hidden>{d.next}</button>
+        </div>
+      </fieldset>
+
+      <!-- 3 · property -->
+      <fieldset class="step" data-step="property">
+        <legend class="step__legend">{form.property.legend}</legend>
+        <ul class="err-summary" data-error-summary role="alert" hidden></ul>
+        <div data-field data-error={form.property.error}>
+          <Choices name={form.property.name} type="radio" options={propCards} required variant="cards" columns={2} idPrefix="f-prop" />
+        </div>
+        <fieldset class="sub" data-show-if="property_type=condo">
+          <legend class="sub__legend">{form.property.coiNeeded.label}</legend>
+          <p class="field__hint">{form.property.coiNeeded.helper}</p>
+          <Choices name={form.property.coiNeeded.name} type="radio" options={form.property.coiNeeded.options} idPrefix="f-coi" />
+        </fieldset>
+        <div class="step__nav">
+          <button type="button" class="btn-back" data-back data-js-only hidden>{form.back}</button>
+          <button type="button" class="btn-next" data-next data-js-only hidden>{form.property.next}</button>
+        </div>
+      </fieldset>
+
+      <!-- 4 · when -->
+      <fieldset class="step" data-step="when">
+        <legend class="step__legend">{form.when.legend}</legend>
+        <p class="step__help">{form.when.helper}</p>
+        <ul class="err-summary" data-error-summary role="alert" hidden></ul>
+        <div class="field field--narrow" data-field>
+          <label for="f-zip">{form.when.zip.label}</label>
+          <input id="f-zip" name={form.when.zip.name} type="text" inputmode="numeric" autocomplete="postal-code" maxlength="5" pattern="[0-9]{5}" required data-error={form.when.zip.error} />
+        </div>
+        <!-- NEEDS DATA: service-area ZIP list for the soft out-of-area warning (form.when.zip.outOfArea) -->
+        <fieldset class="sub">
+          <legend class="sub__legend">{form.when.timing.label}</legend>
+          <div data-field data-error={form.when.timing.error}>
+            <Choices name={form.when.timing.name} type="radio" options={form.when.timing.options} required idPrefix="f-timing" />
+          </div>
+        </fieldset>
+        <div class="field field--narrow" data-field data-show-if="timing=date">
+          <label for="f-date">{form.when.date.label}</label>
+          <input id="f-date" name={form.when.date.name} type="date" required data-date-range data-error-required={form.when.date.error} data-error-range={form.when.date.rangeError} />
+        </div>
+        <fieldset class="sub">
+          <legend class="sub__legend">{form.when.window.label}</legend>
+          <Choices name={form.when.window.name} type="radio" options={form.when.window.options} idPrefix="f-window" />
+        </fieldset>
+        <div class="step__nav">
+          <button type="button" class="btn-back" data-back data-js-only hidden>{form.back}</button>
+          <button type="button" class="btn-next" data-next data-js-only hidden>{form.when.next}</button>
+        </div>
+      </fieldset>
+
+      <!-- 5 · contact -->
+      <fieldset class="step" data-step="contact">
+        <legend class="step__legend">{c.legend}</legend>
+        <ul class="err-summary" data-error-summary role="alert" hidden></ul>
+        <div class="row">
+          <div class="field" data-field>
+            <label for="f-first">{c.firstName.label}</label>
+            <input id="f-first" name={c.firstName.name} autocomplete="given-name" required maxlength="50" data-error={c.firstName.error} />
+          </div>
+          <div class="field" data-field>
+            <label for="f-phone">{c.phone.label}</label>
+            <input id="f-phone" name={c.phone.name} type="tel" inputmode="tel" autocomplete="tel-national" required data-validate="phone" data-phone-mask data-error={c.phone.error} />
+          </div>
+        </div>
+        <div class="field" data-field>
+          <label for="f-email">{c.email.label}</label>
+          <input id="f-email" name={c.email.name} type="email" autocomplete="email" maxlength="200" data-required-if="contact_pref=email" data-error-required={c.email.requiredError} data-error-format={c.email.error} />
+        </div>
+        <fieldset class="sub">
+          <legend class="sub__legend">{c.contactPref.legend}</legend>
+          <div data-field data-error={c.contactPref.error}>
+            <Choices name={c.contactPref.name} type="radio" options={c.contactPref.options} required checked="text" idPrefix="f-pref" />
+          </div>
+        </fieldset>
+        <fieldset class="sub">
+          <legend class="sub__legend">{c.role.label}</legend>
+          <Choices name={c.role.name} type="radio" options={c.role.options} idPrefix="f-role" />
+        </fieldset>
+
+        <div class="consents">
+          <!-- NEEDS DATA: legal review of consent wording before live. Both optional and unchecked (MARS). -->
+          <label class="check"><input type="checkbox" name={c.smsConsent.name} value="yes" /><span>{c.smsConsent.label}</span></label>
+          <label class="check"><input type="checkbox" name={c.emailOptIn.name} value="yes" /><span>{c.emailOptIn.label}</span></label>
+          <p class="field__hint">{c.consent}</p>
+        </div>
+
+        <div class="alert" data-error-panel hidden role="alert">
+          <p class="alert__h">{form.error.heading}</p>
+          <p>{form.error.body}</p>
+          <p>
+            {fallbackOk ? (
+              <>
+                {fb.slice(0, iE)}<a href={contact.emailHref} data-mailto data-track-id="form_error_email" data-track-location="form">{contact.email}</a>{fb.slice(iE + contact.email.length, iP)}<a href={contact.phoneHref} data-track-id="form_error_call" data-track-location="form">{contact.phoneDisplay}</a>{fb.slice(iP + contact.phoneDisplay.length)}
+              </>
+            ) : fb}
+          </p>
+          <div class="alert__actions">
+            <button type="button" class="btn-next" data-retry>{form.error.retry}</button>
+            <a href={form.callAlt.cta.href} data-track-id="form_error_text" data-track-location="form">{form.error.textInstead}</a>
+          </div>
+        </div>
+
+        <div class="step__nav step__nav--submit">
+          <button type="button" class="btn-back" data-back data-js-only hidden>{form.back}</button>
+          <button type="submit" class="btn-submit" data-busy-label={form.submitting}><span class="spinner" aria-hidden="true"></span><span data-label>{form.submit}</span></button>
+        </div>
+        <p class="card__reply">{form.reply}</p>
+        <p class="card__data">{form.dataUse}</p>
+      </fieldset>
+
+      <div class="success" data-success hidden>
+        <h3 class="success__h" data-success-heading tabindex="-1">
+          {parts(form.success.heading).map((p) => (p === '{firstName}' ? <span data-fill="first_name"></span> : p))}
+        </h3>
+        {(['text', 'call', 'email'] as const).map((pref) => (
+          <p class="success__line" data-pref={pref} hidden>
+            {parts(form.success.byPref[pref]).map((p) => (p === '{last4}' ? <span data-last4></span> : p === '{email}' ? <span data-fill="email"></span> : p))}
+          </p>
+        ))}
+        <div class="success__demo" data-demo-notice hidden>
+          <p><strong>{form.demoNotice}</strong></p>
+          <p>{form.demoDetail}</p>
+        </div>
+        <dl class="success__recap">
+          {(Object.keys(form.success.recapLabels) as (keyof typeof form.success.recapLabels)[]).map((k) => (
+            <div><dt>{form.success.recapLabels[k]}</dt><dd data-fill={k}></dd></div>
+          ))}
+        </dl>
+        <p><a class="success__photo" href={contact.smsBase} data-photo-link data-sms-base={contact.smsBase} data-body={form.success.photoLink.smsBody}>{form.success.photoLink.label}</a></p>
+        <p class="success__next-h">{form.success.nextHeading}</p>
+        <ol class="success__next">{form.success.next.map((n) => <li>{n}</li>)}</ol>
+        <p><a href={contact.phoneHref} data-track-id="form_success_call" data-track-location="form">{form.success.callLine}</a></p>
+      </div>
+    </form>
+  </div>
+</section>
+
+<script>
+  import { initMultiStepForm } from '../../scripts/form';
+
+  const root = document.querySelector<HTMLFormElement>('[data-consult]');
+  if (root) {
+    const get = (d: FormData, k: string) => String(d.get(k) ?? '');
+
+    // Date bounds: today .. today + 60 days (cro-spec §4).
+    const date = root.querySelector<HTMLInputElement>('[data-date-range]');
+    if (date) {
+      const iso = (x: Date) => new Date(x.getTime() - x.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      const now = new Date();
+      date.min = iso(now);
+      date.max = iso(new Date(now.getTime() + 60 * 864e5));
+    }
+
+    // Phone display mask on blur, never while typing: (305) 555-0123.
+    const phone = root.querySelector<HTMLInputElement>('[data-phone-mask]');
+    phone?.addEventListener('blur', () => {
+      const digits = phone.value.replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '');
+      if (digits.length === 10) phone.value = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+    });
+
+    initMultiStepForm(root, {
+      names: { id: 'submission_id', entry: 'entry_point', field: 'field', submitFail: 'form_submit_fail' },
+      skipPrefilledSteps: true,
+      minFillMs: 3000, // time trap (Anton): a submit < 3 s after form_start is a bot; fake success, no POST, no event
+      urlParams: { service: 'services' },
+      // Enums, counts and booleans only (form-module.md; cro-spec §5).
+      params: (event, d) => {
+        const services = d.getAll('services').map(String).sort().join(',');
+        if (event === 'form_step') return { services };
+        if (event === 'form_submit')
+          return {
+            services,
+            property_type: get(d, 'property_type'),
+            timing: get(d, 'timing'),
+            coi_needed: get(d, 'coi_needed') || 'na',
+            contact_pref: get(d, 'contact_pref'),
+            role: get(d, 'role') || undefined,
+            page_variant: 'control',
+          };
+        return {};
+      },
+      onState: (state, d) => {
+        if (state === 'success') {
+          const pref = get(d, 'contact_pref') || 'text';
+          root.querySelectorAll<HTMLElement>('[data-pref]').forEach((p) => (p.hidden = p.dataset.pref !== pref));
+          const last4 = get(d, 'phone').replace(/\D/g, '').slice(-4);
+          root.querySelectorAll('[data-last4]').forEach((s) => (s.textContent = last4));
+          const photo = root.querySelector<HTMLAnchorElement>('[data-photo-link]');
+          if (photo) photo.href = (photo.dataset.smsBase ?? '') + encodeURIComponent((photo.dataset.body ?? '').replace('{ref}', get(d, 'submission_id').slice(0, 6)));
+        }
+        if (state === 'error') {
+          // mailto subject carries the service only, never PII (content.ts form.error.mailtoSubject).
+          const subject = (root.dataset.mailtoSubject ?? '').replace('{service}', d.getAll('services').map(String).join(', '));
+          root.querySelectorAll<HTMLAnchorElement>('[data-mailto]').forEach((a) => (a.href = `${a.href.split('?')[0]}?subject=${encodeURIComponent(subject)}`));
+        }
+      },
+    });
+
+    // Notes counter (not part of form.ts). Not a live region: it is in the textarea's description.
+    const notes = root.querySelector<HTMLTextAreaElement>('#f-notes');
+    const counter = root.querySelector<HTMLElement>('[data-counter]');
+    if (notes && counter) {
+      const max = notes.maxLength;
+      const update = () => {
+        counter.textContent = counter.dataset.template!.replace('{used}', notes.value.length.toLocaleString('en-US'));
+        counter.classList.toggle('is-near', notes.value.length > max * 0.9);
+      };
+      notes.addEventListener('input', update);
+      update();
+    }
+  }
+</script>
+
+<style>
+  .consult { background: var(--color-signal-50); border-top: 1px solid var(--color-signal-100); }
+  .consult__grid { display: grid; gap: var(--space-7); align-items: start; }
+  .consult__display { margin: 0; font-size: var(--text-3xl); max-width: 14ch; }
+  .consult__h2 { display: grid; grid-template-columns: var(--space-6) minmax(0, 1fr); align-items: baseline; gap: var(--space-3); max-width: 34ch; margin: var(--space-5) 0 0; text-wrap: pretty; font-size: var(--text-base); font-weight: var(--font-weight-label); letter-spacing: 0; color: var(--color-text-muted); }
+  .consult__h2::before { content: ""; width: var(--space-6); height: 2px; border-radius: var(--radius-pill); background: var(--color-bay); transform: translateY(-0.3em); }
+  .consult__lede { margin: var(--space-5) 0 0; max-width: 42ch; }
+  .consult__alt { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-4); margin: var(--space-6) 0 0; color: var(--color-text-muted); }
+
+  .card {
+    position: relative;
+    padding: var(--space-6) var(--space-5);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-top: 3px solid var(--color-bay);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+  }
+  .card__top { display: grid; gap: var(--space-2); margin-bottom: var(--space-6); }
+  .card__progress-text { margin: 0; font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-signal-700); }
+  .card__progress { height: 4px; border-radius: var(--radius-pill); background: var(--color-mist); overflow: hidden; }
+  .card__progress span { display: block; height: 100%; border-radius: inherit; background: var(--color-signal-500); transform-origin: left; transform: scaleX(var(--progress, 0)); transition: transform var(--duration-slow) var(--ease-out-expo); }
+  .card__reply, .card__data { margin: var(--space-3) 0 0; font-size: var(--text-xs); color: var(--color-text-muted); }
+
+  .step { margin: 0; padding: 0; border: 0; min-width: 0; }
+  .step + .step { margin-top: var(--space-8); }
+  :global([data-consult][data-state]) .step + .step { margin-top: 0; }
+  .step:not([hidden]) { animation: step-in var(--duration-slow) var(--ease-out-expo); }
+  @keyframes step-in { from { opacity: 0; transform: translateX(12px); } }
+  .step__legend { padding: 0; margin-bottom: var(--space-4); font-size: var(--text-2xl); font-weight: var(--font-weight-heading); letter-spacing: var(--tracking-heading); line-height: var(--leading-heading); color: var(--color-heading); }
+  .step__legend:focus { outline: none; }
+  .step__legend:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 4px; }
+  .step__help { margin: 0 0 var(--space-5); font-size: var(--text-sm); color: var(--color-text-muted); }
+  .step__other { margin-top: var(--space-3); }
+
+  .err-summary { margin: 0 0 var(--space-5); padding: var(--space-3) var(--space-4) var(--space-3) var(--space-7); border: 1px solid var(--color-error); border-radius: var(--radius-md); color: var(--color-error); font-size: var(--text-sm); }
+  .err-summary :global(a) { color: var(--color-error); }
+
+  .group { display: grid; gap: var(--space-5); margin-top: var(--space-4); padding: var(--space-5); border-radius: var(--radius-lg); background: var(--color-bg); border: 1px solid var(--color-border); }
+  .sub { margin: var(--space-5) 0 0; padding: 0; border: 0; min-width: 0; }
+  .group > .sub:first-child, .group > .row:first-child { margin-top: 0; }
+  .group .sub { margin-top: 0; }
+  .sub__legend { padding: 0; margin: 0 0 var(--space-3); font-size: var(--text-sm); font-weight: var(--font-weight-label); color: var(--color-heading); }
+  .sub .field__hint { margin: calc(-1 * var(--space-2)) 0 var(--space-3); }
+
+  .row { display: grid; gap: var(--space-4); }
+  .field { display: grid; gap: var(--space-2); margin-top: var(--space-4); }
+  .row .field, .group .field { margin-top: 0; }
+  .field label { font-size: var(--text-sm); font-weight: var(--font-weight-label); color: var(--color-heading); }
+  .field input, .field textarea, .field select {
+    width: 100%;
+    min-height: 3rem;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    font-size: max(16px, var(--text-base));
+    transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+  }
+  .field textarea { resize: vertical; min-height: 6rem; }
+  .field--narrow { max-width: 14rem; }
+  .field input:hover, .field textarea:hover, .field select:hover { border-color: var(--color-signal-400); }
+  .field input:focus-visible, .field textarea:focus-visible, .field select:focus-visible { outline: none; border-color: var(--color-signal-500); box-shadow: 0 0 0 3px var(--color-signal-100); }
+  .field__hint { margin: 0; font-size: var(--text-xs); color: var(--color-text-muted); }
+  .field__hint--right { text-align: right; font-variant-numeric: tabular-nums; }
+  .field__hint :global(.is-near) { color: var(--color-error); }
+
+  /* Invalid state (form.ts sets aria-invalid and appends the message to [data-field]). */
+  .card :global([aria-invalid="true"]:not([type="radio"]):not([type="checkbox"])) { border-color: var(--color-error) !important; }
+  .card :global([data-field] > p[id]:not(.field__hint)) {
+    display: flex;
+    gap: var(--space-2);
+    align-items: flex-start;
+    margin: var(--space-2) 0 0;
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    font-weight: var(--font-weight-label);
+    color: var(--color-error);
+  }
+  .card :global([data-field] > p[id]:not(.field__hint))::before {
+    content: "!";
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 1.1em;
+    height: 1.1em;
+    margin-top: 0.2em;
+    border-radius: 50%;
+    background: var(--color-error);
+    color: var(--color-on-accent);
+    font-size: 0.75em;
+    font-weight: var(--font-weight-heading);
+  }
+
+  .check { display: grid; grid-template-columns: auto 1fr; gap: var(--space-3); align-items: start; font-size: var(--text-sm); color: var(--color-text); cursor: pointer; }
+  .check input { width: 1.25rem; height: 1.25rem; margin: 0.1em 0 0; accent-color: var(--color-signal-600); }
+  .consents { display: grid; gap: var(--space-3); margin-top: var(--space-5); }
+
+  .step__nav { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-top: var(--space-6); }
+  .btn-next, .btn-back, .btn-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 3rem;
+    padding: var(--space-3) var(--space-6);
+    border-radius: var(--radius-pill);
+    font: inherit;
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-label);
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+  }
+  .btn-next { margin-left: auto; border: 1px solid var(--color-accent); background: var(--color-accent); color: var(--color-on-accent); box-shadow: var(--shadow-cta); }
+  .btn-next:hover { background: var(--color-accent-hover); }
+  .btn-submit { margin-left: auto; flex: 1 1 auto; border: 0; background: var(--color-book); color: var(--color-on-book); box-shadow: var(--shadow-book); font-size: var(--text-base); }
+  .btn-submit:hover { background: var(--color-book-hover); }
+  .btn-back { border: 1px solid var(--color-border-strong); background: transparent; color: var(--color-heading); }
+  .btn-back:hover { border-color: var(--color-heading); }
+  .btn-next:focus-visible, .btn-back:focus-visible, .btn-submit:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+  .btn-submit[disabled] { opacity: 0.8; cursor: progress; }
+  .spinner { display: none; width: 1em; height: 1em; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin 0.8s linear infinite; }
+  :global([data-consult][data-state="submitting"]) .spinner { display: inline-block; }
+  @media (prefers-reduced-motion: reduce) { :global([data-consult][data-state="submitting"]) .spinner { display: none; } }
+  @keyframes spin { to { transform: rotate(1turn); } }
+
+  .alert { margin-top: var(--space-6); padding: var(--space-4) var(--space-5); border: 1px solid var(--color-error); border-left-width: 4px; border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text); font-size: var(--text-sm); }
+  .alert p { margin: 0 0 var(--space-2); }
+  .alert__h { font-weight: var(--font-weight-heading); color: var(--color-error); }
+  .alert__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); margin-top: var(--space-3); }
+  .alert .btn-next { margin-left: 0; }
+
+  .success { display: grid; gap: var(--space-4); animation: step-in var(--duration-slow) var(--ease-out-expo); }
+  .success p { margin: 0; }
+  .success__h { margin: 0; font-size: var(--text-2xl); }
+  .success__h:focus { outline: none; }
+  .success__line { font-size: var(--text-lg); }
+  .success__demo { padding: var(--space-4); border-radius: var(--radius-md); background: var(--color-sunset-100); border: 1px dashed var(--color-sunset-700); font-size: var(--text-sm); }
+  .success__demo p + p { margin-top: var(--space-1); }
+  .success__recap { display: grid; gap: var(--space-2); margin: 0; padding: var(--space-4) 0; border-block: 1px solid var(--color-border); }
+  .success__recap div { display: grid; grid-template-columns: 7rem 1fr; gap: var(--space-3); }
+  .success__recap dt { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-signal-700); }
+  .success__recap dd { margin: 0; color: var(--color-heading); overflow-wrap: anywhere; }
+  .success__photo { font-weight: var(--font-weight-label); }
+  .success__next-h { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-muted); }
+  .success__next { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-1); font-size: var(--text-sm); }
+
+  @media (min-width: 640px) {
+    .card { padding: var(--space-7); }
+    .row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .row:has(.field--narrow) { grid-template-columns: 10rem minmax(0, 1fr); }
+  }
+  @media (min-width: 1024px) {
+    .consult__grid { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--space-8); }
+    .consult__intro { position: sticky; top: calc(var(--nav-height) + var(--space-6)); }
+  }
+</style>

@@ -1,0 +1,179 @@
+---
+/**
+ * Process (Iron Sound port): an ordered list. Desktop pins the section and scrolls the four
+ * steps horizontally (ADR §7: the one pin). Mobile and reduced motion: a vertical list with
+ * a signal rail. Mono numerals are decorative; <ol> carries the order.
+ * Followed by the multi-unit band (Iron Sound `trade`).
+ */
+import { anchors, processSteps, trade } from '../../data/content';
+import Button from '../ui/Button.astro';
+import SectionHead from '../ui/SectionHead.astro';
+---
+<section id={anchors.process} class="section process" aria-labelledby="process-heading" data-hscroll>
+  <div class="frame process__head">
+    <SectionHead display={processSteps.display} heading={processSteps.heading} id="process-heading">
+      <div class="process__ctas">
+        <Button cta={processSteps.primary} location="process" icon="arrow" />
+        <Button cta={processSteps.secondary} location="process" variant="text" />
+      </div>
+    </SectionHead>
+    <div class="process__progress" aria-hidden="true" data-hscroll-progress>
+      {processSteps.steps.map((s) => <span>{s.short}</span>)}
+    </div>
+  </div>
+
+  <div class="process__viewport">
+    <ol class="steps" role="list" data-hscroll-track data-reveal-stagger>
+      {processSteps.steps.map((s) => (
+        <li class="step" data-reveal>
+          <span class="step__n" aria-hidden="true">{String(s.n).padStart(2, '0')}</span>
+          <p class="eyebrow step__short">{s.short}</p>
+          <h3 class="step__h3">{s.heading}</h3>
+          <p class="step__body">{s.body}</p>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>
+
+<section id={anchors.trade} class="trade" aria-labelledby="trade-heading">
+  <div class="frame trade__inner">
+    <p class="eyebrow trade__aud">{trade.audience}</p>
+    <h2 id="trade-heading" class="display trade__h2" data-split>{trade.heading}</h2>
+    <p class="trade__body">{trade.body}</p>
+    <div class="trade__ctas">
+      <Button cta={trade.cta} location="trade" />
+      <Button cta={trade.secondary} location="trade" variant="text" />
+    </div>
+  </div>
+</section>
+
+<style>
+  .process { background: var(--color-bg); overflow: clip; }
+  .process__ctas { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4) var(--space-6); }
+  .process__progress { display: none; }
+
+  .steps {
+    display: grid;
+    gap: 0;
+    margin: 0 auto;
+    padding: 0 var(--space-gutter);
+    list-style: none;
+    max-width: calc(var(--container-max) + 2 * var(--space-gutter));
+  }
+  .step {
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: var(--space-2);
+    padding: var(--space-6) 0 var(--space-6) var(--space-7);
+    border-left: 2px solid var(--color-rule);
+  }
+  .step::before {
+    content: "";
+    position: absolute;
+    left: -6px;
+    top: var(--space-6);
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-pill);
+    background: var(--color-bay);
+    box-shadow: var(--shadow-signal-glow);
+  }
+  .step__n {
+    position: absolute;
+    left: var(--space-4);
+    top: calc(var(--space-6) + var(--space-5));
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    line-height: 1;
+    color: var(--color-signal-600);
+    font-variant-numeric: tabular-nums;
+  }
+  .step__short { margin: 0; }
+  .step__short::before { display: none; } /* the rail already carries the signal dot */
+  .step__h3 { margin: 0; font-size: var(--text-2xl); }
+  .step__body { margin: var(--space-2) 0 0; color: var(--color-text-muted); max-width: 46ch; }
+
+  @media (max-width: 767px) {
+    .steps { padding-left: calc(var(--space-gutter) + var(--space-2)); }
+    .step__n { display: none; }
+  }
+
+  @media (min-width: 1024px) {
+    .steps { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-5); }
+    .step { border-left: 0; border-top: 2px solid var(--color-rule); padding: var(--space-8) var(--space-5) 0 0; }
+    .step::before { left: 0; top: -6px; }
+    .step__n { position: static; font-size: var(--text-4xl); font-weight: var(--font-weight-body); letter-spacing: -0.04em; margin-bottom: var(--space-5); }
+  }
+
+  /* Pinned horizontal mode (motion.ts adds .is-pinned on desktop with motion allowed). */
+  .process:global(.is-pinned) {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100svh;
+    padding-block: calc(var(--nav-height) + var(--space-6)) var(--space-7);
+  }
+  .process:global(.is-pinned) :global(.shead) { margin-bottom: var(--space-6); }
+  .process:global(.is-pinned) .process__progress {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    position: relative;
+    padding-top: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+  .process:global(.is-pinned) .process__progress::before,
+  .process:global(.is-pinned) .process__progress::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 2px;
+    width: 100%;
+    background: var(--color-border);
+  }
+  .process:global(.is-pinned) .process__progress::after {
+    background: var(--color-signal-500);
+    transform-origin: left;
+    transform: scaleX(var(--p, 0));
+  }
+  .process:global(.is-pinned) .process__viewport { margin-top: var(--space-7); }
+  .process:global(.is-pinned) .steps {
+    display: flex;
+    gap: var(--space-6);
+    width: max-content;
+    max-width: none;
+    padding-inline: max(var(--space-gutter), calc((100vw - var(--container-max)) / 2));
+  }
+  .process:global(.is-pinned) .step {
+    width: min(34rem, 42vw);
+    min-height: 24rem;
+    padding: var(--space-7);
+    border: 1px solid var(--color-border);
+    border-top: 3px solid var(--color-bay);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-md);
+  }
+  .process:global(.is-pinned) .step::before { display: none; }
+  .process:global(.is-pinned) .step__n { position: static; font-size: var(--text-4xl); margin-bottom: var(--space-6); }
+
+  .trade { padding-block: var(--space-9); background: var(--color-signal-50); border-block: 1px solid var(--color-signal-100); }
+  .trade__inner { display: grid; gap: var(--space-4); }
+  .trade__aud { margin: 0; }
+  .trade__h2 { margin: 0; font-size: var(--text-3xl); max-width: 20ch; }
+  .trade__body { margin: 0; max-width: var(--measure); color: var(--color-text); }
+  .trade__ctas { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4) var(--space-6); margin-top: var(--space-3); }
+  @media (min-width: 1024px) {
+    .trade__inner { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: var(--space-8); align-items: end; }
+    .trade__aud, .trade__h2 { grid-column: 1; }
+    .trade__body, .trade__ctas { grid-column: 2; }
+    .trade__body { grid-row: 2; }
+    .trade__ctas { grid-row: 3; }
+  }
+</style>

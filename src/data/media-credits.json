@@ -18,13 +18,13 @@
     "file": "src/assets/media/signature-tv-wall-after.jpg"
   },
   {
-    "slot": "svc-tv-mounting",
+    "slot": "svc-tv",
     "type": "photo",
     "pexelsId": 37748259,
     "pageUrl": "https://www.pexels.com/photo/modern-minimalist-living-room-with-tv-setup-37748259/",
     "author": "Misbaa eri",
     "authorUrl": "https://www.pexels.com/@misbaa-eri-426041722",
-    "file": "src/assets/media/svc-tv-mounting.jpg"
+    "file": "src/assets/media/svc-tv.jpg"
   },
   {
     "slot": "svc-wifi",
@@ -45,31 +45,13 @@
     "file": "src/assets/media/svc-cameras.jpg"
   },
   {
-    "slot": "svc-smart-home",
+    "slot": "svc-smart",
     "type": "photo",
     "pexelsId": 20901468,
     "pageUrl": "https://www.pexels.com/photo/close-up-of-a-door-knob-20901468/",
     "author": "Sucipta Mahendra",
     "authorUrl": "https://www.pexels.com/@sucipta-mahendra-807856837",
-    "file": "src/assets/media/svc-smart-home.jpg"
-  },
-  {
-    "slot": "band-bay",
-    "type": "video",
-    "pexelsId": 11610250,
-    "pageUrl": "https://www.pexels.com/video/motorboat-and-city-11610250/",
-    "author": "Doug G. Innocent",
-    "authorUrl": "https://www.pexels.com/@doug-g-innocent-202981292",
-    "file": "public/media/band-bay.mp4"
-  },
-  {
-    "slot": "band-miami",
-    "type": "video",
-    "pexelsId": 18293620,
-    "pageUrl": "https://www.pexels.com/video/drone-en-miami-18293620/",
-    "author": "Foster",
-    "authorUrl": "https://www.pexels.com/@foster-326725638",
-    "file": "public/media/band-miami.mp4"
+    "file": "src/assets/media/svc-smart.jpg"
   },
   {
     "slot": "tv-mounted-hidden-cables",
@@ -124,5 +106,95 @@
     "author": "Joaquin Carfagna",
     "authorUrl": "https://www.pexels.com/@joaquin-carfagna-3131171",
     "file": "src/assets/media/smart-lock-door.jpg"
+  },
+  {
+    "slot": "env-condo",
+    "type": "photo",
+    "pexelsId": 6588579,
+    "pageUrl": "https://www.pexels.com/photo/living-room-with-couch-in-front-of-table-with-chair-6588579/",
+    "author": "Max Vakhtbovych",
+    "authorUrl": "https://www.pexels.com/@artbovich",
+    "file": "src/assets/media/env-condo.jpg"
+  },
+  {
+    "slot": "env-house",
+    "type": "photo",
+    "pexelsId": 36777863,
+    "pageUrl": "https://www.pexels.com/photo/modern-living-room-with-stylish-furniture-and-art-36777863/",
+    "author": "Curtis Adams",
+    "authorUrl": "https://www.pexels.com/@curtis-adams-1694007",
+    "file": "src/assets/media/env-house.jpg"
+  },
+  {
+    "slot": "env-office",
+    "type": "photo",
+    "pexelsId": 5444195,
+    "pageUrl": "https://www.pexels.com/photo/brown-wooden-table-with-chairs-5444195/",
+    "author": "myHQ-Workspaces",
+    "authorUrl": "https://www.pexels.com/@myhq-workspaces-3638298",
+    "file": "src/assets/media/env-office.jpg"
+  },
+  {
+    "slot": "svc-theater",
+    "type": "photo",
+    "pexelsId": 6487954,
+    "pageUrl": "https://www.pexels.com/photo/living-room-interior-with-sofa-near-tv-and-table-6487954/",
+    "author": "Max Vakhtbovych",
+    "authorUrl": "https://www.pexels.com/@artbovich",
+    "file": "src/assets/media/svc-theater.jpg"
+  },
+  {
+    "slot": "band-skyline",
+    "type": "photo",
+    "pexelsId": 4118101,
+    "pageUrl": "https://www.pexels.com/photo/tall-buildings-in-the-city-4118101/",
+    "author": "Tory Brown",
+    "authorUrl": "https://www.pexels.com/@tory-brown-2508841",
+    "file": "src/assets/media/band-skyline.jpg"
+  },
+  {
+    "slot": "band-biscayne",
+    "type": "photo",
+    "pexelsId": 34650327,
+    "pageUrl": "https://www.pexels.com/photo/scenic-miami-skyline-with-ocean-view-34650327/",
+    "author": "Arian Fernandez",
+    "authorUrl": "https://www.pexels.com/@troopper84",
+    "file": "src/assets/media/band-biscayne.jpg"
+  },
+  {
+    "slot": "band-detail-mount",
+    "type": "photo",
+    "pexelsId": 6636297,
+    "pageUrl": "https://www.pexels.com/photo/interior-of-modern-living-room-with-tv-on-wall-6636297/",
+    "author": "Max Vakhtbovych",
+    "authorUrl": "https://www.pexels.com/@artbovich",
+    "file": "src/assets/media/band-detail-mount.jpg"
+  },
+  {
+    "slot": "band-detail-doorbell",
+    "type": "photo",
+    "pexelsId": 9461215,
+    "pageUrl": "https://www.pexels.com/photo/a-person-pressing-a-doorbell-9461215/",
+    "author": "Mike Jones",
+    "authorUrl": "https://www.pexels.com/@mike-jones",
+    "file": "src/assets/media/band-detail-doorbell.jpg"
+  },
+  {
+    "slot": "env-townhouse",
+    "type": "photo",
+    "pexelsId": 7546717,
+    "pageUrl": "https://www.pexels.com/photo/retro-style-living-room-with-patterned-curtains-and-large-tv-screen-7546717/",
+    "author": "Max Vakhtbovych",
+    "authorUrl": "https://www.pexels.com/@artbovich",
+    "file": "src/assets/media/env-townhouse.jpg"
+  },
+  {
+    "slot": "svc-office",
+    "type": "photo",
+    "pexelsId": 6794968,
+    "pageUrl": "https://www.pexels.com/photo/chairs-and-table-in-stylish-office-6794968/",
+    "author": "Max Vakhtbovych",
+    "authorUrl": "https://www.pexels.com/@artbovich",
+    "file": "src/assets/media/svc-office.jpg"
   }
 ]

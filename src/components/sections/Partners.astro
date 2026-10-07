@@ -1,0 +1,41 @@
+---
+/** "Gear we install and set up" strip (Iron Sound Partners). Plain text, no logos; a sample list. */
+import { anchors, partners } from '../../data/content';
+import { uiLabels } from '../../data/ui-labels';
+---
+<section id={anchors.brands} class="partners" aria-labelledby="gear-heading">
+  <div class="frame partners__inner">
+    <div class="partners__head">
+      <h2 id="gear-heading" class="eyebrow partners__h2">{partners.heading}</h2>
+      <span class="sample-tag">{uiLabels.sample}</span>
+    </div>
+    <ul class="partners__list" role="list" data-reveal-stagger>
+      {partners.brands.map((b) => (
+        <li class="partners__item" data-reveal>
+          <span class="partners__name">{b.name}</span>
+          <span class="partners__system">{b.system}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .partners { padding-block: var(--space-7); border-bottom: 1px solid var(--color-border); background: var(--color-surface); }
+  .partners__inner { display: grid; gap: var(--space-5); }
+  .partners__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+  .partners__h2 { margin: 0; }
+  .partners__list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5) var(--space-4); margin: 0; padding: 0; list-style: none; }
+  .partners__item { display: grid; gap: var(--space-1); align-content: start; }
+  .partners__name { font-size: var(--text-lg); font-weight: var(--font-weight-heading); letter-spacing: var(--tracking-heading); line-height: 1.15; color: var(--color-slate); }
+  .partners__system { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-text-muted); line-height: 1.4; }
+  @media (min-width: 768px) {
+    .partners__list { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; }
+    .partners__item { padding-inline: var(--space-5); border-left: 1px solid var(--color-rule); }
+    .partners__item:first-child { padding-left: 0; border-left: 0; }
+  }
+  @media (min-width: 1024px) {
+    .partners__inner { grid-template-columns: 14rem minmax(0, 1fr); align-items: center; gap: var(--space-7); }
+    .partners__head { flex-direction: column; align-items: flex-start; }
+  }
+</style>

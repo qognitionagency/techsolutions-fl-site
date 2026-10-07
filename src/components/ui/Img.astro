@@ -1,31 +1,47 @@
 ---
-/** Wraps astro:assets <Picture> (ADR §3): AVIF/WebP, srcset, width/height always set. */
+/**
+ * The one image primitive (ADR §3): <Picture> with AVIF/WebP, explicit width/height
+ * (CLS), lazy unless `priority`. `ratio` + `position` crop through astro:assets so the
+ * delivered pixels match the frame instead of shipping pixels object-fit throws away.
+ */
 import { Picture } from 'astro:assets';
-import { getImage } from '../../lib/media';
+import { getMedia } from '../../lib/media';
 
 interface Props {
   slot: string;
   alt: string;
   sizes: string;
   widths?: number[];
-  eager?: boolean;
-  class?: string;
-  /** object-position for cover crops */
+  /** width / height of the delivered crop, e.g. 4/3. Omit to keep the source ratio. */
+  ratio?: number;
+  /** sharp gravity keyword: 'center', 'top', 'right', 'left top', 'attention'. */
   position?: string;
+  priority?: boolean;
+  class?: string;
+  pictureClass?: string;
+  quality?: number;
 }
-const { slot, alt, sizes, widths = [480, 768, 1080, 1440, 1920], eager = false, class: cls, position } = Astro.props;
-const src = getImage(slot);
+const { slot, alt, sizes, widths = [480, 768, 1080, 1440, 1920], ratio, position = 'center', priority = false, class: cls, pictureClass, quality = 70 } = Astro.props;
+const src = getMedia(slot);
 const usable = widths.filter((w) => w <= src.width);
+const ws = usable.length ? usable : [src.width];
+const maxW = Math.max(...ws);
+const height = ratio ? Math.round(maxW / ratio) : Math.round((maxW * src.height) / src.width);
 ---
 <Picture
   src={src}
   alt={alt}
   formats={['avif', 'webp']}
-  widths={usable}
+  widths={ws}
   sizes={sizes}
-  loading={eager ? 'eager' : 'lazy'}
-  fetchpriority={eager ? 'high' : undefined}
-  decoding={eager ? 'sync' : 'async'}
+  width={maxW}
+  height={height}
+  fit={ratio ? 'cover' : undefined}
+  position={ratio ? position : undefined}
+  quality={quality}
+  loading={priority ? 'eager' : 'lazy'}
+  decoding={priority ? 'sync' : 'async'}
+  fetchpriority={priority ? 'high' : undefined}
   class={cls}
-  style={position ? `object-position:${position}` : undefined}
+  pictureAttributes={{ class: pictureClass }}
 />

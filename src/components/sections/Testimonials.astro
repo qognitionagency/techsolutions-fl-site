@@ -1,0 +1,62 @@
+---
+/**
+ * The one deep band (Iron Sound harbor band → slate; never black). Sample quotes, each with
+ * its visible "Sample review" label. No photos, no stars, no Review schema.
+ */
+import { anchors, testimonials } from '../../data/content';
+import Button from '../ui/Button.astro';
+import SectionHead from '../ui/SectionHead.astro';
+---
+<section id={anchors.reviews} class="section reviews on-deep" aria-labelledby="reviews-heading">
+  <div class="frame">
+    <SectionHead display={testimonials.display} heading={testimonials.heading} id="reviews-heading" tone="deep">
+      <Button cta={testimonials.cta} location="testimonials" variant="inverse" magnetic icon="arrow" />
+    </SectionHead>
+    <ul class="quotes" role="list" data-reveal-stagger>
+      {testimonials.items.map((t) => (
+        <li class="quote" data-reveal>
+          <p class="eyebrow quote__service">{t.service}</p>
+          <blockquote class="quote__block">
+            <p class="quote__text">“{t.quote}”</p>
+            <footer class="quote__author">{t.author}</footer>
+          </blockquote>
+          <span class="quote__label">{t.label}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .reviews { position: relative; isolation: isolate; background: var(--color-surface-deep); color: var(--color-text-on-deep); overflow: hidden; }
+  /* Biscayne-cyan light under the band: the one place the signal glows on slate. */
+  .reviews::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: 50%;
+    bottom: -40%;
+    width: 120%;
+    aspect-ratio: 3 / 1;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, color-mix(in srgb, var(--color-bay) 22%, transparent), transparent 60%);
+  }
+  .quotes { display: grid; gap: var(--space-5); margin: 0; padding: 0; list-style: none; }
+  .quote {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: var(--space-4);
+    padding: var(--space-6);
+    border: 1px solid color-mix(in srgb, var(--color-cloud) 14%, transparent);
+    border-top: 3px solid var(--color-bay);
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--color-cloud) 5%, transparent);
+  }
+  .quote__service { margin: 0; }
+  .quote__block { margin: 0; }
+  .quote__text { margin: 0; font-size: var(--text-lg); line-height: 1.55; color: var(--color-text-on-deep); }
+  .quote__author { margin-top: var(--space-5); font-size: var(--text-sm); font-weight: var(--font-weight-label); color: var(--color-text-on-deep-muted); }
+  .quote__label { justify-self: start; padding: 2px var(--space-2); border: 1px dashed color-mix(in srgb, var(--color-cloud) 45%, transparent); border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-text-on-deep-muted); }
+  @media (min-width: 1024px) { .quotes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+</style>

@@ -1,89 +1,86 @@
 /**
- * Lazy background video (ADR §7).
- * - Hero: src assigned after `load` + idle, fades in over the poster (poster stays the LCP).
- * - Bands: src assigned when within 200px of the viewport; paused when off screen.
- * - Reduced motion or Save-Data: poster only; the toggle offers Play.
- * - A user's Pause sticks: scrolling back never restarts that video.
+ * Lazy video (ADR §7), ported from the Iron Sound build.
+ * - Hero: src assigned after `load` + idle + a settle delay; fades in over the poster
+ *   (the LCP). Paused while off-screen. A pause/play control satisfies WCAG 2.2.2.
+ * - Reduced motion or Save-Data: poster only; the control offers Play.
+ * - [data-lazy-video]: src set 200px before the viewport, paused off-screen.
  */
-type Conn = { saveData?: boolean };
-const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const saveData = Boolean((navigator as Navigator & { connection?: Conn }).connection?.saveData);
-const autoplay = !reduce && !saveData;
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+const saveData = Boolean((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData);
 
-const userPaused = new WeakSet<HTMLVideoElement>();
-const visible = new WeakSet<HTMLVideoElement>();
-
-function load(v: HTMLVideoElement): void {
-  if (v.src || !v.dataset.src) return;
-  v.src = v.dataset.src;
-  v.addEventListener('playing', () => v.classList.add('is-playing'), { once: true });
-}
-
-function play(v: HTMLVideoElement): void {
-  load(v);
-  v.play().catch(() => setToggle(v, 'paused'));
-}
-
-function toggleFor(v: HTMLVideoElement): HTMLButtonElement | null {
-  return v.closest('[data-video-band]')?.querySelector<HTMLButtonElement>('[data-video-toggle]') ?? null;
-}
-
-function setToggle(v: HTMLVideoElement, state: 'playing' | 'paused'): void {
-  const b = toggleFor(v);
-  if (!b) return;
-  b.dataset.state = state;
-  b.setAttribute('aria-label', (state === 'playing' ? b.dataset.labelPause : b.dataset.labelPlay) ?? '');
-}
-
-function init(): void {
-  const videos = Array.from(document.querySelectorAll<HTMLVideoElement>('video[data-video]'));
-  if (!videos.length) return;
-
-  for (const v of videos) {
-    const b = toggleFor(v);
-    if (!b) continue;
-    b.hidden = false;
-    setToggle(v, autoplay ? 'playing' : 'paused');
-    b.addEventListener('click', () => {
-      if (v.paused) {
-        userPaused.delete(v);
-        play(v);
-        setToggle(v, 'playing');
-      } else {
-        userPaused.add(v);
-        v.pause();
-        setToggle(v, 'paused');
-      }
-    });
+function attach(video: HTMLVideoElement) {
+  if (!video.src && video.dataset.src) {
+    video.src = video.dataset.src;
+    video.load();
   }
+}
 
-  if (!autoplay) return;
+function play(video: HTMLVideoElement) {
+  attach(video);
+  video.play().catch(() => {
+    /* Autoplay refused (power saving, policy): the poster stays, which is the designed fallback. */
+  });
+}
 
-  const hero = videos.filter((v) => v.dataset.video === 'hero');
-  const lazy = videos.filter((v) => v.dataset.video !== 'hero');
+function initHero() {
+  const video = document.querySelector<HTMLVideoElement>('[data-hero-video]');
+  const toggle = document.querySelector<HTMLButtonElement>('[data-video-toggle]');
+  if (!video || !toggle) return;
+  const label = toggle.querySelector<HTMLElement>('[data-video-toggle-label]');
+  let userPaused = reduce.matches || saveData;
+  let inView = true;
 
-  const startHero = () => hero.forEach((v) => !userPaused.has(v) && play(v));
-  const idle = (fn: () => void) => ('requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: 2000 }) : setTimeout(fn, 200));
-  if (document.readyState === 'complete') idle(startHero);
-  else addEventListener('load', () => idle(startHero), { once: true });
+  video.addEventListener('playing', () => video.classList.add('is-playing'), { once: true });
+  const sync = () => {
+    toggle.setAttribute('aria-pressed', String(userPaused));
+    if (label) label.textContent = (userPaused ? toggle.dataset.labelPlay : toggle.dataset.labelPause) ?? '';
+  };
+  toggle.hidden = false;
+  sync();
 
+  toggle.addEventListener('click', () => {
+    userPaused = !userPaused;
+    sync();
+    if (userPaused) video.pause();
+    else play(video);
+  });
+
+  new IntersectionObserver(([e]) => {
+    inView = e!.isIntersecting;
+    if (!inView) video.pause();
+    else if (!userPaused && video.src) play(video);
+  }).observe(video);
+
+  const start = () => {
+    if (!userPaused && inView) play(video);
+  };
+  // Load, then idle, then a settle delay: the poster owns the first seconds so the clip
+  // never competes with the LCP image or the font on a slow connection.
+  const SETTLE_MS = 1800;
+  const idle = () => {
+    const later = () => setTimeout(start, SETTLE_MS);
+    if ('requestIdleCallback' in window) window.requestIdleCallback(later, { timeout: 2500 });
+    else later();
+  };
+  if (document.readyState === 'complete') idle();
+  else window.addEventListener('load', idle, { once: true });
+}
+
+function initLazy() {
+  const vids = document.querySelectorAll<HTMLVideoElement>('[data-lazy-video]');
+  if (!vids.length || reduce.matches || saveData) return;
   const io = new IntersectionObserver(
     (entries) => {
       for (const e of entries) {
         const v = e.target as HTMLVideoElement;
-        if (e.isIntersecting) {
-          visible.add(v);
-          if (!userPaused.has(v) && (v.dataset.video !== 'hero' || v.src)) play(v);
-        } else {
-          visible.delete(v);
-          if (v.src) v.pause();
-        }
+        if (e.isIntersecting) play(v);
+        else v.pause();
       }
     },
     { rootMargin: '200px' },
   );
-  lazy.forEach((v) => io.observe(v));
-  hero.forEach((v) => io.observe(v));
+  vids.forEach((v) => io.observe(v));
 }
 
-init();
+initHero();
+initLazy();

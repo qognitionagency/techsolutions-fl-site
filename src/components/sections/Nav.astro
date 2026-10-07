@@ -1,172 +1,259 @@
 ---
-/**
- * Sticky nav (cro-spec §2). Desktop: logo, anchors, phone, Book (sunset).
- * Mobile: logo + small Book + a disclosure menu for anchors. No Text in the
- * mobile nav; the sticky bar handles it.
- */
-import Button from '../ui/Button.astro';
-import { nav } from '../../data/content';
+/** Fixed glass header (Iron Sound port): concept ribbon + nav bar + mobile sheet. */
+import { nav, ribbon } from '../../data/content';
 import { uiLabels } from '../../data/ui-labels';
 import { withBase } from '../../lib/url';
+import Button from '../ui/Button.astro';
 ---
-<a class="skip-link" href="#main">{uiLabels.skipToContent}</a>
-<header class="nav" data-nav>
-  <div class="nav-inner container-x">
-    <a class="nav-logo" href={withBase('/')} aria-label={nav.homeLabel}>
-      <img src={withBase('brand/logo-horizontal.svg')} alt={nav.logoAlt} width="438" height="58" />
-    </a>
-
-    <nav class="nav-links">
-      <ul>
-        {nav.links.map((l) => <li><a href={withBase(l.href)}>{l.label}</a></li>)}
-      </ul>
-    </nav>
-
-    <div class="nav-actions">
-      <a class="nav-phone" href={nav.phone.href} data-track={nav.phone.track} data-track-id={nav.phone.trackId} aria-label={nav.phone.ariaLabel}>
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.6 1.8 5.7 1.4l1.2 3-1.5 1A8 8 0 0 0 10.6 10.6l1-1.5 3 1.2-.4 2.1a1.6 1.6 0 0 1-1.7 1.3C6.9 13.3 2.7 9.1 2.3 3.5a1.6 1.6 0 0 1 1.3-1.7Z" /></svg>
-        {nav.phone.label}
+<header class="site-header" data-header>
+  <p class="ribbon" title={ribbon.disclosure}>
+    <span class="ribbon__mark" aria-hidden="true"></span>
+    <span>{ribbon.text}</span>
+  </p>
+  <nav class="bar" aria-label={uiLabels.mainNav}>
+    <div class="bar__inner frame">
+      <a href="#top" class="bar__logo" aria-label={nav.logoLabel}>
+        <img src={withBase('brand/logo-horizontal.svg')} alt="" width="438" height="58" />
       </a>
-      <!-- NEEDS DATA: Jay's real phone -->
-      <Button link={nav.book} variant="book" size="sm" magnetic data-entry="nav" />
-      <button
-        type="button"
-        class="nav-menu-btn"
-        aria-expanded="false"
-        aria-controls="nav-menu"
-        data-menu-btn
-        data-label-open={nav.menuOpen}
-        data-label-close={nav.menuClose}
-        hidden
-      >
-        <span class="sr-only" data-menu-label>{nav.menuOpen}</span>
-        <span class="burger" aria-hidden="true"><span></span><span></span></span>
-      </button>
+
+      <ul class="bar__links" role="list">
+        {nav.links.map((l) => (
+          <li><a href={l.href} class="bar__link" data-nav-link>{l.label}</a></li>
+        ))}
+      </ul>
+
+      <div class="bar__actions">
+        <a
+          href={nav.phone.href}
+          class="bar__phone"
+          data-track={nav.phone.track}
+          data-track-id={nav.phone.trackId}
+          data-track-type={nav.phone.kind}
+          data-track-location="nav"
+          aria-label={nav.phone.ariaLabel}
+        >{nav.phone.label}</a>
+        <Button cta={nav.primary} location="nav" size="sm" icon="none" class="bar__book" magnetic />
+        <button
+          type="button"
+          class="bar__menu"
+          aria-expanded="false"
+          aria-controls="nav-sheet"
+          data-menu-toggle
+          data-label-open={nav.menuOpen}
+          data-label-close={nav.menuClose}
+        >
+          <span class="bar__menu-lines" aria-hidden="true"><span></span><span></span></span>
+          <span class="bar__menu-label" data-menu-label>{nav.menuOpen}</span>
+        </button>
+      </div>
     </div>
-  </div>
-  <div class="nav-menu" id="nav-menu" data-menu hidden>
-    <ul class="container-x">
-      {nav.links.map((l) => <li><a href={withBase(l.href)} data-menu-link>{l.label}</a></li>)}
-      <li><a href={nav.phone.href} data-track={nav.phone.track} data-track-id={nav.phone.trackId} aria-label={nav.phone.ariaLabel}>{nav.phone.label}</a></li>
-    </ul>
-  </div>
+
+    <div id="nav-sheet" class="sheet" data-menu-sheet hidden>
+      <ul class="sheet__links frame" role="list">
+        {nav.links.map((l, i) => (
+          <li style={`--i:${i}`}><a href={l.href} class="sheet__link">{l.label}</a></li>
+        ))}
+        <li style={`--i:${nav.links.length}`} class="sheet__cta">
+          <Button cta={nav.phone} location="nav" variant="secondary" />
+        </li>
+      </ul>
+    </div>
+  </nav>
 </header>
 
 <script>
-  const header = document.querySelector<HTMLElement>('[data-nav]');
-  const btn = header?.querySelector<HTMLButtonElement>('[data-menu-btn]');
-  const menu = header?.querySelector<HTMLElement>('[data-menu]');
-  const label = btn?.querySelector<HTMLElement>('[data-menu-label]');
+  const header = document.querySelector<HTMLElement>('[data-header]')!;
+  const toggle = header.querySelector<HTMLButtonElement>('[data-menu-toggle]')!;
+  const sheet = header.querySelector<HTMLElement>('[data-menu-sheet]')!;
+  const label = header.querySelector<HTMLElement>('[data-menu-label]')!;
 
-  if (header && btn && menu && label) {
-    btn.hidden = false;
-    const set = (open: boolean) => {
-      btn.setAttribute('aria-expanded', String(open));
-      label.textContent = (open ? btn.dataset.labelClose : btn.dataset.labelOpen) ?? '';
-      menu.hidden = !open;
-      header.toggleAttribute('data-open', open);
-    };
-    btn.addEventListener('click', () => set(btn.getAttribute('aria-expanded') !== 'true'));
-    menu.addEventListener('click', (e) => (e.target as Element).closest('a') && set(false));
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && btn.getAttribute('aria-expanded') === 'true') {
-        set(false);
-        btn.focus();
+  // Collapse the ribbon and firm up the bar once the page moves (transform only: no CLS).
+  let scrolled = false;
+  const onScroll = () => {
+    const s = window.scrollY > 24;
+    if (s !== scrolled) header.classList.toggle('is-scrolled', (scrolled = s));
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // Mobile menu: disclosure pattern. Esc closes, focus returns to the toggle.
+  const setOpen = (open: boolean, restoreFocus = false) => {
+    toggle.setAttribute('aria-expanded', String(open));
+    label.textContent = (open ? toggle.dataset.labelClose : toggle.dataset.labelOpen) ?? '';
+    header.classList.toggle('is-open', open);
+    if (open) {
+      sheet.hidden = false;
+      requestAnimationFrame(() => sheet.classList.add('is-open'));
+      sheet.querySelector<HTMLAnchorElement>('a')?.focus();
+    } else {
+      sheet.classList.remove('is-open');
+      sheet.hidden = true;
+      if (restoreFocus) toggle.focus();
+    }
+  };
+  toggle.addEventListener('click', () => setOpen(toggle.getAttribute('aria-expanded') !== 'true'));
+  sheet.addEventListener('click', (e) => {
+    if ((e.target as Element).closest('a')) setOpen(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') setOpen(false, true);
+  });
+  window.matchMedia('(min-width: 1024px)').addEventListener('change', (e) => e.matches && setOpen(false));
+
+  // Where am I: mark the nav link for the section in view (aria-current="location").
+  const links = [...header.querySelectorAll<HTMLAnchorElement>('[data-nav-link]')];
+  const targets = links.map((a) => document.querySelector<HTMLElement>(a.hash)).filter((el): el is HTMLElement => !!el);
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const en of entries) {
+        if (!en.isIntersecting) continue;
+        links.forEach((a) => (a.hash === `#${en.target.id}` ? a.setAttribute('aria-current', 'location') : a.removeAttribute('aria-current')));
       }
-    });
-    matchMedia('(min-width: 1024px)').addEventListener('change', (m) => m.matches && set(false));
-
-    // Hairline + elevation once the page has scrolled (state: "content is behind the bar").
-    const sentinel = document.createElement('div');
-    sentinel.style.cssText = 'position:absolute;top:0;height:1px;width:1px;';
-    document.body.prepend(sentinel);
-    new IntersectionObserver(([e]) => header.toggleAttribute('data-scrolled', !e!.isIntersecting)).observe(sentinel);
-  }
+    },
+    { rootMargin: '-45% 0px -50% 0px' },
+  );
+  targets.forEach((t) => io.observe(t));
 </script>
 
 <style>
-  .nav {
-    position: sticky;
-    top: 0;
+  .site-header {
+    --ribbon-h: 2rem;
+    position: fixed;
+    inset: 0 0 auto 0;
     z-index: var(--z-nav);
-    /* Near-opaque cloud with a blur so text stays legible over imagery as it scrolls under.
-       Functional translucency, not decoration (no-slop: glassmorphism-as-decoration). */
-    background: color-mix(in srgb, var(--color-cloud) 86%, transparent);
-    backdrop-filter: saturate(1.4) blur(14px);
-    -webkit-backdrop-filter: saturate(1.4) blur(14px);
+    transition: transform var(--duration-slow) var(--ease-out-expo);
+  }
+  .site-header.is-scrolled:not(.is-open) { transform: translateY(calc(-1 * var(--ribbon-h))); }
+
+  /* Concept disclosure: signal-700 with white text (>7:1). Brand blue, never black. */
+  .ribbon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    height: var(--ribbon-h);
+    margin: 0;
+    padding-inline: var(--space-gutter);
+    background: var(--color-signal-700);
+    color: var(--color-on-accent);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ribbon__mark { flex: none; width: var(--space-2); height: var(--space-2); border-radius: var(--radius-pill); background: var(--color-bay); }
+
+  .bar {
+    position: relative;
+    background: var(--color-surface-glass-strong);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    backdrop-filter: blur(18px) saturate(1.4);
     border-bottom: 1px solid transparent;
     transition: border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
   }
-  .nav[data-scrolled] { border-bottom-color: var(--color-border); box-shadow: var(--shadow-xs); }
-  .nav-inner {
-    display: flex;
-    align-items: center;
-    gap: var(--space-5);
-    min-height: calc(var(--spacing) * 16);
-  }
-  .nav-logo { flex: none; display: block; border-radius: var(--radius-sm); }
-  .nav-logo img { width: calc(var(--spacing) * 40); height: auto; }
+  .is-scrolled .bar { border-bottom-color: var(--color-border); box-shadow: var(--shadow-sm); }
+  .bar__inner { display: flex; align-items: center; gap: var(--space-6); height: var(--nav-height); }
+  .bar__logo { display: block; flex: none; padding-block: var(--space-2); border-radius: var(--radius-sm); }
+  .bar__logo img { width: 9.5rem; height: auto; }
+  @media (min-width: 768px) { .bar__logo img { width: 11rem; } }
 
-  .nav-links { display: none; margin-inline: auto; }
-  .nav-links ul { display: flex; gap: var(--space-1); list-style: none; margin: 0; padding: 0; }
-  .nav-links a {
-    display: block;
-    padding: var(--space-2) var(--space-3);
-    border-radius: var(--radius-pill);
-    color: var(--color-slate);
+  .bar__links { display: none; gap: var(--space-5); margin: 0 auto; padding: 0; list-style: none; }
+  .bar__link {
+    position: relative;
+    display: inline-block;
+    padding-block: var(--space-2);
+    color: var(--color-heading);
     font-size: var(--text-sm);
     font-weight: var(--font-weight-label);
     text-decoration: none;
-    transition: background-color var(--duration-fast) var(--ease-standard);
+    white-space: nowrap;
   }
-  .nav-links a:hover { background: var(--color-mist); color: var(--color-slate); }
+  .bar__link::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 2px;
+    height: 2px;
+    border-radius: var(--radius-pill);
+    background: var(--color-bay);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--duration-base) var(--ease-out-quart);
+  }
+  .bar__link:hover { color: var(--color-signal-700); }
+  .bar__link:hover::after, .bar__link[aria-current]::after { transform: scaleX(1); }
+  .bar__link[aria-current] { color: var(--color-signal-700); }
 
-  .nav-actions { display: flex; align-items: center; gap: var(--space-3); margin-left: auto; }
-  .nav-phone {
+  .bar__actions { display: flex; align-items: center; gap: var(--space-3); margin-left: auto; }
+  .bar__phone {
     display: none;
-    align-items: center;
-    gap: var(--space-2);
+    color: var(--color-heading);
     font-family: var(--font-mono);
     font-size: var(--text-sm);
-    color: var(--color-slate);
-    text-decoration: none;
     font-variant-numeric: tabular-nums;
+    text-decoration: none;
+    white-space: nowrap;
   }
-  .nav-phone svg { width: var(--space-4); height: var(--space-4); fill: none; stroke: var(--color-signal-500); stroke-width: 1.4; }
-  .nav-phone:hover { color: var(--color-link); }
+  .bar__phone:hover { color: var(--color-signal-700); }
 
-  .nav-menu-btn {
-    display: grid;
-    place-items: center;
-    width: var(--space-7);
-    height: var(--space-7);
+  .bar__menu {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 2.75rem;
+    padding: 0 var(--space-4);
+    border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-pill);
-    border: 1px solid var(--color-border);
     background: var(--color-surface);
+    color: var(--color-heading);
+    font: inherit;
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-label);
     cursor: pointer;
   }
-  .burger { display: grid; gap: var(--space-1); width: var(--space-4); }
-  .burger span { display: block; height: 1.5px; background: var(--color-slate); border-radius: 1px; transition: transform var(--duration-base) var(--ease-out-quart); }
-  .nav[data-open] .burger span:first-child { transform: translateY(3px) rotate(45deg); }
-  .nav[data-open] .burger span:last-child { transform: translateY(-3px) rotate(-45deg); }
+  .bar__menu:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+  .bar__menu-lines { display: grid; gap: 5px; width: 18px; }
+  .bar__menu-lines span { display: block; height: 1.5px; background: currentColor; transition: transform var(--duration-base) var(--ease-out-quart); }
+  .is-open .bar__menu-lines span:first-child { transform: translateY(3.25px) rotate(45deg); }
+  .is-open .bar__menu-lines span:last-child { transform: translateY(-3.25px) rotate(-45deg); }
 
-  .nav-menu { border-top: 1px solid var(--color-border); background: var(--color-cloud); }
-  .nav-menu ul { list-style: none; margin: 0; padding-block: var(--space-3) var(--space-5); display: grid; }
-  .nav-menu a {
-    display: block;
-    padding: var(--space-3) 0;
-    font-size: var(--text-xl);
-    font-weight: var(--font-weight-heading);
-    letter-spacing: var(--tracking-heading);
-    color: var(--color-slate);
-    text-decoration: none;
-    border-bottom: 1px solid var(--color-border);
-  }
+  /* The compact Book button is hidden on the smallest phones; the sticky bar carries Book there. */
+  .bar__actions :global(.bar__book) { display: none; }
+  @media (min-width: 480px) { .bar__actions :global(.bar__book) { display: inline-flex; } }
 
   @media (min-width: 1024px) {
-    .nav-links { display: block; }
-    .nav-phone { display: inline-flex; }
-    .nav-menu-btn, .nav-menu { display: none !important; }
-    .nav-logo img { width: calc(var(--spacing) * 48); }
+    .bar__links { display: flex; }
+    .bar__menu { display: none; }
+    .sheet { display: none; }
   }
+  @media (min-width: 1280px) { .bar__phone { display: inline; } }
+
+  .sheet {
+    position: absolute;
+    inset: 100% 0 auto 0;
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-border-strong);
+    box-shadow: var(--shadow-lg);
+    padding-block: var(--space-5) var(--space-6);
+  }
+  .sheet__links { display: grid; gap: var(--space-1); margin: 0; list-style: none; }
+  .sheet__links li {
+    opacity: 0;
+    transform: translateY(var(--space-2));
+    transition: opacity var(--duration-base) var(--ease-out-quart), transform var(--duration-base) var(--ease-out-quart);
+    transition-delay: calc(var(--i) * 30ms);
+  }
+  .sheet.is-open .sheet__links li { opacity: 1; transform: none; }
+  .sheet__link {
+    display: block;
+    padding-block: var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-heading);
+    font-weight: var(--font-weight-heading);
+    letter-spacing: var(--tracking-heading);
+    font-size: var(--text-xl);
+    text-decoration: none;
+  }
+  .sheet__cta { padding-top: var(--space-4); }
 </style>

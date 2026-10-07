@@ -1,65 +1,70 @@
 ---
-/** Footer: contact, area, sample notice, Pexels credit + authors (API terms), concept credit. Light, not black. */
+/** Footer (Iron Sound port): NAP, nav, concept disclosure, Pexels credit + authors (API terms). Light, never black. */
 import { footer } from '../../data/content';
-import { creditAuthors } from '../../lib/media';
+import { uiLabels } from '../../data/ui-labels';
+import { stockAuthors } from '../../lib/media';
 import { withBase } from '../../lib/url';
-const authors = creditAuthors();
+import Button from '../ui/Button.astro';
+
+const authors = stockAuthors();
 ---
 <footer class="footer">
-  <div class="container-x">
-    <div class="footer-top">
-      <div class="footer-brand">
-        <img src={withBase('brand/logo-horizontal.svg')} alt="" width="438" height="58" />
-        <p>{footer.tagline}</p>
-      </div>
-      <div class="footer-col">
-        <h2>{footer.contactHeading}</h2>
-        <ul>
-          {footer.links.map((l) => <li><a href={l.href} data-track={l.track} data-track-id={l.trackId}>{l.label}</a></li>)}
-          <li><a href={footer.instagram.href} target="_blank" rel="noopener" data-track={footer.instagram.track} data-track-id={footer.instagram.trackId}>{footer.instagram.label}</a></li>
-        </ul>
-        <!-- NEEDS DATA: Jay's real phone, mobile and email -->
-      </div>
-      <div class="footer-col">
-        <h2>{footer.areaHeading}</h2>
-        <p>{footer.areaLine}</p>
-        {footer.hours && <p>{footer.hours}</p>}
-        {footer.spanish && <p>{footer.spanish}</p>}
-        <!-- NEEDS DATA: hours, Spanish-language service, service radius -->
-      </div>
+  <div class="frame footer__grid">
+    <div class="footer__brand">
+      <img src={withBase('brand/logo-horizontal.svg')} alt={footer.nap.name} width="438" height="58" loading="lazy" class="footer__logo" />
+      <p class="footer__tag">{footer.tagline}</p>
     </div>
-    <p class="footer-notice">{footer.sampleNotice}</p>
-    <div class="footer-bottom">
-      <p class="credits">
-        <a href={footer.pexelsCredit.href} target="_blank" rel="noopener">{footer.pexelsCredit.label}</a>:
-        {authors.map((a, i) => (
-          <>
-            <a href={a.authorUrl} target="_blank" rel="noopener">{a.author}</a>{i < authors.length - 1 ? ', ' : ''}
-          </>
-        ))}
-      </p>
-      <p>{footer.conceptCredit}</p>
-      <p>{footer.legal}</p>
-    </div>
+
+    <address class="footer__nap">
+      <span class="footer__name">{footer.contactHeading}</span>
+      <Button cta={footer.nap.text} location="footer" variant="text" icon="none" />
+      <Button cta={footer.nap.phone} location="footer" variant="text" icon="none" />
+      <Button cta={footer.nap.email} location="footer" variant="text" icon="none" />
+      <Button cta={footer.nap.instagram} location="footer" variant="text" icon="none" />
+      <span class="footer__area">{footer.nap.area}</span>
+      {footer.hours && <span>{footer.hours}</span>}
+      {footer.spanish && <span>{footer.spanish}</span>}
+    </address>
+
+    <nav class="footer__nav" aria-label={uiLabels.footerNav}>
+      <ul role="list">
+        {footer.links.map((l) => <li><a href={l.href} class="link-draw">{l.label}</a></li>)}
+        <li><a href="#top" class="link-draw">{footer.backToTop}</a></li>
+      </ul>
+    </nav>
+  </div>
+
+  <div class="frame footer__fine">
+    <p class="footer__concept">{footer.concept}</p>
+    <p>
+      <a href={footer.credits.pexels.href} rel="noopener" target="_blank" class="link-draw">{footer.credits.pexels.label}</a>.
+      {' '}{footer.credits.authorsPrefix}{' '}
+      {authors.map((a, i) => (
+        <>
+          <a href={a.authorUrl} rel="noopener" target="_blank" class="link-draw">{a.author}</a>{i < authors.length - 2 ? ', ' : i === authors.length - 2 ? ' and ' : '.'}
+        </>
+      ))}
+    </p>
+    <p>{footer.trademarks}</p>
+    <p>{footer.conceptCredit} · {footer.legal}</p>
   </div>
 </footer>
 
 <style>
-  .footer { background: var(--color-mist); border-top: 1px solid var(--color-mist-strong); padding-block: var(--space-9) var(--space-7); font-size: var(--text-sm); }
-  .footer-top { display: grid; gap: var(--space-7); padding-bottom: var(--space-7); border-bottom: 1px solid var(--color-mist-strong); }
-  .footer-brand img { width: calc(var(--spacing) * 48); height: auto; margin-bottom: var(--space-4); }
-  .footer-brand p { margin: 0; max-width: 36ch; color: var(--color-text-muted); }
-  .footer-col h2 { margin: 0 0 var(--space-3); font-family: var(--font-mono); font-size: var(--text-xs); font-weight: var(--font-weight-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-muted); }
-  .footer-col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
-  .footer-col p { margin: 0; }
-  .footer-col a { color: var(--color-slate); overflow-wrap: anywhere; }
-  .footer-col a:hover { color: var(--color-link); }
-  .footer-notice { margin: var(--space-6) 0; padding: var(--space-4); border-radius: var(--radius-md); border: 1px dashed var(--color-border-strong); color: var(--color-slate); max-width: 80ch; }
-  .footer-bottom { display: grid; gap: var(--space-2); color: var(--color-text-muted); font-size: var(--text-xs); }
-  .footer-bottom p { margin: 0; }
-  .footer-bottom a { color: var(--color-steel-ink); }
-  @media (min-width: 768px) {
-    .footer-top { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); }
-  }
-  @media (max-width: 1023px) { .footer { padding-bottom: calc(var(--space-7) + var(--mobile-bar-height)); } }
+  .footer { padding-block: var(--space-9) var(--space-7); background: var(--color-mist); border-top: 2px solid var(--color-bay); font-size: var(--text-sm); }
+  .footer__grid { display: grid; gap: var(--space-7); }
+  .footer__logo { width: 12rem; height: auto; }
+  .footer__tag { margin: var(--space-4) 0 0; max-width: 36ch; color: var(--color-text); }
+  .footer__nap { display: grid; justify-items: start; gap: 0; font-style: normal; color: var(--color-text); }
+  .footer__nap :global(.btn--text) { min-height: 2.25rem; }
+  .footer__name { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-muted); margin-bottom: var(--space-2); }
+  .footer__area { margin-top: var(--space-2); color: var(--color-text-muted); }
+  .footer__nav ul { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+  .footer__nav a { color: var(--color-heading); }
+  .footer__fine { display: grid; gap: var(--space-3); margin-top: var(--space-8); padding-top: var(--space-5); border-top: 1px solid var(--color-mist-strong); color: var(--color-text-muted); font-size: var(--text-xs); line-height: 1.6; }
+  .footer__fine p { margin: 0; max-width: 110ch; }
+  .footer__fine a { color: var(--color-slate); }
+  .footer__concept { color: var(--color-heading); font-weight: var(--font-weight-label); }
+  @media (min-width: 768px) { .footer__grid { grid-template-columns: 1.3fr 1fr 0.8fr; } }
+  @media (max-width: 1023px) { .footer { padding-bottom: calc(var(--space-7) + var(--mobilebar-height) + env(safe-area-inset-bottom)); } }
 </style>

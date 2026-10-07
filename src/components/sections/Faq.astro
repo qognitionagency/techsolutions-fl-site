@@ -1,29 +1,30 @@
 ---
-/**
- * FAQ: <details>/<summary> with the question as an H3 (seo-spec §3). The answer
- * text is in the HTML at load. The same content.ts strings feed FAQPage JSON-LD
- * (lib/schema.ts). faq_open fires per open with the slug (cro-spec §5).
- */
-import { faq } from '../../data/content';
+/** FAQ (Iron Sound port): question = H3 inside <summary>, answer = the <p> after it. Text bound to FAQPage JSON-LD. */
+import { anchors, faq } from '../../data/content';
+import Button from '../ui/Button.astro';
+import SectionHead from '../ui/SectionHead.astro';
 ---
-<section class="faq section-y" id={faq.id} aria-labelledby="faq-h2">
-  <div class="container-x faq-grid">
-    <header class="faq-head">
-      <h2 id="faq-h2" class="h-section" data-split>{faq.h2}</h2>
-      <div class="faq-links">
-        <a class="btn-like" href={faq.textLink.href} data-track={faq.textLink.track} data-track-id={faq.textLink.trackId}>{faq.textLink.label}</a>
-        <a href={faq.callLink.href} data-track={faq.callLink.track} data-track-id={faq.callLink.trackId}>{faq.callLink.label}</a>
-        <!-- NEEDS DATA: Jay's real phone -->
+<section id={anchors.faq} class="section faq" aria-labelledby="faq-heading">
+  <div class="frame faq__grid">
+    <div class="faq__side">
+      <SectionHead display={faq.display} heading={faq.heading} id="faq-heading" align="stack" />
+      <div class="faq__ctas">
+        <Button cta={faq.primary} location="faq" variant="secondary" />
+        <Button cta={faq.secondary} location="faq" variant="text" />
       </div>
-    </header>
-    <div class="faq-list">
-      {faq.items.map((f) => (
-        <details class="qa" data-faq-id={f.id}>
-          <summary>
-            <h3>{f.q}</h3>
-            <span class="qa-icon" aria-hidden="true"></span>
+    </div>
+    <div class="faq__list">
+      {faq.items.map((q, i) => (
+        <details class="qa" data-faq-id={q.id} name="faq">
+          <summary class="qa__q">
+            <span class="qa__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+            <h3 class="qa__h3">{q.question}</h3>
+            <span class="qa__icon" aria-hidden="true"></span>
           </summary>
-          <div class="qa-a"><p>{f.a}</p></div>
+          <div class="qa__a">
+            <p>{q.answer}</p>
+            {q.link && <Button cta={q.link} location="faq" variant="text" />}
+          </div>
         </details>
       ))}
     </div>
@@ -33,70 +34,41 @@ import { faq } from '../../data/content';
 <script>
   import { track } from '../../scripts/analytics';
   for (const d of document.querySelectorAll<HTMLDetailsElement>('details[data-faq-id]')) {
-    d.addEventListener('toggle', () => d.open && track('faq_open', { faq_id: d.dataset.faqId }));
+    d.addEventListener('toggle', () => {
+      if (d.open) track('faq_open', { faq_id: d.dataset.faqId });
+    });
   }
 </script>
 
 <style>
-  .faq-grid { display: grid; gap: var(--space-7); }
-  .faq-head { display: grid; gap: var(--space-5); align-content: start; }
-  .faq-links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); }
-  .faq-links a { font-weight: var(--font-weight-label); }
-  .btn-like {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--space-7);
-    padding-inline: var(--space-5);
-    border-radius: var(--radius-pill);
-    box-shadow: inset 0 0 0 1.5px var(--color-signal-500);
-    background: var(--color-surface);
-    color: var(--color-signal-700);
-    text-decoration: none;
-  }
-  .btn-like:hover { background: var(--color-signal-50); }
-
-  .faq-list { border-top: 1px solid var(--color-border); }
+  .faq { background: var(--color-bg); }
+  .faq__grid { display: grid; gap: var(--space-7); }
+  .faq__ctas { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4) var(--space-6); }
+  .faq__list { border-top: 2px solid var(--color-slate); }
   .qa { border-bottom: 1px solid var(--color-border); }
-  .qa summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-4);
-    padding-block: var(--space-5);
-    cursor: pointer;
-    list-style: none;
-    border-radius: var(--radius-sm);
-  }
-  .qa summary::-webkit-details-marker { display: none; }
-  .qa h3 { margin: 0; font-size: var(--text-lg); font-weight: var(--font-weight-label); }
-  .qa summary:hover h3 { color: var(--color-signal-700); }
-  .qa-icon {
-    position: relative;
-    flex: none;
-    width: var(--space-6);
-    height: var(--space-6);
-    border-radius: var(--radius-pill);
-    border: 1px solid var(--color-border);
-    background: var(--color-surface);
-    transition: transform var(--duration-base) var(--ease-out-quart), background-color var(--duration-fast) var(--ease-standard);
-  }
-  .qa-icon::before, .qa-icon::after {
-    content: "";
-    position: absolute;
-    inset: 50% auto auto 50%;
-    width: var(--space-3);
-    height: 1.5px;
-    background: var(--color-slate);
-    transform: translate(-50%, -50%);
-  }
-  .qa-icon::after { transform: translate(-50%, -50%) rotate(90deg); transition: transform var(--duration-base) var(--ease-out-quart); }
-  .qa[open] .qa-icon { background: var(--color-signal-50); border-color: var(--color-signal-200); }
-  .qa[open] .qa-icon::after { transform: translate(-50%, -50%) rotate(0deg); }
-  .qa-a { padding-bottom: var(--space-5); }
-  .qa-a p { margin: 0; max-width: var(--measure); color: var(--color-text-muted); }
+  .qa__q { display: grid; grid-template-columns: var(--space-7) minmax(0, 1fr) var(--space-6); align-items: center; gap: var(--space-3); padding: var(--space-5) 0; list-style: none; }
+  .qa__q:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+  .qa__n { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-signal-600); }
+  .qa__h3 { margin: 0; font-size: var(--text-lg); line-height: 1.3; transition: color var(--duration-fast) var(--ease-standard); }
+  .qa__q:hover .qa__h3 { color: var(--color-signal-700); }
+  /* Plus becomes minus: says open/closed. */
+  .qa__icon { position: relative; width: var(--space-6); height: var(--space-6); border-radius: var(--radius-pill); border: 1px solid var(--color-border); background: var(--color-surface); transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
+  .qa__icon::before, .qa__icon::after { content: ""; position: absolute; left: 50%; top: 50%; width: 12px; height: 1.5px; background: var(--color-heading); transform: translate(-50%, -50%); transition: transform var(--duration-base) var(--ease-out-quart); }
+  .qa__icon::after { transform: translate(-50%, -50%) rotate(90deg); }
+  .qa[open] .qa__icon { background: var(--color-signal-50); border-color: var(--color-signal-200); }
+  .qa[open] .qa__icon::after { transform: translate(-50%, -50%) rotate(0deg); }
+  .qa__a { padding: 0 var(--space-6) var(--space-6) var(--space-8); color: var(--color-text-muted); max-width: calc(var(--measure) + var(--space-8)); }
+  .qa__a p { margin: 0 0 var(--space-3); }
+  .qa[open] .qa__a { animation: qa-in var(--duration-base) var(--ease-out-quart); }
+  @keyframes qa-in { from { opacity: 0; transform: translateY(-4px); } }
 
+  @media (max-width: 767px) {
+    .qa__q { grid-template-columns: minmax(0, 1fr) var(--space-6); }
+    .qa__n { display: none; }
+    .qa__a { padding-left: 0; padding-right: 0; }
+  }
   @media (min-width: 1024px) {
-    .faq-grid { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: var(--space-8); }
-    .faq-head { position: sticky; top: calc(var(--spacing) * 28); align-self: start; }
+    .faq__grid { grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: var(--space-9); align-items: start; }
+    .faq__side { position: sticky; top: calc(var(--nav-height) + var(--space-6)); }
   }
 </style>

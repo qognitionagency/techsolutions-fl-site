@@ -1,20 +1,23 @@
 /**
- * JSON-LD graph (seo-spec §5), built from content.ts so every string matches
- * the visible page (Ruth, 2026-10-07). No Review / AggregateRating: reviews are
- * samples. Video doorbells sit under the Cameras service (MARS ruling).
+ * JSON-LD graph (seo-spec §5), built from content.ts so every string matches the visible
+ * page (Ruth, 2026-10-07). FAQPage mainEntity = faq.items verbatim. No Review /
+ * AggregateRating: the reviews are samples. Video doorbells sit under the Cameras
+ * service (MARS ruling; the tile heading names them).
  */
-import { contact, faq, footer, meta, nav, serviceArea, services, type ServiceCard } from '../data/content';
+import { contact, faq, footer, meta, serviceArea, services, type ServiceTile } from '../data/content';
 import { absolute } from './url';
 
-/** Structured-data facts that are not page copy: schema.org types and Wikipedia entity links. */
-const SERVICE_TYPE: Record<ServiceCard['id'], { slug: string; serviceType: string }> = {
-  tv: { slug: 'tv', serviceType: 'TV mounting' },
-  wifi: { slug: 'wifi', serviceType: 'Home network installation' },
-  cameras: { slug: 'cameras', serviceType: 'Security camera installation' },
-  smart: { slug: 'smarthome', serviceType: 'Smart home installation' },
+/** Structured-data facts, not page copy: schema.org serviceType per tile. */
+const SERVICE_TYPE: Record<ServiceTile['id'], string> = {
+  tv: 'TV mounting',
+  theater: 'Home theater installation',
+  wifi: 'Home network installation',
+  cameras: 'Security camera installation',
+  smart: 'Smart home installation',
+  office: 'Office network and AV installation',
 };
 
-const PLACE_SAMEAS: Record<string, { type: string; sameAs: string }> = {
+const PLACE: Record<string, { type: string; sameAs: string }> = {
   'Downtown Miami': { type: 'Place', sameAs: 'https://en.wikipedia.org/wiki/Downtown_Miami' },
   Brickell: { type: 'Place', sameAs: 'https://en.wikipedia.org/wiki/Brickell' },
   Edgewater: { type: 'Place', sameAs: 'https://en.wikipedia.org/wiki/Edgewater,_Miami' },
@@ -24,6 +27,13 @@ const PLACE_SAMEAS: Record<string, { type: string; sameAs: string }> = {
   Doral: { type: 'City', sameAs: 'https://en.wikipedia.org/wiki/Doral,_Florida' },
   Kendall: { type: 'Place', sameAs: 'https://en.wikipedia.org/wiki/Kendall,_Florida' },
   'Miami Beach': { type: 'City', sameAs: 'https://en.wikipedia.org/wiki/Miami_Beach,_Florida' },
+  Aventura: { type: 'City', sameAs: 'https://en.wikipedia.org/wiki/Aventura,_Florida' },
+  Hollywood: { type: 'City', sameAs: 'https://en.wikipedia.org/wiki/Hollywood,_Florida' },
+  'Fort Lauderdale': { type: 'City', sameAs: 'https://en.wikipedia.org/wiki/Fort_Lauderdale,_Florida' },
+};
+const COUNTY: Record<string, string> = {
+  'Miami-Dade County': 'https://en.wikipedia.org/wiki/Miami-Dade_County,_Florida',
+  'Broward County': 'https://en.wikipedia.org/wiki/Broward_County,_Florida',
 };
 
 /** Observed names for the same business (seo-spec §5 alternateName). */
@@ -32,35 +42,32 @@ const ALTERNATE_NAMES = ['TechSolutions Smart Home Installations', 'tech_solutio
 export function buildSchema(site: URL | undefined) {
   const SITE = absolute('/', site);
   const id = (frag: string) => `${SITE}#${frag}`;
-  const sampleNote = services.footnote;
-
   const offer = (name: string, amount: number) => ({
     '@type': 'Offer',
     name,
     priceSpecification: { '@type': 'PriceSpecification', minPrice: amount, priceCurrency: 'USD' },
-    description: sampleNote,
+    description: services.footnote,
   });
 
-  const serviceNodes = services.items.map((s) => {
-    const t = SERVICE_TYPE[s.id];
-    const offers = [offer(s.h3, s.fromPrice.amount)];
-    if (s.alsoFrom) offers.push(offer(s.alsoFrom.label, s.alsoFrom.price.amount));
+  const serviceNodes = services.tiles.map((t) => {
+    const offers = [];
+    if (t.price) offers.push(offer(t.heading, t.price.amount));
+    if ('alsoFrom' in t && t.alsoFrom) offers.push(offer(t.alsoFrom.label, t.alsoFrom.price.amount));
     return {
       '@type': 'Service',
-      '@id': id(`service-${t.slug}`),
-      name: s.h3,
-      serviceType: t.serviceType,
-      description: `${s.body} ${s.points.join('. ')}.`,
+      '@id': id(`service-${t.id}`),
+      name: t.heading,
+      serviceType: SERVICE_TYPE[t.id],
+      description: `${t.lede} ${t.body}`,
       provider: { '@id': id('business') },
-      offers: offers.length === 1 ? offers[0] : offers,
+      ...(offers.length ? { offers: offers.length === 1 ? offers[0] : offers } : {}),
     };
   });
 
   const areaServed = [
-    { '@type': 'AdministrativeArea', name: 'Miami-Dade County', sameAs: 'https://en.wikipedia.org/wiki/Miami-Dade_County,_Florida' },
-    { '@type': 'AdministrativeArea', name: 'Broward County', sameAs: 'https://en.wikipedia.org/wiki/Broward_County,_Florida' },
+    ...serviceArea.counties.map((c) => ({ '@type': 'AdministrativeArea', name: c, ...(COUNTY[c] ? { sameAs: COUNTY[c] } : {}) })),
     { '@type': 'City', name: 'Miami', sameAs: 'https://en.wikipedia.org/wiki/Miami' },
-    ...serviceArea.neighborhoods.map((n) => ({ '@type': PLACE_SAMEAS[n]?.type ?? 'Place', name: n, ...(PLACE_SAMEAS[n] ? { sameAs: PLACE_SAMEAS[n].sameAs } : {}) })),
+    ...serviceArea.cities.map((n) => ({ '@type': PLACE[n]?.type ?? 'Place', name: n, ...(PLACE[n] ? { sameAs: PLACE[n].sameAs } : {}) })),
   ];
 
   return {
@@ -69,7 +76,7 @@ export function buildSchema(site: URL | undefined) {
       {
         '@type': 'HomeAndConstructionBusiness',
         '@id': id('business'),
-        name: nav.logoAlt,
+        name: contact.businessName,
         alternateName: ALTERNATE_NAMES,
         description: footer.tagline,
         url: SITE,
@@ -79,16 +86,9 @@ export function buildSchema(site: URL | undefined) {
         address: { '@type': 'PostalAddress', addressLocality: 'Miami', addressRegion: 'FL', addressCountry: 'US' },
         areaServed,
         sameAs: [contact.instagramUrl],
-        knowsAbout: services.items.map((s) => s.h3),
+        knowsAbout: services.tiles.map((t) => t.heading),
       },
-      {
-        '@type': 'WebSite',
-        '@id': id('website'),
-        url: SITE,
-        name: meta.siteName,
-        inLanguage: meta.lang,
-        publisher: { '@id': id('business') },
-      },
+      { '@type': 'WebSite', '@id': id('website'), url: SITE, name: meta.ogSiteName, inLanguage: meta.lang, publisher: { '@id': id('business') } },
       {
         '@type': 'WebPage',
         '@id': id('webpage'),
@@ -105,11 +105,7 @@ export function buildSchema(site: URL | undefined) {
         '@type': 'FAQPage',
         '@id': id('faq'),
         isPartOf: { '@id': id('webpage') },
-        mainEntity: faq.items.map((f) => ({
-          '@type': 'Question',
-          name: f.q,
-          acceptedAnswer: { '@type': 'Answer', text: f.a },
-        })),
+        mainEntity: faq.items.map((q) => ({ '@type': 'Question', name: q.question, acceptedAnswer: { '@type': 'Answer', text: q.answer } })),
       },
     ],
   };

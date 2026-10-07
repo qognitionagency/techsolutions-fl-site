@@ -1,16 +1,126 @@
 [
-  { "slot": "hero-tv-wall", "type": "video", "id": 34874524, "query": "modern living room tv", "orientation": "landscape" },
-  { "slot": "signature-tv-wall-after", "type": "photo", "id": 6020432, "query": "wall mounted tv white wall", "orientation": "landscape" },
-  { "slot": "svc-tv-mounting", "type": "photo", "id": 37748259, "query": "cable raceway wall" },
-  { "slot": "svc-wifi", "type": "photo", "id": 159304, "query": "router" },
-  { "slot": "svc-cameras", "type": "photo", "id": 18435554, "query": "security camera on white wall" },
-  { "slot": "svc-smart-home", "type": "photo", "id": 20901468, "query": "smart lock door" },
-  { "slot": "band-bay", "type": "video", "id": 11610250, "query": "miami beach golden hour aerial", "orientation": "landscape" },
-  { "slot": "band-miami", "type": "video", "id": 18293620, "query": "miami skyline sunset", "orientation": "landscape" },
-  { "slot": "tv-mounted-hidden-cables", "type": "photo", "id": 34992777, "query": "soundbar tv wall" },
-  { "slot": "tv-concrete-raceway", "type": "photo", "id": 14129562, "query": "cable raceway wall" },
-  { "slot": "soundbar-under-tv", "type": "photo", "id": 6316063, "query": "cable raceway wall" },
-  { "slot": "mesh-wifi-node-shelf", "type": "photo", "id": 4790267, "query": "white wifi router" },
-  { "slot": "outdoor-camera-eave", "type": "photo", "id": 13646859, "query": "security camera under roof" },
-  { "slot": "smart-lock-door", "type": "photo", "id": 15885484, "query": "keypad smart lock front door" }
+  {
+    "slot": "hero-tv-wall",
+    "type": "video",
+    "id": 34874524,
+    "query": "modern living room tv",
+    "orientation": "landscape"
+  },
+  {
+    "slot": "signature-tv-wall-after",
+    "type": "photo",
+    "id": 6020432,
+    "query": "wall mounted tv white wall",
+    "orientation": "landscape"
+  },
+  {
+    "slot": "svc-tv",
+    "type": "photo",
+    "id": 37748259,
+    "query": "cable raceway wall"
+  },
+  {
+    "slot": "svc-wifi",
+    "type": "photo",
+    "id": 159304,
+    "query": "router"
+  },
+  {
+    "slot": "svc-cameras",
+    "type": "photo",
+    "id": 18435554,
+    "query": "security camera on white wall"
+  },
+  {
+    "slot": "svc-smart",
+    "type": "photo",
+    "id": 20901468,
+    "query": "smart lock door"
+  },
+  {
+    "slot": "tv-mounted-hidden-cables",
+    "type": "photo",
+    "id": 34992777,
+    "query": "soundbar tv wall"
+  },
+  {
+    "slot": "tv-concrete-raceway",
+    "type": "photo",
+    "id": 14129562,
+    "query": "cable raceway wall"
+  },
+  {
+    "slot": "soundbar-under-tv",
+    "type": "photo",
+    "id": 6316063,
+    "query": "cable raceway wall"
+  },
+  {
+    "slot": "mesh-wifi-node-shelf",
+    "type": "photo",
+    "id": 4790267,
+    "query": "white wifi router"
+  },
+  {
+    "slot": "outdoor-camera-eave",
+    "type": "photo",
+    "id": 13646859,
+    "query": "security camera under roof"
+  },
+  {
+    "slot": "smart-lock-door",
+    "type": "photo",
+    "id": 15885484,
+    "query": "keypad smart lock front door"
+  },
+  {
+    "slot": "env-condo",
+    "type": "photo",
+    "id": 6588579
+  },
+  {
+    "slot": "env-house",
+    "type": "photo",
+    "id": 36777863
+  },
+  {
+    "slot": "env-office",
+    "type": "photo",
+    "id": 5444195
+  },
+  {
+    "slot": "svc-theater",
+    "type": "photo",
+    "id": 6487954
+  },
+  {
+    "slot": "band-skyline",
+    "type": "photo",
+    "id": 4118101
+  },
+  {
+    "slot": "band-biscayne",
+    "type": "photo",
+    "id": 34650327
+  },
+  {
+    "slot": "band-detail-mount",
+    "type": "photo",
+    "id": 6636297
+  },
+  {
+    "slot": "band-detail-doorbell",
+    "type": "photo",
+    "id": 9461215
+  },
+  {
+    "slot": "env-townhouse",
+    "type": "photo",
+    "id": 7546717
+  },
+  {
+    "slot": "svc-office",
+    "type": "photo",
+    "id": 6794968
+  }
 ]
