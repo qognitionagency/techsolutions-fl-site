@@ -9,7 +9,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'sha256-tcIWGxy052P51CwAeAoOMoHELWwnRU0W3mj2YOfc8lM=' 'sha256-H+piQnc6sHygPenRQyxKtNvjpr54eK9VJHOEWR/mAik='; style-src 'self' 'unsafe-inline'; img-src 'self'; media-src 'self'; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self' 'sha256-sU2lR9xpZeZAa2afl+nK/vjjYkwD7tEEg9fg3/fytuk=' 'sha256-e5qzUhanI27UR7uLMPlbrvNHGkGpiZALS1UmP9bKorg=' 'sha256-ziwnSN5qAd1cy1FakgVP6+1GLn6GGWr0d1U3luorSz8='; style-src 'self' 'unsafe-inline'; img-src 'self'; media-src 'self'; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests"
         },
         {
           "key": "X-Content-Type-Options",

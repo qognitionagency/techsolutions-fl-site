@@ -405,7 +405,10 @@ export function initMultiStepForm(root: HTMLFormElement, opts: FormOptions = {})
     for (const [k, v] of Object.entries(el.dataset)) if (k.startsWith('prefill') && k.length > 7 && v != null) fields[snake(k.slice(7))] = v;
     const hash = (el.getAttribute('href') ?? '').split('#')[1];
     const target = hash ? document.getElementById(hash) : null;
-    if (!Object.keys(fields).length && !target?.contains(root)) return;
+    // The form, or a wrapper up to its nearest <section>. <main>/<body> (skip link, #top) are not CTAs.
+    const scope = root.closest('section') ?? root;
+    const toForm = !!target && target.contains(root) && scope.contains(target);
+    if (!Object.keys(fields).length && !toForm) return;
     if (!startedAt) entry = el.dataset.entry || el.dataset.trackId || 'direct';
     apply(fields);
     if (opts.skipPrefilledSteps && prefilledNames.size) {

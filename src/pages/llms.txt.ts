@@ -16,7 +16,7 @@ export const GET: APIRoute = ({ site }) => {
     ribbon.disclosure,
     '',
     '## Services',
-    ...services.tiles.map((t) => `- [${t.heading}](${url(anchors.services)}): ${t.lede}`),
+    ...services.tabs.map((t) => `- [${t.title}](${url(t.id)}): ${t.pitch.join(' ')}`),
     '',
     '## Answers',
     ...faq.items.map((q) => `- [${q.question}](${url(anchors.faq)})`),

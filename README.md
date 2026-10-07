@@ -2,38 +2,36 @@
 
 A one-page concept site Qognition built for **TechSolutions FL** (Jay, Miami: TV mounting, Wi-Fi, cameras, smart home) ahead of the 9 Oct 2026 discovery call. It is a pitch, not the client's live site. The phone, email, prices, promises and reviews are **sample content**. A ribbon on the page says so, and the page is `noindex`.
 
-**Theme:** "Miami Signal". Cool white, signal blue, Biscayne cyan and a sunset accent. Geist and Geist Mono. Light only.
+**Theme (v3.1):** product-grade, red / silver / ink on white, from the client's own logo. Geist and Geist Mono. Light only. Spec: [`docs/design-spec-v3.md`](docs/design-spec-v3.md) (§00 is the v3.1 palette and logo).
 
 ## What's on the page
 
-Section order follows the Iron Sound build (`src/pages/index.astro`).
+Section order follows `src/pages/index.astro` (spec §0).
 
-- **Hero.** Service-led H1, poster image with a lazy background video and a pause control.
-- **Gear strip.** "Gear we install and set up", labelled sample.
-- **Services bento.** Six tiles with sample starting prices. "Add to my booking" prefills the form.
-- **Before/after slider.** Same wall, wires gone. Drag, or use the keyboard.
-- **Condo · House · Office tabs.** Each panel's CTA prefills the property type.
-- **How it works.** Pinned horizontal steps on desktop. Then the multi-unit band.
-- **Gallery.** Stock frames labelled "Stock image, sample". Links to [@tech_solutionsfl](https://www.instagram.com/tech_solutionsfl/).
+- **Hero.** Product headline, a framed stock photo with a sample-price card, and an HTML/CSS phone cycling three app screens (camera, lock, Wi-Fi). The cycle pauses on hover and focus, and stops for the session on a pick or Pause. It never auto-plays under reduced motion.
+- **Service explorer.** Four ARIA tabs, each with a flat technical drawing: TV wall (drywall vs concrete, never in-wall on concrete), condo Wi-Fi plan (router only vs mesh), camera plan (2 vs 3 + doorbell), and an interactive smart-home phone. Each drawing has a desktop and a mobile artboard. Callouts are HTML and the numbered list is the text alternative. Toggles are native radios driven by CSS `:has()`.
+- **Instant quote builder.** Pick services and options, and a receipt prices them live. All prices are samples from `content.ts`, and the arithmetic in `src/lib/quote.ts` is unit-tested. "Book this install" prefills the booking form through `form:prefill`.
+- **How it works.** Four steps with micro-UI vignettes (quote card, SMS thread, checklists).
+- **Built for.** Condo, house and office cards with stock thumbnails.
 - **Reviews.** Labelled sample.
-- **Service area.** County map and a sample neighborhood list.
+- **Service area.** Map and the sample neighborhood list.
 - **FAQ.** Includes FAQPage JSON-LD.
-- **Booking form.** Five steps, with unchecked SMS and email consent boxes.
-- **Sticky Call / Text / Book bar** on mobile.
-- **Motion.** GSAP ScrollTrigger and Lenis. All of it is off under `prefers-reduced-motion`.
+- **Booking form.** Luke's five-step module, with icon cards and unchecked SMS and email consent boxes.
+- **Sticky Call / Text / Get a quote bar** under 768px.
+- **Motion.** CSS plus small IntersectionObserver scripts. No GSAP or Lenis on the page (the spec bans parallax, pins and scroll-jacking). All of it is off under `prefers-reduced-motion`.
 
 ## Stack
 
-Astro 5 (static), Tailwind v4, GSAP and Lenis, and Fontsource. Photos and video come from Pexels, downloaded and committed by `npm run media`. The key lives only in a local `.env`, which is gitignored. See [`docs/adr/0001-stack-and-structure.md`](docs/adr/0001-stack-and-structure.md).
+Astro 5 (static), Tailwind v4 and Fontsource. Page JS is about 10 KB gzip, form included. Stock photos come from Pexels and are used only inside designed components (spec §4). The six slots on the page are listed in `src/lib/media.ts` `USED_SLOTS`, and the footer credits exactly those. `gsap` and `lenis` were removed from `package.json` (nothing imported them). See [`docs/adr/0001-stack-and-structure.md`](docs/adr/0001-stack-and-structure.md).
 
 ```bash
 npm install
 npm run dev        # local
-npm test           # form module tests (also run on prebuild)
+npm test           # form, url and quote tests (also run on prebuild)
 npm run build      # postbuild checks: no Pexels key in dist, CSP hashes current
 ```
 
-All copy lives in `src/data/content.ts`. Every sample value there is tagged `// NEEDS DATA` and listed in the exported `needsData` array.
+All copy lives in `src/data/content.ts`. Every sample value there is tagged `// NEEDS DATA` and listed in the exported `needsData` array. UI-only control labels (pause/play, stepper names, "Stock photo") are in `src/data/ui-labels.ts`, pending a move into content.ts.
 
 ## Deploy
 
@@ -55,6 +53,6 @@ Swap in these from Jay:
 
 Confirm his insurance and certificate-of-insurance (COI) status, and his Florida licence for camera work. Until those are confirmed, the page must not say "licensed", "insured" or "certified". Then set `PUBLIC_INDEXABLE=true`.
 
-Photos and video: [Pexels](https://www.pexels.com). Credits are in `src/data/media-credits.json` and the footer.
+Photos: [Pexels](https://www.pexels.com). Credits are in `src/data/media-credits.json`, and the footer lists the authors of the slots in use.
 
 Concept and build by Qognition Agency.

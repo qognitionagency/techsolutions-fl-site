@@ -1,0 +1,62 @@
+---
+/**
+ * Built for (#built-for; design-spec-v3 §2.5 layout, content.ts builtFor copy). Three cards:
+ * a stock photo thumbnail (approved list: env-condo, env-townhouse, env-office; never
+ * env-house, which shows a hanging cable), an icon chip overlapping the photo edge, the title,
+ * two lines, and a contextual Book link that prefills the property type.
+ */
+import { builtFor, type BuiltForCard } from '../../data/content';
+import { uiLabels } from '../../data/ui-labels';
+import Button from '../ui/Button.astro';
+import Icon from '../ui/Icon.astro';
+import Img from '../ui/Img.astro';
+import SectionHead from '../ui/SectionHead.astro';
+
+const PHOTO: Record<BuiltForCard['id'], { slot: string; pos: string }> = {
+  condo: { slot: 'env-condo', pos: '20% 50%' },
+  house: { slot: 'env-townhouse', pos: '30% 45%' },
+  office: { slot: 'env-office', pos: '72% 45%' },
+};
+const ICON = { building: 'building', house: 'house', briefcase: 'office' } as const;
+---
+<section id="built-for" class="section bf" aria-labelledby="bf-h2">
+  <div class="frame">
+    <SectionHead eyebrow={builtFor.eyebrow} heading={builtFor.heading} id="bf-h2" />
+    <ul class="bf__grid" role="list">
+      {builtFor.cards.map((c) => (
+        <li class="card bf__card" data-reveal>
+          <div class="bf__photo" style={`--pos:${PHOTO[c.id].pos}`}>
+            <Img slot={PHOTO[c.id].slot} alt="" widths={[400, 640, 800]} sizes="(min-width: 1024px) 24rem, (min-width: 768px) 30vw, 92vw" class="bf__img" />
+            <span class="sample-tag bf__stock">{uiLabels.stockPhoto}</span>
+          </div>
+          <span class="bf__icon" aria-hidden="true"><Icon name={ICON[c.icon]} size={22} /></span>
+          <div class="bf__body">
+            <h3 class="bf__h3">{c.title}</h3>
+            <p>{c.lines[0]}</p>
+            <p>{c.lines[1]}</p>
+            <div class="bf__cta"><Button cta={c.cta} location="built_for" variant="text" uid={c.id} /></div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .bf { border-bottom: 1px solid var(--color-border); }
+  .bf :global(.shead__display) { max-width: 26ch; }
+  .bf__grid { display: grid; gap: var(--grid-gap); margin: 0; padding: 0; list-style: none; }
+  .bf__card { display: grid; grid-template-rows: auto auto 1fr; overflow: hidden; transition: box-shadow var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard); }
+  .bf__card:hover { box-shadow: var(--shadow-md); border-color: var(--color-line-strong); transform: translateY(-2px); }
+  .bf__photo { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: var(--color-surface-sunken); }
+  .bf__photo :global(picture), .bf__photo :global(.bf__img) { display: block; width: 100%; height: 100%; object-fit: cover; object-position: var(--pos, center); transition: transform var(--duration-slow) var(--ease-out-quart); }
+  .bf__card:hover .bf__photo :global(.bf__img) { transform: scale(1.03); }
+  .bf__stock { position: absolute; top: var(--space-3); right: var(--space-3); }
+  .bf__icon { position: relative; z-index: 1; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; margin: -1.375rem 0 0 var(--space-5); border-radius: var(--radius-pill); background: var(--color-surface); box-shadow: var(--shadow-sm); color: var(--color-accent); }
+  .bf__body { display: grid; align-content: start; gap: var(--space-2); padding: var(--space-3) var(--space-5) var(--space-5); }
+  .bf__h3 { font-size: var(--text-xl); }
+  .bf__body p { margin: 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+  .bf__cta { margin-top: var(--space-2); }
+  @media (min-width: 768px) { .bf__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (prefers-reduced-motion: reduce) { .bf__card:hover { transform: none; } }
+</style>

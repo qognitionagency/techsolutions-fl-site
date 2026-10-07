@@ -14,6 +14,12 @@ const define = { 'import.meta.env.PUBLIC_FORM_ENDPOINT': 'undefined', 'import.me
 for (const f of ['analytics', 'form']) {
   await build({ entryPoints: [`${SRC}/${f}.ts`], bundle: true, format: 'esm', outfile: `${OUT}/${f}.mjs`, define, logLevel: 'error' });
 }
+// Quote arithmetic + the real content.ts model it prices (Mira, v3 quote builder).
+await build({ entryPoints: [`${ROOT}src/lib/quote.ts`], bundle: true, format: 'esm', outfile: `${OUT}/quote.mjs`, logLevel: 'error' });
+await build({ entryPoints: [`${ROOT}src/data/content.ts`], bundle: true, format: 'esm', outfile: `${OUT}/content.mjs`, logLevel: 'error' });
+// Scroll reveal (Owen, 2026-10-07): content must never stay hidden (jump past, IO silent, print).
+await build({ entryPoints: [`${SRC}/reveal.ts`], bundle: true, format: 'esm', outfile: `${OUT}/reveal.mjs`, logLevel: 'error' });
+await build({ entryPoints: [`${ROOT}src/lib/css-time.ts`], bundle: true, format: 'esm', outfile: `${OUT}/css-time.mjs`, logLevel: 'error' });
 // url.ts under both deploy bases: Vercel (/) and GitHub Pages project site (/techsolutions-fl-site/).
 for (const [name, base] of [['url-root', '/'], ['url-pages', '/techsolutions-fl-site/']]) {
   await build({

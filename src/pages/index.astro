@@ -1,35 +1,28 @@
 ---
-/** Composes sections only. No copy, no logic (ADR §2). Section order follows the Iron Sound build. */
+/** Composes sections only. No copy, no logic. Order and backgrounds: design-spec-v3 §0. */
 import Base from '../layouts/Base.astro';
 import Nav from '../components/sections/Nav.astro';
 import Hero from '../components/sections/Hero.astro';
-import Partners from '../components/sections/Partners.astro';
-import Services from '../components/sections/Services.astro';
-import Signature from '../components/sections/Signature.astro';
-import Sectors from '../components/sections/Sectors.astro';
+import ServiceExplorer from '../components/sections/ServiceExplorer.astro';
+import QuoteBuilder from '../components/sections/QuoteBuilder.astro';
 import Process from '../components/sections/Process.astro';
-import Gallery from '../components/sections/Gallery.astro';
-import Testimonials from '../components/sections/Testimonials.astro';
+import BuiltFor from '../components/sections/BuiltFor.astro';
+import Reviews from '../components/sections/Reviews.astro';
 import ServiceArea from '../components/sections/ServiceArea.astro';
 import Faq from '../components/sections/Faq.astro';
 import Consult from '../components/sections/Consult.astro';
 import Footer from '../components/sections/Footer.astro';
 import MobileBar from '../components/sections/MobileBar.astro';
-import Band from '../components/ui/Band.astro';
 ---
 <Base>
   <Nav />
   <main id="main">
     <Hero />
-    <Partners />
-    <Services />
-    <Signature />
-    <Band back="band-skyline" front="band-detail-mount" side="right" />
-    <Sectors />
+    <ServiceExplorer />
+    <QuoteBuilder />
     <Process />
-    <Band back="band-biscayne" front="band-detail-doorbell" side="left" />
-    <Gallery />
-    <Testimonials />
+    <BuiltFor />
+    <Reviews />
     <ServiceArea />
     <Faq />
     <Consult />
@@ -37,3 +30,6 @@ import Band from '../components/ui/Band.astro';
   <Footer />
   <MobileBar />
 </Base>
+<script>
+  import '../scripts/phone';
+</script>

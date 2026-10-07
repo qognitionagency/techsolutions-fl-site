@@ -1,0 +1,154 @@
+---
+/**
+ * Hero phone (spec §2.1): three app screens from content.ts hero.phoneMockup, cycling
+ * camera → lock → Wi-Fi. The device is one role="img" with the content aria-label; the
+ * screens inside are aria-hidden. The switcher under it is real buttons (aria-pressed) plus a
+ * pause/play button (WCAG 2.2.2). phone.ts drives it; without JS the camera screen shows.
+ */
+import { hero } from '../../data/content';
+import { uiLabels } from '../../data/ui-labels';
+import PhoneMock from '../ui/PhoneMock.astro';
+import CameraFeed from '../diagrams/CameraFeed.astro';
+import Icon from '../ui/Icon.astro';
+
+const m = hero.phoneMockup;
+---
+<figure class="hp" data-phone>
+  <div class="hp__device" data-phone-device role="img" aria-label={m.ariaLabel}>
+    <PhoneMock>
+      <div class="hp__screens" aria-hidden="true">
+        {m.screens.map((s, i) => (
+          <div class:list={['scr', i === 0 && 'is-on']} data-screen={s.id}>
+            <div class="scr__app"><Icon name="chevron-left" size={16} /><span>{s.app}</span></div>
+            <div class="scr__head">
+              <p class="scr__title">{s.title}</p>
+              <span class:list={['status', `status--${s.status.tone}`]}>
+                {s.status.dot && <span class="status__dot"></span>}
+                {s.status.text}
+              </span>
+            </div>
+
+            {s.id === 'camera' && (
+              <>
+                <CameraFeed view="porch" />
+                <div class="scr__ctrls">
+                  {(['talk', 'snapshot', 'clips'] as const).map((n) => <span class="scr__ctrl"><Icon name={n} size={18} /></span>)}
+                </div>
+              </>
+            )}
+            {s.id === 'lock' && (
+              <div class="scr__lock">
+                <span class="scr__ring"><Icon name="lock" size={30} /></span>
+              </div>
+            )}
+
+            <ul class:list={['scr__rows', s.id === 'wifi' && 'scr__rows--wifi']}>
+              {s.rows.map((r) => (
+                <li>
+                  <span class="scr__label">{r.label}</span>
+                  <span class="scr__value">
+                    {s.id === 'wifi' && <span class="scr__bars"><i></i><i></i><i></i><i></i></span>}
+                    {r.value}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div class="scr__tabs">
+              {(['home', 'camera', 'lock', 'wifi'] as const).map((n) => (
+                <span class:list={['scr__tab', (n === 'camera' && s.id === 'camera') || (n === 'lock' && s.id === 'lock') || (n === 'wifi' && s.id === 'wifi') ? 'is-cur' : '']}><Icon name={n} size={20} /></span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </PhoneMock>
+  </div>
+
+  <div class="hp__switch" data-js-only hidden>
+    <div class="seg hp__seg">
+      {m.screens.map((s, i) => (
+        <button type="button" class="hp__pick" data-screen-pick aria-pressed={i === 0 ? 'true' : 'false'}>
+          <span>{s.app}</span><i class="hp__progress" aria-hidden="true"></i>
+        </button>
+      ))}
+    </div>
+    <button type="button" class="hp__pause" data-phone-pause aria-pressed="false" aria-label={uiLabels.pauseScreens} data-label-pause={uiLabels.pauseScreens} data-label-play={uiLabels.playScreens}>
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false" class="hp__pause-i"><path d="M5 3.5v9M11 3.5v9" /></svg>
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false" class="hp__play-i"><path d="M5 3.5 12.5 8 5 12.5Z" /></svg>
+    </button>
+  </div>
+  <figcaption class="hp__cap">{m.caption}</figcaption>
+</figure>
+
+<style>
+  .hp { margin: 0; display: grid; justify-items: center; gap: var(--space-3); }
+  .hp__device { position: relative; }
+  .hp__screens { position: absolute; inset: 2.5rem 0 0; }
+  .scr {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-1) var(--space-4) var(--space-4);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity var(--duration-slow) var(--ease-out-expo), transform var(--duration-slow) var(--ease-out-expo);
+  }
+  .scr.is-on { opacity: 1; transform: none; }
+  .scr__app { display: flex; align-items: center; gap: 2px; margin-left: -4px; font-size: var(--text-xs); font-weight: var(--font-weight-label); color: var(--color-link); }
+  .scr__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+  .scr__title { margin: 0; font-size: var(--text-lg); font-weight: var(--font-weight-heading); letter-spacing: var(--tracking-title); line-height: var(--leading-ui); color: var(--color-heading); }
+  .scr .status--live .status__dot { animation: live 1.6s var(--ease-in-out) infinite; }
+  @keyframes live { 50% { opacity: 0.35; } }
+  .scr :global(.feed) { aspect-ratio: 4 / 3.4; }
+  .scr__tabs { display: flex; justify-content: space-around; margin-top: auto; padding-top: var(--space-3); border-top: 1px solid var(--color-border); color: var(--color-steel); }
+  .scr__tab { display: grid; place-items: center; width: 2.5rem; height: 2rem; border-radius: var(--radius-md); }
+  .scr__tab.is-cur { color: var(--color-signal-600); background: var(--color-signal-50); }
+  .scr__ctrls { display: flex; justify-content: center; gap: var(--space-4); }
+  .scr__ctrl { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: var(--radius-pill); background: var(--color-mist); color: var(--color-heading); }
+  .scr__lock { display: grid; place-items: center; padding-block: var(--space-4); }
+  .scr__ring { display: grid; place-items: center; width: 6rem; height: 6rem; border-radius: var(--radius-pill); border: 2px solid var(--color-accent); background: var(--color-signal-50); color: var(--color-signal-700); }
+  .scr__rows { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border); }
+  .scr__rows li { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-height: 2.75rem; border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .scr__label { color: var(--color-heading); font-weight: var(--font-weight-label); }
+  .scr__value { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-feature-settings: var(--font-feature-data); font-size: var(--text-xs); color: var(--color-text-muted); }
+  .scr__bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 15px; }
+  .scr__bars i { width: 3px; border-radius: 1px; background: var(--color-signal); }
+  .scr__bars i:nth-child(1) { height: 6px; } .scr__bars i:nth-child(2) { height: 9px; } .scr__bars i:nth-child(3) { height: 12px; } .scr__bars i:nth-child(4) { height: 15px; }
+
+  .hp__switch { display: flex; align-items: center; gap: var(--space-2); }
+  .hp__seg { padding: 3px; }
+  .hp__pick {
+    position: relative;
+    min-height: 2.5rem;
+    padding: 0 var(--space-4);
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-label);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    overflow: hidden;
+    transition: background-color var(--duration-base) var(--ease-standard), color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
+  }
+  .hp__pick:hover { color: var(--color-heading); }
+  .hp__pick[aria-pressed="true"] { background: var(--color-surface); color: var(--color-heading); box-shadow: var(--shadow-xs); }
+  .hp__pick:focus-visible, .hp__pause:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+  .hp__progress { position: absolute; left: var(--space-3); right: var(--space-3); bottom: 3px; height: 2px; border-radius: var(--radius-pill); background: var(--color-accent); transform: scaleX(0); transform-origin: left; }
+  :global(.hp.is-cycling) .hp__pick[aria-pressed="true"] .hp__progress { animation: hp-progress var(--duration-cycle) linear forwards; }
+  @keyframes hp-progress { to { transform: scaleX(1); } }
+  .hp__pause { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-pill); background: var(--color-surface); color: var(--color-heading); cursor: pointer; }
+  .hp__pause:hover { border-color: var(--color-line-strong); }
+  .hp__pause svg { fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  .hp__play-i { display: none; }
+  :global(.hp.is-paused) .hp__pause-i { display: none; }
+  :global(.hp.is-paused) .hp__play-i { display: block; }
+  .hp__cap { max-width: 34ch; text-align: center; font-size: var(--text-xs); line-height: var(--leading-ui); color: var(--color-text-muted); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scr { transition: none; transform: none; }
+    .scr .status--live .status__dot { animation: none; }
+  }
+</style>

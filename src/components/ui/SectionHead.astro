@@ -1,64 +1,58 @@
 ---
 /**
- * Section header: the memorable `display` line as a <p> (styled large) with the
- * keyword H2 beneath it (seo-spec §3: the H2 carries the meaning). Optional aside slot.
+ * Section head (spec §1.2). Kicker row: mono EYEBROW │ the SEO H2 rendered small; then the
+ * memorable display line (<p>, --text-3xl) and an optional lead. When a section's content has no
+ * display line (its heading IS the memorable line, e.g. the quote builder), the H2 itself takes
+ * the display size. Every string from content.ts.
  */
 interface Props {
-  display: string;
-  heading: string;
-  id: string;
-  tone?: 'light' | 'deep';
-  align?: 'split' | 'stack';
   eyebrow?: string;
+  heading: string;
+  display?: string;
+  lead?: string;
+  id: string;
+  align?: 'start' | 'center';
+  /** Rendered after the H2 inside the kicker row (e.g. a Sample tag). */
+  tag?: string;
 }
-const { display, heading, id, tone = 'light', align = 'split', eyebrow } = Astro.props;
-const hasAside = Astro.slots.has('default');
+const { eyebrow, heading, display, lead, id, align = 'start', tag } = Astro.props;
 ---
-<header class:list={['shead', `shead--${tone}`, hasAside && align === 'split' && 'shead--split']}>
-  <div class="shead__main">
-    {eyebrow && <p class="eyebrow shead__eyebrow">{eyebrow}</p>}
-    <p class="display shead__display" data-split>{display}</p>
-    <h2 id={id} class="shead__h2">{heading}</h2>
+<header class:list={['shead', align === 'center' && 'shead--center']} data-reveal>
+  <div class="shead__kicker">
+    {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+    {eyebrow && display && <span class="shead__rule" aria-hidden="true"></span>}
+    {display && <h2 id={id} class="shead__h2s">{heading}</h2>}
+    {tag && <span class="sample-tag">{tag}</span>}
   </div>
-  {hasAside && <div class="shead__aside" data-reveal><slot /></div>}
+  {display ? <p class="shead__display">{display}</p> : <h2 id={id} class="shead__display">{heading}</h2>}
+  {lead && <p class="lede">{lead}</p>}
 </header>
 
 <style>
-  .shead { display: grid; gap: var(--space-5); margin-bottom: var(--space-8); }
-  .shead__eyebrow { margin: 0 0 var(--space-4); }
-  .shead__display { margin: 0; max-width: 18ch; font-size: var(--text-3xl); }
-  .shead__h2 {
-    display: grid;
-    grid-template-columns: var(--space-6) minmax(0, 1fr);
-    align-items: baseline;
-    gap: var(--space-3);
-    margin: var(--space-5) 0 0;
-    max-width: 48ch;
-    font-size: var(--text-base);
+  .shead { max-width: 52rem; }
+  .shead__kicker { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+  .shead__kicker:empty { display: none; }
+  .shead--center .shead__kicker { justify-content: center; }
+  .shead__rule { width: 1px; height: var(--space-4); background: var(--color-line-strong); }
+  .shead__h2s {
+    font-size: var(--text-sm);
     font-weight: var(--font-weight-label);
     letter-spacing: 0;
-    line-height: 1.45;
-    text-wrap: pretty;
+    line-height: var(--leading-ui);
     color: var(--color-text-muted);
+    text-wrap: pretty;
   }
-  .shead__h2::before {
-    content: "";
-    flex: none;
-    width: var(--space-6);
-    height: 2px;
-    transform: translateY(-0.3em);
-    border-radius: var(--radius-pill);
-    background: var(--color-rule-signal);
+  .shead__display {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-3xl);
+    font-weight: var(--font-weight-display);
+    line-height: var(--leading-heading);
+    letter-spacing: var(--tracking-heading);
+    color: var(--color-heading);
+    text-wrap: balance;
+    max-width: 22ch;
   }
-  .shead__aside { max-width: 34rem; color: var(--color-text-muted); }
-  .shead__aside :global(p) { margin: 0 0 var(--space-4); }
-
-  .shead--deep .shead__display { color: var(--color-text-on-deep); }
-  .shead--deep .shead__h2 { color: var(--color-text-on-deep-muted); }
-  .shead--deep .shead__aside { color: var(--color-text-on-deep-muted); }
-
-  @media (min-width: 1024px) {
-    .shead--split { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: end; gap: var(--space-8); }
-    .shead__aside { justify-self: end; }
-  }
+  .shead--center .shead__display { margin-inline: auto; }
+  .shead :global(.lede) { margin-top: var(--space-4); }
+  .shead--center :global(.lede) { margin-inline: auto; }
 </style>

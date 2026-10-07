@@ -1,179 +1,147 @@
 ---
 /**
- * Process (Iron Sound port): an ordered list. Desktop pins the section and scrolls the four
- * steps horizontally (ADR §7: the one pin). Mobile and reduced motion: a vertical list with
- * a signal rail. Mono numerals are decorative; <ol> carries the order.
- * Followed by the multi-unit band (Iron Sound `trade`).
+ * How it works (#how-it-works; design-spec-v3 §2.4, copy content.ts processSteps). Four cards,
+ * each with a micro-UI vignette rendered from its `micro` (quote card, SMS thread, checklist).
+ * Vignettes play once, in sequence, when the section is 30% in view. They ship in their end
+ * state: without JS, under reduced motion, or if already on screen, nothing hides.
+ * Every vignette carries a Sample tag (content: sample: true).
  */
-import { anchors, processSteps, trade } from '../../data/content';
+import { anchors, processSteps as ps } from '../../data/content';
+import { uiLabels } from '../../data/ui-labels';
 import Button from '../ui/Button.astro';
+import Icon from '../ui/Icon.astro';
 import SectionHead from '../ui/SectionHead.astro';
 ---
-<section id={anchors.process} class="section process" aria-labelledby="process-heading" data-hscroll>
-  <div class="frame process__head">
-    <SectionHead display={processSteps.display} heading={processSteps.heading} id="process-heading">
-      <div class="process__ctas">
-        <Button cta={processSteps.primary} location="process" icon="arrow" />
-        <Button cta={processSteps.secondary} location="process" variant="text" />
-      </div>
-    </SectionHead>
-    <div class="process__progress" aria-hidden="true" data-hscroll-progress>
-      {processSteps.steps.map((s) => <span>{s.short}</span>)}
-    </div>
-  </div>
+<section id={anchors.process} class="section section--alt how" aria-labelledby="how-h2" data-how>
+  <div class="frame">
+    <SectionHead eyebrow={ps.eyebrow} heading={ps.heading} display={ps.display} id="how-h2" />
 
-  <div class="process__viewport">
-    <ol class="steps" role="list" data-hscroll-track data-reveal-stagger>
-      {processSteps.steps.map((s) => (
-        <li class="step" data-reveal>
-          <span class="step__n" aria-hidden="true">{String(s.n).padStart(2, '0')}</span>
-          <p class="eyebrow step__short">{s.short}</p>
-          <h3 class="step__h3">{s.heading}</h3>
-          <p class="step__body">{s.body}</p>
+    <ol class="how__list" role="list">
+      {ps.steps.map((s, si) => (
+        <li class="card how__card" style={`--si:${si}`}>
+          <div class="how__well" aria-hidden="true">
+            {s.micro.kind === 'quote' && (
+              <div class="mv mv--quote">
+                <div class="mv__row"><span class="mv__title">{s.micro.title}</span>{s.micro.sample && <span class="sample-tag">{uiLabels.sample}</span>}</div>
+                <div class="mv__chips">{s.micro.lines.map((l, i) => <span class="mv__chip" style={`--i:${i}`}><Icon name="check" size={12} />{l}</span>)}</div>
+                <p class="mv__total mono">{s.micro.total}</p>
+              </div>
+            )}
+            {s.micro.kind === 'sms' && (
+              <div class="mv mv--sms">
+                {s.micro.sample && <div class="mv__row mv__row--end"><span class="sample-tag">{uiLabels.sample}</span></div>}
+                {s.micro.messages.map((m, i) => <p class:list={['mv__bubble', `mv__bubble--${m.from}`]} style={`--i:${i}`}>{m.text}</p>)}
+              </div>
+            )}
+            {s.micro.kind === 'checklist' && (
+              <div class="mv mv--check">
+                {s.micro.sample && <div class="mv__row mv__row--end"><span class="sample-tag">{uiLabels.sample}</span></div>}
+                <ul role="list">
+                  {s.micro.items.map((it, i) => (
+                    <li style={`--i:${i}`}>
+                      <span class="mv__tick"><svg viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="7.25" /><path d="m4.75 8.25 2.25 2.25 4.25-4.5" pathLength="1" /></svg></span>
+                      <span>{it.label}</span><span class="mono mv__val">{it.value}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+          <p class="how__n mono"><span>{String(s.n).padStart(2, '0')}</span><span class="how__short">{s.short}</span></p>
+          <h3 class="how__h3">{s.heading}</h3>
+          <p class="how__body">{s.body}</p>
         </li>
       ))}
     </ol>
-  </div>
-</section>
 
-<section id={anchors.trade} class="trade" aria-labelledby="trade-heading">
-  <div class="frame trade__inner">
-    <p class="eyebrow trade__aud">{trade.audience}</p>
-    <h2 id="trade-heading" class="display trade__h2" data-split>{trade.heading}</h2>
-    <p class="trade__body">{trade.body}</p>
-    <div class="trade__ctas">
-      <Button cta={trade.cta} location="trade" />
-      <Button cta={trade.secondary} location="trade" variant="text" />
+    <div class="how__ctas">
+      <Button cta={ps.primary} location="how" />
+      <Button cta={ps.secondary} location="how" variant="text" />
     </div>
   </div>
 </section>
 
-<style>
-  .process { background: var(--color-bg); overflow: clip; }
-  .process__ctas { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4) var(--space-6); }
-  .process__progress { display: none; }
+<script>
+  const sec = document.querySelector<HTMLElement>('[data-how]');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (sec && !reduce && 'IntersectionObserver' in window && sec.getBoundingClientRect().top > window.innerHeight) {
+    sec.classList.add('is-armed');
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e?.isIntersecting) return;
+        sec.classList.add('is-play');
+        io.disconnect();
+      },
+      { threshold: 0.3 },
+    );
+    io.observe(sec);
+  }
+</script>
 
-  .steps {
-    display: grid;
-    gap: 0;
-    margin: 0 auto;
-    padding: 0 var(--space-gutter);
-    list-style: none;
-    max-width: calc(var(--container-max) + 2 * var(--space-gutter));
+<style>
+  .how__list { position: relative; display: grid; gap: var(--grid-gap); margin: 0; padding: 0; list-style: none; }
+  .how__card { display: grid; align-content: start; gap: var(--space-2); padding: var(--space-4) var(--space-4) var(--space-5); }
+  .how__well { position: relative; display: grid; align-items: start; height: 12.5rem; margin-bottom: var(--space-3); padding: var(--space-4); overflow: hidden; border-radius: var(--radius-lg); background: var(--color-surface-sunken); box-shadow: inset 0 0 0 1px var(--color-border); }
+  .how__n { display: flex; align-items: center; gap: var(--space-3); margin: 0; font-size: var(--text-xs); letter-spacing: var(--tracking-label); color: var(--color-eyebrow); }
+  .how__short { text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-muted); }
+  .how__h3 { font-size: var(--text-lg); }
+  .how__body { margin: 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+  .how__ctas { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); margin-top: var(--space-7); }
+
+  /* Vignettes */
+  .mv { display: grid; gap: var(--space-2); font-size: var(--text-xs); }
+  .mv__row { display: flex; align-items: center; justify-content: space-between; }
+  .mv__title { font-weight: var(--font-weight-heading); color: var(--color-heading); font-size: var(--text-sm); }
+  .mv__chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+  .mv__chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px var(--space-2); border-radius: var(--radius-pill); border: 1px solid var(--color-accent); background: var(--color-surface-tint); color: var(--color-link-hover); font-weight: var(--font-weight-label); }
+  .mv__total { margin: var(--space-1) 0 0; font-size: var(--text-2xl); font-weight: var(--font-weight-data); letter-spacing: -0.02em; color: var(--color-price); }
+
+  .mv--sms { gap: 6px; }
+  .mv__bubble { max-width: 88%; margin: 0; padding: 6px var(--space-3); border-radius: var(--radius-lg); line-height: var(--leading-ui); }
+  .mv__bubble--us { justify-self: start; background: var(--color-surface); box-shadow: inset 0 0 0 1px var(--color-border); color: var(--color-heading); border-bottom-left-radius: var(--radius-xs); }
+  .mv__bubble--you { justify-self: end; background: var(--color-accent); color: var(--color-on-accent); border-bottom-right-radius: var(--radius-xs); }
+  .mv__row--end { justify-content: flex-end; }
+
+  .mv--check ul { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+  .mv--check li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-2); padding: 6px var(--space-2); border-radius: var(--radius-md); background: var(--color-surface); box-shadow: inset 0 0 0 1px var(--color-border); color: var(--color-heading); }
+  .mv__tick svg { display: block; fill: none; }
+  .mv__tick circle { fill: var(--color-success); }
+  .mv__tick path { stroke: var(--color-on-accent); stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; }
+  .mv__val { color: var(--color-success); }
+
+  /* Play once: armed = start state, play = sequence. */
+  :global(.is-armed) .mv__chip, :global(.is-armed) .mv__bubble, :global(.is-armed) .mv--check li { opacity: 0; }
+  :global(.is-armed) .mv__tick circle { fill: var(--color-surface); stroke: var(--color-border-strong); }
+  :global(.is-armed) .mv__tick path { stroke-dashoffset: 1; }
+  :global(.is-play) .mv__chip, :global(.is-play) .mv__bubble, :global(.is-play) .mv--check li {
+    animation: mv-in var(--duration-base) var(--ease-out-expo) calc(var(--si) * 300ms + var(--i) * 300ms + 200ms) both;
   }
-  .step {
-    position: relative;
-    display: grid;
-    align-content: start;
-    gap: var(--space-2);
-    padding: var(--space-6) 0 var(--space-6) var(--space-7);
-    border-left: 2px solid var(--color-rule);
-  }
-  .step::before {
-    content: "";
-    position: absolute;
-    left: -6px;
-    top: var(--space-6);
-    width: 10px;
-    height: 10px;
-    border-radius: var(--radius-pill);
-    background: var(--color-bay);
-    box-shadow: var(--shadow-signal-glow);
-  }
-  .step__n {
-    position: absolute;
-    left: var(--space-4);
-    top: calc(var(--space-6) + var(--space-5));
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    line-height: 1;
-    color: var(--color-signal-600);
-    font-variant-numeric: tabular-nums;
-  }
-  .step__short { margin: 0; }
-  .step__short::before { display: none; } /* the rail already carries the signal dot */
-  .step__h3 { margin: 0; font-size: var(--text-2xl); }
-  .step__body { margin: var(--space-2) 0 0; color: var(--color-text-muted); max-width: 46ch; }
+  :global(.is-play) .mv__bubble { animation-delay: calc(var(--si) * 300ms + var(--i) * 600ms + 400ms); }
+  :global(.is-play) .mv__tick circle { animation: tick-fill var(--duration-base) var(--ease-standard) calc(var(--si) * 300ms + var(--i) * 250ms + 300ms) both; }
+  :global(.is-play) .mv__tick path { animation: tick-draw var(--duration-base) var(--ease-out-expo) calc(var(--si) * 300ms + var(--i) * 250ms + 420ms) both; }
+  @keyframes mv-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @keyframes tick-fill { from { fill: var(--color-surface); stroke: var(--color-border-strong); } to { fill: var(--color-success); stroke: transparent; } }
+  @keyframes tick-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 
   @media (max-width: 767px) {
-    .steps { padding-left: calc(var(--space-gutter) + var(--space-2)); }
-    .step__n { display: none; }
+    .how__list { padding-left: var(--space-6); }
+    .how__list::before { content: ""; position: absolute; left: 0.6875rem; top: var(--space-4); bottom: var(--space-4); border-left: 1px dashed var(--color-accent); }
+    .how__card::before { content: ""; position: absolute; left: calc(-1 * var(--space-6) + 0.375rem); top: calc(12.5rem + var(--space-4) + var(--space-3) + 0.25rem); width: 0.625rem; height: 0.625rem; border-radius: var(--radius-pill); background: var(--color-surface); border: 1.5px solid var(--color-accent); }
   }
-
+  @media (min-width: 768px) { .how__list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (min-width: 1024px) {
-    .steps { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-5); }
-    .step { border-left: 0; border-top: 2px solid var(--color-rule); padding: var(--space-8) var(--space-5) 0 0; }
-    .step::before { left: 0; top: -6px; }
-    .step__n { position: static; font-size: var(--text-4xl); font-weight: var(--font-weight-body); letter-spacing: -0.04em; margin-bottom: var(--space-5); }
-  }
-
-  /* Pinned horizontal mode (motion.ts adds .is-pinned on desktop with motion allowed). */
-  .process:global(.is-pinned) {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-height: 100svh;
-    padding-block: calc(var(--nav-height) + var(--space-6)) var(--space-7);
-  }
-  .process:global(.is-pinned) :global(.shead) { margin-bottom: var(--space-6); }
-  .process:global(.is-pinned) .process__progress {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    position: relative;
-    padding-top: var(--space-3);
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    letter-spacing: var(--tracking-label);
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-  }
-  .process:global(.is-pinned) .process__progress::before,
-  .process:global(.is-pinned) .process__progress::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 2px;
-    width: 100%;
-    background: var(--color-border);
-  }
-  .process:global(.is-pinned) .process__progress::after {
-    background: var(--color-signal-500);
-    transform-origin: left;
-    transform: scaleX(var(--p, 0));
-  }
-  .process:global(.is-pinned) .process__viewport { margin-top: var(--space-7); }
-  .process:global(.is-pinned) .steps {
-    display: flex;
-    gap: var(--space-6);
-    width: max-content;
-    max-width: none;
-    padding-inline: max(var(--space-gutter), calc((100vw - var(--container-max)) / 2));
-  }
-  .process:global(.is-pinned) .step {
-    width: min(34rem, 42vw);
-    min-height: 24rem;
-    padding: var(--space-7);
-    border: 1px solid var(--color-border);
-    border-top: 3px solid var(--color-bay);
-    border-radius: var(--radius-xl);
-    background: var(--color-surface);
-    box-shadow: var(--shadow-md);
-  }
-  .process:global(.is-pinned) .step::before { display: none; }
-  .process:global(.is-pinned) .step__n { position: static; font-size: var(--text-4xl); margin-bottom: var(--space-6); }
-
-  .trade { padding-block: var(--space-9); background: var(--color-signal-50); border-block: 1px solid var(--color-signal-100); }
-  .trade__inner { display: grid; gap: var(--space-4); }
-  .trade__aud { margin: 0; }
-  .trade__h2 { margin: 0; font-size: var(--text-3xl); max-width: 20ch; }
-  .trade__body { margin: 0; max-width: var(--measure); color: var(--color-text); }
-  .trade__ctas { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4) var(--space-6); margin-top: var(--space-3); }
-  @media (min-width: 1024px) {
-    .trade__inner { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: var(--space-8); align-items: end; }
-    .trade__aud, .trade__h2 { grid-column: 1; }
-    .trade__body, .trade__ctas { grid-column: 2; }
-    .trade__body { grid-row: 2; }
-    .trade__ctas { grid-row: 3; }
+    .how__list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    /* Dashed line joining the 01–04 numbers across the cards. */
+    .how__list::before {
+      content: "";
+      position: absolute;
+      left: var(--space-4);
+      right: var(--space-4);
+      top: calc(var(--space-4) + 12.5rem + var(--space-3) + var(--space-2) + 0.5em);
+      border-top: 1px dashed var(--color-accent);
+      opacity: 0.5;
+      z-index: 0;
+    }
+    .how__n span:first-child { position: relative; z-index: 1; padding-right: var(--space-2); background: var(--color-surface); }
   }
 </style>

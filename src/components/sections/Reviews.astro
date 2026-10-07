@@ -1,0 +1,47 @@
+---
+/**
+ * Reviews (#reviews; design-spec-v3 §2.6, content.ts reviews). SAMPLE reviews: every card
+ * carries its visible label. No stars, no photos of people, no counts, no review schema
+ * (guardrails). The H2 is Ruth's "…go here" line; the display says they are samples.
+ */
+import { anchors, reviews } from '../../data/content';
+import Button from '../ui/Button.astro';
+import SectionHead from '../ui/SectionHead.astro';
+---
+<section id={anchors.reviews} class="section rv" aria-labelledby="rv-h2">
+  <div class="frame">
+    <SectionHead heading={reviews.heading} display={reviews.display} id="rv-h2" align="center" />
+    <ul class="rv__grid" role="list">
+      {reviews.items.map((r) => (
+        <li class="rv__card" data-reveal>
+          <figure class="rv__fig">
+            <div class="rv__top">
+              <span class="rv__initial" aria-hidden="true">{r.author.charAt(0)}</span>
+              <figcaption class="rv__author">{r.author}</figcaption>
+              {r.sample && <span class="sample-tag rv__tag">{r.label}</span>}
+            </div>
+            <blockquote class="rv__quote"><p>{r.quote}</p></blockquote>
+            <p class="rv__svc mono">{r.service}</p>
+          </figure>
+        </li>
+      ))}
+    </ul>
+    <div class="rv__cta"><Button cta={reviews.cta} location="reviews" /></div>
+  </div>
+</section>
+
+<style>
+  .rv__grid { display: grid; gap: var(--grid-gap); margin: 0; padding: 0; list-style: none; }
+  .rv__card { padding: var(--space-6); border: 1px solid var(--color-border); border-radius: var(--radius-xl); background: var(--color-surface); }
+  .rv__fig { display: grid; gap: var(--space-4); height: 100%; grid-template-rows: auto 1fr auto; margin: 0; }
+  .rv__top { display: flex; align-items: center; gap: var(--space-3); }
+  .rv__initial { display: grid; place-items: center; flex: none; width: 2rem; height: 2rem; border-radius: var(--radius-pill); background: var(--color-mist); font-size: var(--text-sm); font-weight: var(--font-weight-heading); color: var(--color-heading); }
+  .rv__author { font-size: var(--text-sm); font-weight: var(--font-weight-heading); color: var(--color-heading); }
+  .rv__tag { margin-left: auto; }
+  .rv__quote { margin: 0; }
+  .rv__quote p { margin: 0; font-size: var(--text-lg); line-height: 1.5; color: var(--color-heading); }
+  .rv__svc { margin: 0; padding-top: var(--space-4); border-top: 1px solid var(--color-border); font-size: var(--text-xs); color: var(--color-text-muted); }
+  .rv__cta { display: flex; justify-content: center; margin-top: var(--space-7); }
+  @media (min-width: 768px) { .rv__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (min-width: 768px) and (max-width: 1023px) { .rv__card { padding: var(--space-5); } .rv__quote p { font-size: var(--text-base); } }
+</style>

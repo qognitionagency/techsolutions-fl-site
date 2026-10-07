@@ -7,7 +7,20 @@ import type { ImageMetadata } from 'astro';
 import credits from '../data/media-credits.json';
 import { withBase } from './url';
 
-const files = import.meta.glob<{ default: ImageMetadata }>('/src/assets/media/*.jpg', { eager: true });
+// Only the slots the page renders (USED_SLOTS below). An eager '*.jpg' glob made Astro emit the
+// original of every stock photo in src/assets/media into dist (~13 MB, 16 never shown). Globs
+// must be literals: add the file here AND to USED_SLOTS when a component starts using a slot.
+const files = import.meta.glob<{ default: ImageMetadata }>(
+  [
+    '/src/assets/media/signature-tv-wall-after.jpg',
+    '/src/assets/media/band-detail-mount.jpg',
+    '/src/assets/media/svc-wifi.jpg',
+    '/src/assets/media/env-condo.jpg',
+    '/src/assets/media/env-townhouse.jpg',
+    '/src/assets/media/env-office.jpg',
+  ],
+  { eager: true },
+);
 const bySlot = new Map<string, ImageMetadata>(
   Object.entries(files).map(([path, mod]) => [path.split('/').pop()!.replace(/\.jpg$/, ''), mod.default]),
 );
@@ -31,9 +44,15 @@ export interface Credit {
   file: string;
 }
 
-/** Pexels authors, one entry each, in manifest order (footer credit line, Pexels API terms). */
-export function stockAuthors(): { author: string; authorUrl: string }[] {
+/**
+ * Every stock slot the v3 page renders (design-spec-v3 §4.6 approved list). The footer credits
+ * exactly these. Add a slot here when a component starts using it.
+ */
+export const USED_SLOTS = ['signature-tv-wall-after', 'band-detail-mount', 'svc-wifi', 'env-condo', 'env-townhouse', 'env-office'] as const;
+
+/** Pexels authors of the given slots, one entry each, in manifest order (footer credit, Pexels terms). */
+export function stockAuthors(slots: readonly string[] = USED_SLOTS): { author: string; authorUrl: string }[] {
   const seen = new Map<string, string>();
-  for (const c of credits as Credit[]) if (c.author && c.authorUrl && !seen.has(c.author)) seen.set(c.author, c.authorUrl);
+  for (const c of credits as Credit[]) if (slots.includes(c.slot) && c.author && c.authorUrl && !seen.has(c.author)) seen.set(c.author, c.authorUrl);
   return [...seen].map(([author, authorUrl]) => ({ author, authorUrl }));
 }

@@ -1,0 +1,77 @@
+---
+/**
+ * The condo plan drawn once (plan units, unit 40..760 × 40..400, balcony below). Used by both
+ * artboards of DiagramWifiPlan: desktop as-is, mobile rotated 90° by the parent's matrix.
+ * Rooms fill by coverage tone per mode (data-t<modeIndex>="good|weak|bad"): flat, discrete
+ * fills (spec §3.7-B: not blurry heat). The only gradient is the node glow (spec §3.2).
+ */
+interface Props {
+  /** id prefix: unique per artboard */
+  p: string;
+  /** mode index of "router only" and "with mesh" */
+  R: number;
+  M: number;
+  /** tone by room key for each mode index */
+  tones: Record<string, Record<number, string>>;
+  router: readonly [number, number];
+  node: readonly [number, number];
+}
+const { p, R, M, tones, router, node } = Astro.props;
+const room = (key: string) => Object.fromEntries(Object.entries(tones[key] ?? {}).map(([m, t]) => [`data-t${m}`, t]));
+const RECTS: [string, number, number, number, number][] = [
+  ['entry', 40, 190, 130, 210],
+  ['kitchen', 40, 40, 260, 150],
+  ['hall', 300, 40, 170, 150],
+  ['corridor', 470, 130, 100, 80],
+  ['living', 170, 190, 300, 210],
+  ['bath', 470, 40, 100, 90],
+  ['primary', 570, 40, 190, 170],
+  ['bedroom-2', 470, 210, 290, 190],
+  ['balcony', 420, 400, 340, 60],
+];
+---
+<defs>
+  <radialGradient id={`${p}-glow`} r="0.5">
+    <stop offset="0" style="stop-color: var(--illo-signal); stop-opacity: 0.35" />
+    <stop offset="1" style="stop-color: var(--illo-signal); stop-opacity: 0" />
+  </radialGradient>
+</defs>
+<rect x="40" y="40" width="720" height="360" class="wfp__floor" />
+{RECTS.map(([k, x, y, w, h]) => <rect x={x} y={y} width={w} height={h} class="wfp__room" {...room(k)} />)}
+
+<!-- furniture: structure hairlines -->
+<g class="dg__structure">
+  <rect x="54" y="54" width="200" height="24" rx="2" /><rect x="110" y="112" width="110" height="44" rx="3" />
+  <rect x="210" y="330" width="170" height="44" rx="8" /><rect x="250" y="246" width="90" height="50" rx="4" />
+  <rect x="446" y="236" width="14" height="120" rx="2" />
+  <rect x="610" y="70" width="120" height="100" rx="4" /><rect x="600" y="250" width="120" height="96" rx="4" />
+  <rect x="484" y="56" width="40" height="64" rx="12" />
+  <line x1="436" y1="440" x2="744" y2="440" />
+</g>
+
+<!-- glow + rings: router always, node in mesh mode -->
+<circle cx={router[0]} cy={router[1]} r="150" fill={`url(#${p}-glow)`} />
+<g class="wfp__rings" style={`transform-origin:${router[0]}px ${router[1]}px`}>
+  <circle cx={router[0]} cy={router[1]} r="140" /><circle cx={router[0]} cy={router[1]} r="140" /><circle cx={router[0]} cy={router[1]} r="140" />
+</g>
+<g data-fade-mode={String(M)}>
+  <circle cx={node[0]} cy={node[1]} r="170" fill={`url(#${p}-glow)`} />
+  <g class="wfp__rings" style={`transform-origin:${node[0]}px ${node[1]}px`}>
+    <circle cx={node[0]} cy={node[1]} r="150" /><circle cx={node[0]} cy={node[1]} r="150" /><circle cx={node[0]} cy={node[1]} r="150" />
+  </g>
+</g>
+
+<!-- walls -->
+<path d="M40 220 V40 H760 V400 H720 M560 400 H470 M420 400 H40 V260" class="wfp__wall wfp__wall--ext" />
+<path d="M300 40 V120 M40 190 H110 M230 190 H300 M40 330 H110 M110 330 V345 M110 385 V400 M170 330 V400 M470 40 V130 M570 40 V160 M570 196 V210 M470 130 H500 M540 130 H570 M470 210 H490 M530 210 H760 M470 210 V400" class="wfp__wall" />
+<!-- glazing to the balcony + door swings -->
+<g class="dg__fine-g">
+  <path d="M420 397 H470 M420 403 H470 M560 397 H720 M560 403 H720" />
+  <path d="M40 220 A40 40 0 0 1 80 260" /><path d="M110 345 A40 40 0 0 1 150 385" />
+  <path d="M500 130 A40 40 0 0 0 540 170" /><path d="M570 160 A36 36 0 0 0 534 196" /><path d="M490 210 A40 40 0 0 0 530 250" />
+</g>
+
+<!-- devices -->
+<rect x={router[0] - 10} y={router[1] - 10} width="20" height="20" rx="2" class="wfp__router" />
+<g data-fade-mode={String(M)}><circle cx={node[0]} cy={node[1]} r="10" class="wfp__node" /><circle cx={node[0]} cy={node[1]} r="3.5" class="wfp__node-core" /></g>
+{R < 0 ? null : null}

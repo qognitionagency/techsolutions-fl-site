@@ -1,0 +1,71 @@
+---
+/**
+ * Phone device frame (spec §2.1): pure HTML/CSS. Bezel, screen, dynamic-island pill and a
+ * status bar whose signal and battery glyphs are drawn in CSS. The screen content is the slot.
+ * The time in the status bar is the visitor's local clock (filled by phone.ts); it is data,
+ * not copy, and stays empty without JS.
+ */
+interface Props {
+  class?: string;
+  /** Max device width; defaults to --device-width. */
+  width?: string;
+}
+const { class: cls, width } = Astro.props;
+---
+<div class:list={['device', cls]} style={width ? `--dw:${width}` : undefined}>
+  <div class="device__screen">
+    <div class="device__bar" aria-hidden="true">
+      <span class="device__time mono" data-clock="short"></span>
+      <span class="device__island"></span>
+      <span class="device__glyphs"><i></i><i></i><i></i><b></b></span>
+    </div>
+    <slot />
+  </div>
+</div>
+
+<style>
+  .device {
+    position: relative;
+    width: var(--dw, var(--device-width));
+    aspect-ratio: var(--device-aspect);
+    padding: var(--device-bezel);
+    border-radius: var(--radius-device);
+    background: var(--device-bezel-color);
+    box-shadow: var(--shadow-device);
+  }
+  .device__screen {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+    border-radius: var(--radius-screen);
+    background: var(--color-surface);
+    container-type: inline-size;
+  }
+  .device__bar {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 2.5rem;
+    padding: 0 var(--space-5);
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-data);
+    color: var(--color-heading);
+  }
+  .device__time { min-width: 2.5rem; }
+  .device__island {
+    position: absolute;
+    top: 0.625rem;
+    left: 50%;
+    width: 28%;
+    height: 1.5rem;
+    transform: translateX(-50%);
+    border-radius: var(--radius-pill);
+    background: var(--color-slate);
+  }
+  .device__glyphs { display: inline-flex; align-items: flex-end; gap: 2px; height: 0.625rem; }
+  .device__glyphs i { width: 3px; border-radius: 1px; background: var(--color-heading); }
+  .device__glyphs i:nth-child(1) { height: 4px; } .device__glyphs i:nth-child(2) { height: 7px; } .device__glyphs i:nth-child(3) { height: 10px; }
+  .device__glyphs b { width: 1.25rem; height: 0.625rem; margin-left: var(--space-1); border: 1.5px solid var(--color-heading); border-radius: 3px; background: linear-gradient(90deg, var(--color-heading) 70%, transparent 0) content-box; padding: 1px; }
+</style>

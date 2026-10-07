@@ -282,6 +282,17 @@ test('a CTA with data-prefill-* prefills, records entry from data-track-id, and 
   assert.equal($(d, '[name=entry_cta]').value, 'env_marine_book');
 });
 
+// Owen, 2026-10-07: a link to <main> (the skip link) or <body> contains the form but is not a
+// booking CTA. Only the form itself or something up to its nearest <section> counts.
+test('a skip link to <main> is not a booking CTA; a link to the form\'s section still is', async () => {
+  const { d, form } = await setup(`<a id="skip" href="#main">Skip</a><a id="sec" href="#consult">Book</a><main id="main">` + FORM + `</main>`);
+  form.initMultiStepForm($(d, 'form'), LIVE);
+  click($(d, '#skip'));
+  assert.notEqual(d.activeElement, $(d, '[data-step=type] legend'), 'skip link must not jump focus into the form');
+  click($(d, '#sec'));
+  assert.equal(d.activeElement, $(d, '[data-step=type] legend'));
+});
+
 // Amended 2026-10-07 (Anton, security review): URL prefill is an allowlist. Only fields named
 // in Object.values(urlParams) and utm_* hidden fields; any other control, choice or not, is ignored.
 test('URL query/hash prefill only touches urlParams targets and utm_* hidden fields', async () => {

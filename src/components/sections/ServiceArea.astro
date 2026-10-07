@@ -1,23 +1,25 @@
 ---
 /**
- * Service area (Iron Sound port, re-drawn for Miami-Dade + Broward). A stylised SVG of the
+ * Service area (#service-area; design-spec-v3 §2.7 restyle, content.ts serviceArea). Re-drawn for Miami-Dade + Broward. A stylised SVG of the
  * coast from approximate lon/lat (equirectangular, x scaled by cos 25.9°). The county line
  * sits at the real Broward/Miami-Dade latitude (≈25.957°N). It is a diagram, not a survey map.
- * Neighborhoods are numbered markers keyed to the HTML list (the list carries the names for
- * search and screen readers; the map is one labelled image). Every neighborhood is a sample
+ * Neighborhood points are accent dots; their labels are HTML over the map (never below 12px).
+ * The chip list carries the names for search and screen readers; the map is one labelled image.
+ * No route lines, no radius circle: the radius is NEEDS DATA. Every neighborhood is a sample
  * until Jay confirms his radius (content.ts serviceArea.sample).
  */
 import { anchors, serviceArea } from '../../data/content';
 import { uiLabels } from '../../data/ui-labels';
 import Button from '../ui/Button.astro';
 import SectionHead from '../ui/SectionHead.astro';
+import Icon from '../ui/Icon.astro';
 
 const K = 700; // px per degree of latitude
 const COS = Math.cos((25.9 * Math.PI) / 180);
 const LON0 = -80.48;
 const LON1 = -80.02;
-const LAT0 = 26.33; // north edge (Broward's north line ≈ 26.32)
-const LAT1 = 25.45; // south edge
+const LAT0 = 26.19; // north edge: just above Fort Lauderdale (the northernmost sample point)
+const LAT1 = 25.62; // south edge: just below Kendall
 const px = (lon: number) => +((lon - LON0) * K * COS).toFixed(1);
 const py = (lat: number) => +((LAT0 - lat) * K).toFixed(1);
 const W = Math.ceil(px(LON1));
@@ -61,111 +63,98 @@ const marks = serviceArea.cities.flatMap((c, i) => {
   const p = pos[c];
   return p ? [{ n: i + 1, name: c, x: px(p[1]), y: py(p[0]) }] : [];
 });
-const hatch = Array.from({ length: Math.ceil(H / 12) }, (_, i) => i * 12 + 6);
+const pct = (v: number, of: number) => `${((v / of) * 100).toFixed(2)}%`;
+// Label side per point, set so neighbours never collide (checked at 390 and 1440).
+const SIDE: Record<string, 'l' | 'r' | 't' | 'b'> = {
+  'Downtown Miami': 'r', Brickell: 'l', Edgewater: 't', Wynwood: 'l', 'Coconut Grove': 'r', 'Coral Gables': 'l',
+  Doral: 'l', Kendall: 'l', 'Miami Beach': 'r', Aventura: 'l', Hollywood: 'l', 'Fort Lauderdale': 'l',
+};
+const HUB = 'Downtown Miami';
 const [mdLabel, brLabel] = serviceArea.counties;
 ---
-<section id={anchors.area} class="section area" aria-labelledby="area-heading">
-  <div class="frame area__grid">
+<section id={anchors.area} class="section section--alt area" aria-labelledby="area-heading">
+  <div class="frame grid12 area__grid">
     <div class="area__text">
-      <SectionHead display={serviceArea.display} heading={serviceArea.heading} id="area-heading" align="stack" />
+      <SectionHead eyebrow={serviceArea.eyebrow} heading={serviceArea.heading} display={serviceArea.display} id="area-heading" tag={serviceArea.sample ? uiLabels.sample : undefined} />
       <p class="area__body">{serviceArea.body}</p>
       <ul class="area__counties" role="list">
-        {serviceArea.counties.map((c) => <li>{c}</li>)}
+        {serviceArea.counties.map((c) => <li><Icon name="pin" size={18} />{c}</li>)}
       </ul>
-      <div class="area__hoods-head">
-        <p class="eyebrow">{serviceArea.neighborhoodsLabel}</p>
-        {serviceArea.sample && <span class="sample-tag">{uiLabels.sample}</span>}
-      </div>
-      <ol class="area__hoods" role="list">
-        {serviceArea.cities.map((c, i) => (
-          <li data-n={i + 1}><span class="area__n" aria-hidden="true">{i + 1}</span>{c}</li>
-        ))}
-      </ol>
+      <p class="eyebrow area__hoods-h">{serviceArea.neighborhoodsLabel}</p>
+      <ul class="area__chips" role="list">
+        {serviceArea.cities.map((c) => <li class="mono">{c}</li>)}
+      </ul>
       <p class="area__note">{serviceArea.outOfAreaNote}</p>
       <div class="area__ctas">
-        <Button cta={serviceArea.ask} location="area" variant="secondary" />
+        <Button cta={serviceArea.ask} location="area" />
         <Button cta={serviceArea.secondary} location="area" variant="text" />
       </div>
     </div>
 
-    <figure class="area__map" data-reveal>
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={serviceArea.mapLabel} class="map">
-        <defs>
-          <clipPath id="land-clip"><path d={mainland} /><path d={poly(island)} /><path d={poly(keyBiscayne)} /></clipPath>
-        </defs>
-        <g class="map__sea" aria-hidden="true">
-          {hatch.map((y) => <line x1="0" x2={W} y1={y} y2={y} />)}
-        </g>
-        <g clip-path="url(#land-clip)">
-          <rect class="map__county map__county--br" x="0" y="0" width={W} height={py(COUNTY_LINE)} />
-          <rect class="map__county map__county--md" x="0" y={py(COUNTY_LINE)} width={W} height={H - py(COUNTY_LINE)} />
-        </g>
-        <path class="map__coast" d={coastLine} />
-        <path class="map__coast" d={poly(island)} />
-        <path class="map__coast" d={poly(keyBiscayne)} />
-        <line class="map__line" x1="0" x2={px(-80.118)} y1={py(COUNTY_LINE)} y2={py(COUNTY_LINE)} />
-        <text class="map__county-label" x="14" y={py(COUNTY_LINE) - 16}>{brLabel?.toUpperCase()}</text>
-        <text class="map__county-label" x="14" y={py(COUNTY_LINE) + 26}>{mdLabel?.toUpperCase()}</text>
-        {marks.map((m) => (
-          <g class="map__mark" data-n={m.n}>
-            <circle cx={m.x} cy={m.y} r="6.5" />
-            <text x={m.x} y={m.y + 3} text-anchor="middle">{m.n}</text>
+    <figure class="stage area__map" data-reveal>
+      <div class="area__canvas" style={`aspect-ratio:${W}/${H}`}>
+        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={serviceArea.mapLabel} class="map">
+          <defs>
+            <clipPath id="land-clip"><path d={mainland} /><path d={poly(island)} /><path d={poly(keyBiscayne)} /></clipPath>
+          </defs>
+          <g clip-path="url(#land-clip)">
+            <rect class="map__county" x="0" y="0" width={W} height={H} />
           </g>
+          <path class="map__coast" d={coastLine} />
+          <path class="map__coast" d={poly(island)} />
+          <path class="map__coast" d={poly(keyBiscayne)} />
+          <line class="map__line" x1="0" x2={px(-80.118)} y1={py(COUNTY_LINE)} y2={py(COUNTY_LINE)} />
+          {marks.map((m) => (
+            <g class:list={['map__mark', m.name === HUB && 'map__mark--hub']}>
+              {m.name === HUB && <circle class="map__pulse" cx={m.x} cy={m.y} r="14" />}
+              <circle cx={m.x} cy={m.y} r={m.name === HUB ? 6 : 3.5} />
+            </g>
+          ))}
+        </svg>
+        <span class="map__county-label" style={`left:${pct(14, W)};top:${pct(py(COUNTY_LINE) - 22, H)}`} aria-hidden="true">{brLabel}</span>
+        <span class="map__county-label" style={`left:${pct(14, W)};top:${pct(py(COUNTY_LINE) + 10, H)}`} aria-hidden="true">{mdLabel}</span>
+        {marks.map((m, i) => (
+          <span class:list={['map__label', `map__label--${SIDE[m.name] ?? 'r'}`, i % 2 === 1 && 'map__label--alt', m.name === HUB && 'map__label--hub']} style={`left:${pct(m.x, W)};top:${pct(m.y, H)}`} aria-hidden="true">{m.name}</span>
         ))}
-        <g class="map__north" transform="translate(24 34)" aria-hidden="true">
-          <path d="M0 -16 L6 6 L0 2 L-6 6 Z" />
-        </g>
-      </svg>
+      </div>
     </figure>
   </div>
 </section>
 
 <style>
-  .area { background: var(--color-surface); border-top: 1px solid var(--color-border); }
-  .area__grid { display: grid; gap: var(--space-8); align-items: start; }
-  .area__text :global(.shead) { margin-bottom: var(--space-5); }
-  .area__body { margin: 0; max-width: var(--measure); }
-  .area__counties { display: grid; margin: var(--space-6) 0 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border); }
-  .area__counties li { padding-block: var(--space-3); border-bottom: 1px solid var(--color-border); font-size: var(--text-xl); font-weight: var(--font-weight-heading); letter-spacing: var(--tracking-heading); color: var(--color-heading); }
-  .area__hoods-head { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-6); }
-  .area__hoods-head .eyebrow { margin: 0; }
-  .area__hoods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2) var(--space-4); margin: var(--space-4) 0 0; padding: 0; list-style: none; font-size: var(--text-sm); }
-  .area__hoods li { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) 0; color: var(--color-text); transition: color var(--duration-fast) var(--ease-standard); }
-  .area__n { display: inline-grid; place-items: center; flex: none; width: 1.5rem; height: 1.5rem; border-radius: var(--radius-pill); background: var(--color-signal-50); box-shadow: inset 0 0 0 1px var(--color-signal-200); font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-signal-700); transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard); }
-  .area__hoods li:hover { color: var(--color-signal-700); }
-  .area__hoods li:hover .area__n { background: var(--color-signal-600); color: var(--color-on-accent); }
+  .area__grid { align-items: start; row-gap: var(--space-7); }
+  .area__body { margin: 0; max-width: var(--measure); color: var(--color-text-muted); }
+  .area__counties { display: grid; gap: var(--space-2); margin: var(--space-5) 0 0; padding: 0; list-style: none; }
+  .area__counties li { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-lg); font-weight: var(--font-weight-heading); color: var(--color-heading); }
+  .area__counties :global(.icon) { color: var(--color-accent); }
+  .area__hoods-h { margin-top: var(--space-6); }
+  .area__chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
+  .area__chips li { padding: 3px var(--space-3); border-radius: var(--radius-pill); background: var(--color-surface); box-shadow: inset 0 0 0 1px var(--color-border); font-size: var(--text-xs); color: var(--color-heading); }
   .area__note { margin: var(--space-5) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); max-width: 46ch; }
-  .area__ctas { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4) var(--space-6); margin-top: var(--space-6); }
+  .area__ctas { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); margin-top: var(--space-6); }
 
-  .area__map { margin: 0; padding: var(--space-5); border-radius: var(--radius-xl); background: var(--color-bg); border: 1px solid var(--color-border); box-shadow: var(--shadow-md); }
-  .map { display: block; width: 100%; max-width: 26rem; height: auto; margin-inline: auto; overflow: visible; }
-  .map__sea line { stroke: var(--color-bay); stroke-width: 1; opacity: 0.35; }
-  .map__county--br { fill: var(--color-mist); }
-  .map__county--md { fill: var(--color-signal-50); }
-  .map__line { stroke: var(--color-signal-500); stroke-width: 1.2; stroke-dasharray: 3 4; }
-  .map__coast { fill: none; stroke: var(--color-slate); stroke-width: 1.4; stroke-linejoin: round; }
-  .map__county-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.16em; fill: var(--color-slate); }
-  .map__mark circle { fill: var(--color-signal-600); stroke: var(--color-surface); stroke-width: 1.5; transition: fill var(--duration-fast) var(--ease-standard), r var(--duration-base) var(--ease-spring); }
-  .map__mark text { font-family: var(--font-mono); font-size: 8px; font-weight: 600; fill: var(--color-on-accent); pointer-events: none; }
-  .map__north path { fill: var(--color-bay); }
-  /* Hovering a neighborhood in the list lights its marker: ties the text to the diagram. */
-  .area:has(li[data-n="1"]:hover) .map__mark[data-n="1"] circle,
-  .area:has(li[data-n="2"]:hover) .map__mark[data-n="2"] circle,
-  .area:has(li[data-n="3"]:hover) .map__mark[data-n="3"] circle,
-  .area:has(li[data-n="4"]:hover) .map__mark[data-n="4"] circle,
-  .area:has(li[data-n="5"]:hover) .map__mark[data-n="5"] circle,
-  .area:has(li[data-n="6"]:hover) .map__mark[data-n="6"] circle,
-  .area:has(li[data-n="7"]:hover) .map__mark[data-n="7"] circle,
-  .area:has(li[data-n="8"]:hover) .map__mark[data-n="8"] circle,
-  .area:has(li[data-n="9"]:hover) .map__mark[data-n="9"] circle,
-  .area:has(li[data-n="10"]:hover) .map__mark[data-n="10"] circle,
-  .area:has(li[data-n="11"]:hover) .map__mark[data-n="11"] circle,
-  .area:has(li[data-n="12"]:hover) .map__mark[data-n="12"] circle { fill: var(--color-sunset-700); r: 10; }
+  .area__map { margin: 0; padding: var(--space-5); }
+  .area__canvas { position: relative; width: 100%; max-width: 30rem; margin-inline: auto; }
+  .map { display: block; width: 100%; height: 100%; overflow: hidden; }
+  .map * { vector-effect: non-scaling-stroke; }
+  .map__county { fill: var(--illo-fill-2); }
+  .map__line { stroke: var(--illo-ink); stroke-width: var(--illo-stroke-fine); stroke-dasharray: 3 4; }
+  .map__coast { fill: none; stroke: var(--illo-ink); stroke-width: var(--illo-stroke); stroke-linejoin: round; }
+  .map__mark circle { fill: var(--illo-accent); stroke: var(--color-surface); stroke-width: 1.5; }
+  .map__mark .map__pulse { fill: none; stroke: var(--illo-accent); stroke-width: var(--illo-stroke-fine); opacity: 0.5; }
+  .map__county-label { position: absolute; transform: translateY(-50%); font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; color: var(--color-text-muted); white-space: nowrap; }
+  .map__label { position: absolute; transform: translate(10px, -50%); font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-heading); white-space: nowrap; pointer-events: none; text-shadow: 0 0 3px var(--color-surface), 0 0 3px var(--color-surface); }
+  .map__label--l { transform: translate(calc(-100% - 10px), -50%); }
+  .map__label--t { transform: translate(-50%, calc(-100% - 8px)); }
+  .map__label--b { transform: translate(-50%, 8px); }
+  .map__label--hub { font-weight: var(--font-weight-heading); }
 
-  @media (min-width: 640px) { .area__hoods { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 767px) {
+    .area__map { order: -1; padding: var(--space-3); }
+    .map__label--alt:not(.map__label--hub) { display: none; }
+  }
   @media (min-width: 1024px) {
-    .area__grid { grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: var(--space-9); }
-    .area__hoods { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .area__map { position: sticky; top: calc(var(--nav-height) + var(--space-6)); }
+    .area__text { grid-column: 1 / span 5; }
+    .area__map { grid-column: 6 / -1; position: sticky; top: calc(var(--nav-height) + var(--space-6)); }
   }
 </style>

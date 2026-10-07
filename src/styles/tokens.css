@@ -1,174 +1,299 @@
 /* ==========================================================================
-   TechSolutions FL — "Miami Signal" design tokens
-   Light theme only. Tokens first; components consume roles, never primitives.
+   TechSolutions FL — design tokens, v3.1 ("red / silver / ink on white")
+   Spec: docs/design-spec-v3.md §00 (v3.1 supersedes the v3 blue palette).
+   Light theme only. Tokens first; components consume ROLES, never primitives.
+   EVERY v2/v3 VARIABLE NAME IS KEPT so existing components compile. Some names are
+   now historical: --color-signal-300..900 is the RED ramp (50/100/200 are silver
+   tints), --color-slate is INK,
+   --color-bay is GRAPHITE (Wi-Fi), --color-sunset is RED (live/rec only).
+   New code should use the new aliases (--color-ink, --color-red-*, --color-chrome-*).
    Names follow Tailwind v4 namespaces (--color-*, --radius-*, --shadow-*,
-   --ease-*, --font-*, --text-*, --spacing) so global.css can expose them with
-   `@theme inline { ... }` without renaming.
+   --ease-*, --font-*, --text-*, --spacing) for `@theme inline { ... }`.
+
+   v3.1 changes (by Elena, 2026-10-07; operator: "red, silver, black with white bg",
+   taken from the client's own logo, IG @tech_solutionsfl)
+   - Brand red #E1251B (logo, illustration accent). Text/button red #C51A1F (5.93:1).
+   - Ink #0E0F11 replaces slate for text, phone bezel and the footer band.
+   - Neutrals are graphite/silver (cool grey, near-zero hue), not blue-slate.
+   - Chrome (#E4E6E9 -> #9BA1A8, edge #6E747B) is for the logo, the footer's top
+     hairline and the phone rim ONLY.
+   - Wi-Fi coverage is a graphite ramp, not cyan; "dead zone" is the absence of fill,
+     not a warning colour. Red in diagrams = the hardware we install + its cable route.
+   - Shadows are neutral ink; only the CTA shadow carries red.
    ==========================================================================
 
-   WCAG 2.2 contrast — pairs approved for TEXT (ratios computed from relative
-   luminance, rounded down to 2 dp). Anything not on this list is decorative only.
+   WCAG 2.2 contrast — pairs approved for TEXT (relative luminance, rounded down).
+   Anything not on this list is decorative only.
 
    AA normal text (>= 4.5:1)
-     --color-slate       #1E2A3B on --color-cloud #F5F8FC        13.60
-     --color-slate       #1E2A3B on #FFFFFF                       14.48
-     --color-slate       #1E2A3B on --color-mist  #E6ECF4         12.19
-     --color-slate       #1E2A3B on --color-signal-100 #DCE8FF    11.75
-     --color-steel-ink   #5B6878 on --color-cloud                  5.33
-     --color-steel-ink   #5B6878 on --color-mist                   4.78
-     --color-steel-ink   #5B6878 on #FFFFFF                        5.68
-     --color-signal-600  #1259E0 on --color-cloud                  5.58  (links, text accents)
-     --color-signal-600  #1259E0 on --color-mist                   5.00
-     --color-signal-600  #1259E0 on --color-signal-50 #EEF4FF      5.38
-     --color-signal-700  #0F49B8 on --color-cloud                  7.39
-     --color-signal-700  #0F49B8 on --color-signal-100             6.38
-     #FFFFFF             on --color-signal-500 #1A6BFF             4.57  (primary CTA; passes, thin margin)
-     #FFFFFF             on --color-signal-600 (CTA hover)         5.94
-     --color-slate       on --color-sunset #FF7A59                 5.64  ("Book" button, price pills)
-     --color-slate       on --color-bay    #2BC4D8                 6.89  (signal chips)
-     --color-sunset-700  #B4401F on --color-cloud                  5.34  (price text without a pill)
+     --color-slate (ink) #0E0F11 on #FFFFFF                         19.1
+     --color-slate (ink) #0E0F11 on --color-cloud #F4F5F6           17.5
+     --color-slate (ink) #0E0F11 on --color-mist  #E8EAED           15.9
+     --color-slate (ink) #0E0F11 on --color-signal-50 #F1F2F4       17.1  (selected chip, ribbon)
+     --color-slate (ink) #0E0F11 on --color-bay-100 #ECEEF0         16.4  (phone Wi-Fi card)
+     --color-steel-ink   #575C63 on #FFFFFF                          6.7
+     --color-steel-ink   #575C63 on --color-cloud                    6.1
+     --color-steel-ink   #575C63 on --color-signal-50                6.0
+     --color-steel-ink   #575C63 on --color-mist                     5.5
+     --color-steel-ink   #575C63 on --color-bay-100                  5.7
+     --color-signal-600  #C51A1F on #FFFFFF                          5.9   (links, eyebrow, active tab)
+     --color-signal-600  #C51A1F on --color-cloud                    5.4
+     --color-signal-600  #C51A1F on --color-signal-50                5.2
+     --color-signal-600  #C51A1F on --color-mist (= sunset-100)      4.9   (live pill / status--bad text)
+     --color-signal-700  #A3151A on #FFFFFF                          7.8   (link hover)
+     --color-signal-700  #A3151A on --color-cloud                    7.1
+     --color-signal-700  #A3151A on --color-signal-50                6.9   (selected chip text, badges)
+     --color-signal-700  #A3151A on --color-signal-100 (mist)        6.5
+     #FFFFFF             on --color-signal-600 #C51A1F               5.9   (primary CTA)
+     #FFFFFF             on --color-signal-700 (CTA hover)           7.8
+     #FFFFFF             on --color-signal-800 (CTA active)         10.6
+     #FFFFFF             on --color-slate (ink, footer)             19.1
+     #BFC4CA (steel-300) on --color-slate (footer muted text)       10.9
+     #EE8A84 (signal-300) on --color-slate (footer link hover)       7.8
+     --color-error       #B42318 on #FFFFFF                          6.5   (always with an icon)
+     --color-success     #13774A on #FFFFFF                          5.5
 
-   Large text / UI components only (>= 3:1)
-     --color-signal-500  #1A6BFF on --color-cloud                  4.29  (icons, borders, 24px+ headings)
-     --color-signal-500  #1A6BFF on --color-mist                   3.84
-     --color-steel       #7A8899 on --color-cloud                  3.39  (input borders, dividers)
+   Large text (>= 24px, or >= 18.66px bold) / UI components only (>= 3:1)
+     --color-signal-500  #E1251B on #FFFFFF                          4.6   (logo red; passes AA by a thin
+                                                                           margin, so never body-size text)
+     --color-signal-500  #E1251B on --color-slate (ink)              4.0   (UI/large only on dark)
+     --color-steel       #7D838A on #FFFFFF                          3.8   (input borders = --color-border-strong)
+     --color-steel       #7D838A on --color-cloud                    3.5
+     --color-focus       #C51A1F on #FFFFFF 5.9 / on ink 3.2         (focus ring passes 3:1 on both)
 
    FAILS — never use for text
-     #FFFFFF        on --color-sunset   2.56   (do not put white text on the Book button)
-     --color-bay    on --color-cloud    1.97   (Wi-Fi graphics and glows only)
-     --color-sunset on --color-cloud    2.41
+     Any chrome value (#E4E6E9, #9BA1A8) on white: 1.2–2.6. Chrome is decoration only.
+     --color-line / --color-line-strong are decorative hairlines (< 1.5:1): never the only
+     boundary of an input or a toggle. Inputs use --color-border-strong.
+     --color-bay (graphite) is fine as text (6.7) but is reserved for Wi-Fi meters, not copy.
    ========================================================================== */
 
 :root {
   color-scheme: light;
 
-  /* ---------- Primitives: brand ---------- */
-  --color-cloud: #F5F8FC;   /* page */
-  --color-mist:  #E6ECF4;   /* cards, bands */
-  --color-mist-strong: #D5DEEA;  /* borders on mist */
-  --color-slate: #1E2A3B;   /* text, headings */
-  --color-steel: #7A8899;   /* client's gray: borders, icons */
-  --color-steel-ink: #5B6878;  /* client's gray darkened to pass as secondary text */
+  /* ---------- Primitives: v3.1 named values ---------- */
+  --color-ink: #0E0F11;          /* near-black: text, headings, phone bezel, footer */
+  --color-ink-800: #1A1C1F;      /* raised surfaces on ink */
+  --color-ink-line: #2A2D31;     /* hairlines on ink */
 
-  /* Signal blue, brand value at 500. */
-  --color-signal-50:  #EEF4FF;
-  --color-signal-100: #DCE8FF;
-  --color-signal-200: #B9D0FF;
-  --color-signal-300: #8AB2FF;
-  --color-signal-400: #5590FF;
-  --color-signal-500: #1A6BFF;  /* primary CTA */
-  --color-signal-600: #1259E0;
-  --color-signal-700: #0F49B8;
-  --color-signal-800: #0E3B8F;
-  --color-signal-900: #0D2E6B;
+  /* Brand red, logo value at 500. Hue held at ~0 deg so button and logo match. */
+  --color-red-50:  #FCF0F0;
+  --color-red-100: #F9DEDF;
+  --color-red-200: #F4B9B6;
+  --color-red-300: #EE8A84;      /* on ink only (footer link hover) */
+  --color-red-400: #E8564E;
+  --color-red-500: #E1251B;      /* LOGO red. Illustration accent, live dot. Not body text */
+  --color-red-600: #C51A1F;      /* text-safe red + primary button fill */
+  --color-red-700: #A3151A;
+  --color-red-800: #7E1015;
+  --color-red-900: #5C0D10;
 
-  --color-bay:        #2BC4D8;  /* Biscayne cyan: Wi-Fi / signal visuals only */
-  --color-bay-100:    #D9F5F9;
-  --color-sunset:     #FF7A59;  /* "Book" button and price pills only */
-  --color-sunset-100: #FFE6DE;
-  --color-sunset-700: #B4401F;  /* sunset that is allowed to be text */
+  /* Chrome (the logo's silver). Decoration only: logo, footer top hairline, phone rim. */
+  --color-chrome-hi:   #E4E6E9;
+  --color-chrome-lo:   #9BA1A8;
+  --color-chrome-edge: #6E747B;
+  --gradient-chrome: linear-gradient(180deg, var(--color-chrome-hi) 0%, var(--color-chrome-lo) 100%);
+  --gradient-chrome-hairline: linear-gradient(90deg, rgb(155 161 168 / 0) 0%, var(--color-chrome-lo) 20%,
+                              var(--color-chrome-hi) 50%, var(--color-chrome-lo) 80%, rgb(155 161 168 / 0) 100%);
+
+  /* ---------- Primitives: v3 names (kept; values remapped) ---------- */
+  --color-white: #FFFFFF;
+  --color-cloud: #F4F5F6;   /* silver band: alternate sections, sunken wells */
+  --color-mist:  #E8EAED;   /* chip / segmented-control track */
+  --color-mist-strong: #D5D8DC;  /* strong hairline */
+  --color-slate: var(--color-ink);          /* was blue-slate #1E2A3B; now INK */
+  --color-slate-800: var(--color-ink-800);  /* footer raised surfaces */
+  --color-slate-line: var(--color-ink-line);/* hairlines on ink */
+  --color-steel: #7D838A;   /* graphite: input borders, icons (3.8:1) */
+  --color-steel-ink: #575C63;  /* secondary text (6.7:1) */
+  --color-steel-300: #BFC4CA;  /* muted text on ink; illustration secondary structure */
+
+  /* --color-signal-* was signal blue. Solid steps 300-900 are now the RED ramp.
+     Tint steps 50/100/200 are SILVER on purpose: the build uses them for section
+     backgrounds (#book), the ribbon, map fills, badge rings, ::selection and the dot grid,
+     and the brand has no pink. Red tints exist as --color-red-50..200 for explicit use only. */
+  --color-silver-50: #F1F2F4;
+  --color-signal-50:  var(--color-silver-50);   /* tint surface: selected chip, badge, ribbon */
+  --color-signal-100: var(--color-mist);        /* tint border, focus halo, ::selection */
+  --color-signal-200: var(--color-mist-strong); /* badge ring, dot grid */
+  --color-signal-300: var(--color-red-300);
+  --color-signal-400: var(--color-red-400);
+  --color-signal-500: var(--color-red-500);  /* logo red, diagram accent */
+  --color-signal-600: var(--color-red-600);  /* text-safe red, primary CTA */
+  --color-signal-700: var(--color-red-700);
+  --color-signal-800: var(--color-red-800);
+  --color-signal-900: var(--color-red-900);
+
+  --color-bay:        #575C63;  /* was Biscayne cyan. Now GRAPHITE: Wi-Fi meters + coverage only */
+  --color-bay-100:    #ECEEF0;  /* Wi-Fi status card */
+  --color-sunset:     var(--color-red-500);  /* was sunset. Now LIVE/REC dot only. Never a fill > 16px */
+  --color-sunset-100: var(--color-mist);     /* live pill / status--bad background: silver, red dot + red text */
+  --color-sunset-700: var(--color-red-600);  /* live pill text */
+
+  /* Hairlines (decorative) */
+  --color-line:        #E6E8EB;  /* default card / divider hairline on white */
+  --color-line-strong: var(--color-mist-strong);  /* hover, active card, table rules */
 
   /* ---------- Roles ---------- */
-  --color-bg:             var(--color-cloud);
-  --color-surface:        #FFFFFF;
-  --color-surface-sunken: var(--color-mist);
-  --color-surface-tint:   var(--color-signal-50);
-  --color-text:           var(--color-slate);
+  --color-bg:             var(--color-white);
+  --color-bg-alt:         var(--color-cloud);   /* every second section, max */
+  --color-surface:        var(--color-white);
+  --color-surface-sunken: var(--color-cloud);   /* wells inside cards, diagram stage */
+  --color-surface-tint:   var(--color-silver-50); /* ribbon, selected chips, highlight cards. Silver, NOT pink */
+  --color-surface-inverse: var(--color-ink);    /* footer only */
+  --color-text:           var(--color-ink);
   --color-text-muted:     var(--color-steel-ink);
-  --color-heading:        var(--color-slate);
-  --color-link:           var(--color-signal-600);
-  --color-link-hover:     var(--color-signal-700);
-  --color-accent:         var(--color-signal-500);
-  --color-accent-hover:   var(--color-signal-600);
-  --color-accent-active:  var(--color-signal-700);
-  --color-on-accent:      #FFFFFF;
-  --color-book:           var(--color-sunset);
-  --color-book-hover:     #FF6A44;
-  --color-on-book:        var(--color-slate);
-  --color-price:          var(--color-sunset-700);
-  --color-border:         var(--color-mist-strong);
-  --color-border-strong:  var(--color-steel);
-  --color-signal:         var(--color-bay);
-  --color-focus:          var(--color-signal-500);
-  --color-error:          #B42318;   /* 6.17:1 on cloud */
-  --color-success:        #13774A;   /* 5.23:1 on cloud */
+  --color-text-inverse:   var(--color-white);
+  --color-text-inverse-muted: var(--color-steel-300);
+  --color-heading:        var(--color-ink);
+  --color-eyebrow:        var(--color-red-600);
+  --color-link:           var(--color-red-600);
+  --color-link-hover:     var(--color-red-700);
+  --color-accent:         var(--color-red-600);   /* primary button fill: white text 5.9:1 */
+  --color-accent-hover:   var(--color-red-700);
+  --color-accent-active:  var(--color-red-800);
+  --color-on-accent:      var(--color-white);
+  /* "Book" keeps its name and is the primary red. */
+  --color-book:           var(--color-red-600);
+  --color-book-hover:     var(--color-red-700);
+  --color-on-book:        var(--color-white);
+  --color-price:          var(--color-ink);     /* mono, tabular */
+  --color-border:         var(--color-line);
+  --color-border-strong:  var(--color-steel);   /* inputs, toggles: 3:1 */
+  --color-signal:         var(--color-bay);     /* Wi-Fi meters: graphite */
+  --color-live:           var(--color-red-500); /* live / recording dot */
+  --color-live-text:      var(--color-red-600);
+  --color-focus:          var(--color-red-600);
+  --color-error:          #B42318;   /* 6.5:1 on white. Always paired with an icon + text */
+  --color-success:        #13774A;   /* 5.5:1 on white */
+  --color-success-bg:     #E7F6EE;
 
   /* ---------- Type ---------- */
   --font-sans: "Geist Variable", "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "Geist Mono Variable", "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  --font-weight-display: 650;
+  --font-weight-display: 600;
   --font-weight-heading: 600;
   --font-weight-body: 400;
   --font-weight-label: 500;
+  --font-weight-data: 500;
+  --font-feature-data: "tnum" 1, "zero" 1;
 
-  /* Fluid scale: min at 360px viewport, max at 1440px. */
-  --text-xs:   clamp(0.75rem,   0.7292rem + 0.0926vw, 0.8125rem);
-  --text-sm:   clamp(0.8125rem, 0.7917rem + 0.0926vw, 0.875rem);
-  --text-base: clamp(1rem,      0.9583rem + 0.1852vw, 1.125rem);
-  --text-lg:   clamp(1.125rem,  1.0417rem + 0.3704vw, 1.375rem);
-  --text-xl:   clamp(1.375rem,  1.25rem   + 0.5556vw, 1.75rem);
-  --text-2xl:  clamp(1.625rem,  1.4167rem + 0.9259vw, 2.25rem);
-  --text-3xl:  clamp(2rem,      1.5rem    + 2.2222vw, 3.5rem);
-  --text-4xl:  clamp(2.5rem,    1.75rem   + 3.3333vw, 4.75rem);   /* hero display */
+  /* Fluid scale: min at 360px viewport, max at 1440px (px values in comments). */
+  --text-xs:   clamp(0.75rem,   0.7292rem + 0.0926vw, 0.8125rem); /* 12 → 13  eyebrow, captions, SVG labels floor */
+  --text-sm:   clamp(0.8125rem, 0.7917rem + 0.0926vw, 0.875rem);  /* 13 → 14  UI, chips, form helper */
+  --text-base: clamp(1rem,      0.9792rem + 0.0926vw, 1.0625rem); /* 16 → 17  body */
+  --text-lg:   clamp(1.125rem,  1.0833rem + 0.1852vw, 1.25rem);   /* 18 → 20  lead paragraph */
+  --text-xl:   clamp(1.25rem,   1.1667rem + 0.3704vw, 1.5rem);    /* 20 → 24  card titles */
+  --text-2xl:  clamp(1.5rem,    1.3333rem + 0.7407vw, 2rem);      /* 24 → 32  sub-section */
+  --text-3xl:  clamp(1.875rem,  1.5rem    + 1.6667vw, 3rem);      /* 30 → 48  section H2 */
+  --text-4xl:  clamp(2.5rem,    1.8333rem + 2.963vw,  4.5rem);    /* 40 → 72  hero H1 */
+  --text-data-xl: clamp(2.5rem, 2.1667rem + 1.4815vw, 3.5rem);    /* 40 → 56  quote total (mono) */
 
-  --leading-display: 1.02;
-  --leading-heading: 1.15;
-  --leading-body: 1.55;
-  --tracking-display: -0.035em;  /* Geist tightens well at display sizes */
-  --tracking-heading: -0.02em;
+  --leading-display: 1.03;
+  --leading-heading: 1.12;
+  --leading-body: 1.6;
+  --leading-ui: 1.35;
+  --tracking-display: -0.042em;  /* hero H1 */
+  --tracking-heading: -0.028em;  /* H2 */
+  --tracking-title: -0.014em;    /* H3 / card titles */
   --tracking-label: 0.04em;
-  --measure: 64ch;
+  --tracking-eyebrow: 0.08em;    /* mono uppercase eyebrow */
+  --measure: 62ch;
+  --measure-lead: 46ch;
 
   /* ---------- Space (4px base) ---------- */
   --spacing: 0.25rem;
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.5rem;
-  --space-6: 2rem;
-  --space-7: 3rem;
-  --space-8: 4rem;
-  --space-9: 6rem;
-  --space-10: 8rem;
-  --space-gutter:  clamp(1rem, 0.6667rem + 1.4815vw, 2rem);
-  --space-section: clamp(3.5rem, 2.3333rem + 5.1852vw, 7rem);
-  --container-max: 76rem;          /* 1216px */
-  --mobile-bar-height: 4.5rem;     /* sticky Call / Text / Book; pad page bottom by this on mobile */
+  --space-1: 0.25rem;   /*  4 */
+  --space-2: 0.5rem;    /*  8 */
+  --space-3: 0.75rem;   /* 12 */
+  --space-4: 1rem;      /* 16 */
+  --space-5: 1.5rem;    /* 24 */
+  --space-6: 2rem;      /* 32 */
+  --space-7: 3rem;      /* 48 */
+  --space-8: 4rem;      /* 64 */
+  --space-9: 6rem;      /* 96 */
+  --space-10: 8rem;     /* 128 */
+  --space-gutter:  clamp(1.25rem, 0.9167rem + 1.4815vw, 2.25rem);   /* 20 → 36 page side padding */
+  --space-section: clamp(4.5rem, 3.3333rem + 5.1852vw, 8rem);       /* 72 → 128 section top/bottom */
+  --space-section-sm: clamp(3rem, 2.5rem + 2.2222vw, 4.5rem);       /* 48 → 72 compact sections */
+  --space-head: clamp(2rem, 1.6667rem + 1.4815vw, 3rem);            /* 32 → 48 section head → content */
+  --space-card: clamp(1.25rem, 1.0833rem + 0.7407vw, 1.75rem);      /* 20 → 28 card padding */
 
-  /* ---------- Radius (friendly, consistent with the bracket mark: r20/100) ---------- */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-2xl: 32px;
-  --radius-pill: 999px;
+  /* ---------- Layout ---------- */
+  --grid-columns: 12;
+  --grid-gap: clamp(1rem, 0.8333rem + 0.7407vw, 1.5rem);            /* 16 → 24 */
+  --container-max: 75rem;        /* 1200 content width */
+  --container-wide: 80rem;       /* 1280 explorer + quote stage */
+  --container-narrow: 47.5rem;   /* 760 FAQ, booking form */
+  --nav-height: 4rem;            /* 64 */
+  --mobile-bar-height: 4.5rem;   /* sticky Call / Text / Quote; pad page bottom by this on mobile */
 
-  /* ---------- Elevation (slate + signal tinted, layered; no grey) ---------- */
-  --shadow-xs: 0 1px 2px rgb(30 42 59 / 0.06);
-  --shadow-sm: 0 1px 2px rgb(30 42 59 / 0.05), 0 2px 8px -2px rgb(26 107 255 / 0.08);
-  --shadow-md: 0 1px 2px rgb(30 42 59 / 0.05), 0 6px 14px -4px rgb(30 42 59 / 0.08),
-               0 14px 28px -12px rgb(26 107 255 / 0.16);
-  --shadow-lg: 0 2px 4px rgb(30 42 59 / 0.04), 0 14px 28px -8px rgb(30 42 59 / 0.10),
-               0 32px 64px -20px rgb(26 107 255 / 0.22);
-  --shadow-cta: 0 1px 1px rgb(13 46 107 / 0.20), 0 8px 20px -6px rgb(26 107 255 / 0.50);
-  --shadow-book: 0 1px 1px rgb(180 64 31 / 0.20), 0 8px 20px -6px rgb(255 122 89 / 0.55);
-  --shadow-signal-glow: 0 0 0 1px rgb(43 196 216 / 0.30), 0 10px 32px -8px rgb(43 196 216 / 0.45);
+  /* ---------- Radius (product-grade; nested radius = outer - padding) ---------- */
+  --radius-xs: 4px;     /* tags, kbd */
+  --radius-sm: 6px;     /* small controls inside cards */
+  --radius-md: 8px;     /* buttons, inputs, segmented items */
+  --radius-lg: 12px;    /* inner wells, photo inside card, SMS bubble */
+  --radius-xl: 16px;    /* cards */
+  --radius-2xl: 24px;   /* stage panels: explorer, quote builder, hero photo frame */
+  --radius-pill: 999px; /* chips, tabs track, status pills */
+  --radius-device: 46px;  /* phone outer bezel */
+  --radius-screen: 36px;  /* phone screen */
+
+  /* ---------- Elevation (hairline ring + neutral ink; red only under the CTA) ---------- */
+  --shadow-xs: 0 1px 2px rgb(14 15 17 / 0.06);
+  --shadow-sm: 0 0 0 1px rgb(14 15 17 / 0.04), 0 1px 2px rgb(14 15 17 / 0.05),
+               0 4px 12px -4px rgb(14 15 17 / 0.08);
+  --shadow-md: 0 0 0 1px rgb(14 15 17 / 0.04), 0 2px 4px rgb(14 15 17 / 0.05),
+               0 12px 24px -8px rgb(14 15 17 / 0.10), 0 24px 48px -24px rgb(14 15 17 / 0.16);
+  --shadow-lg: 0 0 0 1px rgb(14 15 17 / 0.05), 0 4px 8px rgb(14 15 17 / 0.05),
+               0 24px 48px -16px rgb(14 15 17 / 0.14), 0 48px 96px -32px rgb(14 15 17 / 0.22);
+  /* Phone: 1px chrome-edge rim reads as a metal frame around the ink bezel. */
+  --shadow-device: 0 0 0 1px var(--color-chrome-edge), 0 30px 60px -20px rgb(14 15 17 / 0.40),
+                   0 60px 120px -40px rgb(14 15 17 / 0.30);
+  --shadow-cta: inset 0 1px 0 rgb(255 255 255 / 0.16), 0 1px 2px rgb(92 13 16 / 0.25),
+                0 6px 16px -6px rgb(197 26 31 / 0.45);
+  --shadow-book: var(--shadow-cta);
+  --shadow-signal-glow: 0 0 0 1px rgb(87 92 99 / 0.25), 0 10px 32px -8px rgb(87 92 99 / 0.30);
   --shadow-focus: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-focus);
+
+  /* ---------- Device (phone mockup) ---------- */
+  --device-width: clamp(15.5rem, 12.5rem + 9vw, 18.75rem);  /* 248 → 300 */
+  --device-aspect: 300 / 620;
+  --device-bezel: 10px;
+  --device-bezel-color: var(--color-ink);
+
+  /* ---------- Illustration (SVG diagrams; see spec §3 + §00) ---------- */
+  --illo-stroke: 1.5px;          /* default line, vector-effect: non-scaling-stroke */
+  --illo-stroke-fine: 1px;       /* dimension lines, hatching, grid */
+  --illo-stroke-bold: 2px;       /* the subject: cable route, coverage edge, TV outline */
+  --illo-ink: var(--color-ink);             /* primary outlines */
+  --illo-structure: var(--color-steel-300); /* studs, walls in plan, furniture */
+  --illo-hatch: var(--color-mist-strong);   /* concrete / section hatch */
+  --illo-fill: var(--color-cloud);          /* solid areas */
+  --illo-fill-2: #ECEEF0;                   /* second solid (drywall board) */
+  --illo-accent: var(--color-red-500);      /* what we install + its route (TV mount, raceway, AP, camera) */
+  --illo-accent-fill: rgb(225 37 27 / 0.08);
+  --illo-signal: #6E747B;                   /* Wi-Fi rings, coverage edge: graphite */
+  --illo-signal-fill: rgb(87 92 99 / 0.20); /* STRONG coverage. WEAK = same at opacity .5 */
+  --illo-alert: var(--color-steel);         /* dead-zone dashed outline: graphite, NOT red */
+  --illo-alert-fill: var(--color-white);    /* dead zone = no fill (blank paper) */
+  --illo-label: var(--color-steel-ink);     /* label text, >= 12px rendered */
+  --illo-dash: 4 4;                         /* hidden-in-wall cable, planned route */
 
   /* ---------- Motion ---------- */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);     /* headline reveals, picker result */
-  --ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1);   /* price pill pop, magnetic CTA release */
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);      /* before/after slider snap */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);     /* reveals, price tick */
+  --ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1);   /* chip select only */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);      /* diagram toggles */
   --ease-in: cubic-bezier(0.5, 0, 0.75, 0);
   --duration-instant: 100ms;
   --duration-fast: 180ms;
   --duration-base: 280ms;
   --duration-slow: 520ms;
-  --duration-scene: 900ms;
+  --duration-scene: 900ms;       /* diagram state change, cable draw */
+  --duration-cycle: 4200ms;      /* hero phone: time on each app state */
+  --reveal-distance: 12px;       /* scroll reveal translateY; never more */
 
   /* ---------- Layers ---------- */
   --z-base: 0;
@@ -188,5 +313,7 @@
     --duration-slow: 0.01ms;
     --duration-scene: 0.01ms;
     --ease-spring: var(--ease-standard);
+    --reveal-distance: 0px;
+    /* --duration-cycle is NOT zeroed: JS must stop auto-cycling instead (spec §2.2). */
   }
 }

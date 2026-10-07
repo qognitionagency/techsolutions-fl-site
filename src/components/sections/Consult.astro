@@ -1,24 +1,27 @@
 ---
 /**
- * Booking form (#book), Iron Sound's multi-step card on Luke's form.ts (docs/form-module.md).
- * Steps: service (photo cards) → details → property (photo cards) → when → contact.
+ * Booking form (#book; design-spec-v3 §2.9), Luke's form.ts unchanged (docs/form-module.md).
+ * Steps: service (icon cards) → details → property (icon cards) → when → contact.
+ * The quote builder prefills it through `form:prefill` (incl. the hidden quote_* fields).
  * Without JS every step renders and the form posts natively (https endpoint only, Anton).
  * Five states: idle, invalid (inline + summary), submitting, success (+ demo notice), error.
  */
 import { anchors, contact, form } from '../../data/content';
 import Button from '../ui/Button.astro';
 import Choices from '../ui/Choices.astro';
+import Icon from '../ui/Icon.astro';
+import type { IconName } from '../ui/icon-names';
 
 const rawEndpoint = (import.meta.env.PUBLIC_FORM_ENDPOINT ?? '').trim();
 // Native (no-JS) post only to an https endpoint, matching form.ts's live-mode rule (Anton, 2026-10-07).
 const endpoint = /^https:\/\/[^/\s]/i.test(rawEndpoint) ? rawEndpoint : undefined;
 
 const tpl = (s: string) => s.replace('{current}', '{n}').replace('{step}', '{title}');
-const svcImage: Record<string, string> = { tv: 'svc-tv', theater: 'svc-theater', wifi: 'svc-wifi', cameras: 'svc-cameras', smart: 'svc-smart', office: 'svc-office' };
-const svcCards = form.service.options.filter((o) => svcImage[o.key]).map((o) => ({ ...o, image: svcImage[o.key] }));
-const svcOther = form.service.options.filter((o) => !svcImage[o.key]);
-const propImage: Record<string, string> = { condo: 'env-condo', house: 'env-house', townhouse: 'env-townhouse', office: 'env-office' };
-const propCards = form.property.options.map((o) => ({ ...o, image: propImage[o.key] }));
+// Icons, never photos, on the selectable cards (brief + spec §2.9).
+const svcIcon: Record<string, IconName> = { tv: 'tv', theater: 'speaker', wifi: 'wifi', cameras: 'camera', smart: 'lock', office: 'office', other: 'dots' };
+const svcCards = form.service.options.map((o) => ({ ...o, icon: svcIcon[o.key] }));
+const propIcon: Record<string, IconName> = { condo: 'building', house: 'house', townhouse: 'townhouse', office: 'office' };
+const propCards = form.property.options.map((o) => ({ ...o, icon: propIcon[o.key] }));
 const d = form.details;
 const c = form.contact;
 const parts = (s: string) => s.split(/(\{\w+\})/).filter(Boolean);
@@ -28,11 +31,11 @@ const iE = fb.indexOf(contact.email);
 const iP = fb.indexOf(contact.phoneDisplay);
 const fallbackOk = iE >= 0 && iP > iE;
 ---
-<section id={anchors.consult} class="section consult" aria-labelledby="consult-heading">
-  <div class="frame consult__grid">
+<section id={anchors.consult} class="section section--alt consult" aria-labelledby="consult-heading">
+  <div class="frame grid12 consult__grid">
     <div class="consult__intro">
-      <p class="display consult__display" data-split>{form.display}</p>
       <h2 id="consult-heading" class="consult__h2">{form.heading}</h2>
+      <p class="consult__display">{form.display}</p>
       <p class="consult__lede">{form.intro}</p>
       <p class="consult__alt">
         <span>{form.callAlt.prefix}</span>
@@ -51,6 +54,8 @@ const fallbackOk = iE >= 0 && iP > iE;
       <input type="hidden" name="submission_id" />
       <input type="hidden" name="entry_point" />
       <input type="hidden" name="page_variant" value="control" />
+      <!-- Set by the quote builder handoff (content.ts quoteBuilder); enums/integers only. -->
+      <input type="hidden" name="quote_summary" /><input type="hidden" name="quote_total" /><input type="hidden" name="quote_service" />
       <input type="hidden" name="utm_source" /><input type="hidden" name="utm_medium" /><input type="hidden" name="utm_campaign" />
       <div class="visually-hidden" aria-hidden="true">
         <label>{c.honeypot.label} <input name={c.honeypot.name} tabindex="-1" autocomplete="off" /></label>
@@ -63,7 +68,6 @@ const fallbackOk = iE >= 0 && iP > iE;
         <ul class="err-summary" data-error-summary role="alert" hidden></ul>
         <div data-field data-required-group data-error={form.service.error}>
           <Choices name={form.service.name} type="checkbox" options={svcCards} variant="cards" columns={3} idPrefix="f-svc" />
-          <div class="step__other"><Choices name={form.service.name} type="checkbox" options={svcOther} idPrefix="f-svc" /></div>
         </div>
         <div class="step__nav"><button type="button" class="btn-next" data-next data-js-only hidden>{form.service.next}</button></div>
       </fieldset>
@@ -245,6 +249,7 @@ const fallbackOk = iE >= 0 && iP > iE;
       </fieldset>
 
       <div class="success" data-success hidden>
+        <span class="success__mark" aria-hidden="true"><Icon name="check" size={24} /></span>
         <h3 class="success__h" data-success-heading tabindex="-1">
           {parts(form.success.heading).map((p) => (p === '{firstName}' ? <span data-fill="first_name"></span> : p))}
         </h3>
@@ -312,6 +317,8 @@ const fallbackOk = iE >= 0 && iP > iE;
             contact_pref: get(d, 'contact_pref'),
             role: get(d, 'role') || undefined,
             page_variant: 'control',
+            quote_total: Number(get(d, 'quote_total')) || undefined,
+            quote_service: get(d, 'quote_service') || undefined,
           };
         return {};
       },
@@ -342,50 +349,41 @@ const fallbackOk = iE >= 0 && iP > iE;
         counter.classList.toggle('is-near', notes.value.length > max * 0.9);
       };
       notes.addEventListener('input', update);
+      notes.addEventListener('change', update); // form:prefill (quote builder) dispatches change
       update();
     }
   }
 </script>
 
 <style>
-  .consult { background: var(--color-signal-50); border-top: 1px solid var(--color-signal-100); }
-  .consult__grid { display: grid; gap: var(--space-7); align-items: start; }
-  .consult__display { margin: 0; font-size: var(--text-3xl); max-width: 14ch; }
-  .consult__h2 { display: grid; grid-template-columns: var(--space-6) minmax(0, 1fr); align-items: baseline; gap: var(--space-3); max-width: 34ch; margin: var(--space-5) 0 0; text-wrap: pretty; font-size: var(--text-base); font-weight: var(--font-weight-label); letter-spacing: 0; color: var(--color-text-muted); }
-  .consult__h2::before { content: ""; width: var(--space-6); height: 2px; border-radius: var(--radius-pill); background: var(--color-bay); transform: translateY(-0.3em); }
-  .consult__lede { margin: var(--space-5) 0 0; max-width: 42ch; }
-  .consult__alt { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-4); margin: var(--space-6) 0 0; color: var(--color-text-muted); }
+  .consult__grid { align-items: start; row-gap: var(--space-7); }
+  .consult__h2::before { content: ""; display: block; width: var(--space-6); height: 2px; margin-bottom: var(--space-3); border-radius: var(--radius-pill); background: var(--color-accent); }
+  .consult__h2 { font-size: var(--text-sm); font-weight: var(--font-weight-label); letter-spacing: 0; line-height: var(--leading-ui); color: var(--color-text-muted); }
+  .consult__display { margin: var(--space-3) 0 0; font-size: var(--text-3xl); font-weight: var(--font-weight-display); line-height: var(--leading-heading); letter-spacing: var(--tracking-heading); color: var(--color-heading); max-width: 16ch; }
+  .consult__lede { margin: var(--space-4) 0 0; max-width: var(--measure-lead); color: var(--color-text-muted); }
+  .consult__alt { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-4); margin: var(--space-5) 0 0; padding-top: var(--space-5); border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-size: var(--text-sm); }
 
-  .card {
-    position: relative;
-    padding: var(--space-6) var(--space-5);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-top: 3px solid var(--color-bay);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-lg);
-  }
-  .card__top { display: grid; gap: var(--space-2); margin-bottom: var(--space-6); }
-  .card__progress-text { margin: 0; font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-signal-700); }
-  .card__progress { height: 4px; border-radius: var(--radius-pill); background: var(--color-mist); overflow: hidden; }
-  .card__progress span { display: block; height: 100%; border-radius: inherit; background: var(--color-signal-500); transform-origin: left; transform: scaleX(var(--progress, 0)); transition: transform var(--duration-slow) var(--ease-out-expo); }
+  .card { position: relative; padding: var(--space-5); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); }
+  .card__top { display: grid; gap: var(--space-2); margin-bottom: var(--space-5); }
+  .card__progress-text { margin: 0; font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-label); color: var(--color-text-muted); }
+  .card__progress { height: 2px; border-radius: var(--radius-pill); background: var(--color-mist); overflow: hidden; }
+  .card__progress span { display: block; height: 100%; background: var(--color-accent); transform-origin: left; transform: scaleX(var(--progress, 0)); transition: transform var(--duration-slow) var(--ease-out-expo); }
   .card__reply, .card__data { margin: var(--space-3) 0 0; font-size: var(--text-xs); color: var(--color-text-muted); }
 
   .step { margin: 0; padding: 0; border: 0; min-width: 0; }
   .step + .step { margin-top: var(--space-8); }
   :global([data-consult][data-state]) .step + .step { margin-top: 0; }
   .step:not([hidden]) { animation: step-in var(--duration-slow) var(--ease-out-expo); }
-  @keyframes step-in { from { opacity: 0; transform: translateX(12px); } }
-  .step__legend { padding: 0; margin-bottom: var(--space-4); font-size: var(--text-2xl); font-weight: var(--font-weight-heading); letter-spacing: var(--tracking-heading); line-height: var(--leading-heading); color: var(--color-heading); }
+  @keyframes step-in { from { opacity: 0; transform: translateX(var(--reveal-distance)); } }
+  .step__legend { padding: 0; margin-bottom: var(--space-2); font-size: var(--text-xl); font-weight: var(--font-weight-heading); letter-spacing: var(--tracking-title); line-height: var(--leading-heading); color: var(--color-heading); }
   .step__legend:focus { outline: none; }
   .step__legend:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 4px; }
   .step__help { margin: 0 0 var(--space-5); font-size: var(--text-sm); color: var(--color-text-muted); }
-  .step__other { margin-top: var(--space-3); }
 
   .err-summary { margin: 0 0 var(--space-5); padding: var(--space-3) var(--space-4) var(--space-3) var(--space-7); border: 1px solid var(--color-error); border-radius: var(--radius-md); color: var(--color-error); font-size: var(--text-sm); }
   .err-summary :global(a) { color: var(--color-error); }
 
-  .group { display: grid; gap: var(--space-5); margin-top: var(--space-4); padding: var(--space-5); border-radius: var(--radius-lg); background: var(--color-bg); border: 1px solid var(--color-border); }
+  .group { display: grid; gap: var(--space-5); margin-top: var(--space-4); padding: var(--space-4); border-radius: var(--radius-lg); background: var(--color-bg-alt); border: 1px solid var(--color-border); }
   .sub { margin: var(--space-5) 0 0; padding: 0; border: 0; min-width: 0; }
   .group > .sub:first-child, .group > .row:first-child { margin-top: 0; }
   .group .sub { margin-top: 0; }
@@ -410,64 +408,34 @@ const fallbackOk = iE >= 0 && iP > iE;
   }
   .field textarea { resize: vertical; min-height: 6rem; }
   .field--narrow { max-width: 14rem; }
-  .field input:hover, .field textarea:hover, .field select:hover { border-color: var(--color-signal-400); }
-  .field input:focus-visible, .field textarea:focus-visible, .field select:focus-visible { outline: none; border-color: var(--color-signal-500); box-shadow: 0 0 0 3px var(--color-signal-100); }
+  .field input:hover, .field textarea:hover, .field select:hover { border-color: var(--color-heading); }
+  .field input:focus-visible, .field textarea:focus-visible, .field select:focus-visible { outline: none; border-color: var(--color-accent); box-shadow: var(--shadow-focus); }
   .field__hint { margin: 0; font-size: var(--text-xs); color: var(--color-text-muted); }
   .field__hint--right { text-align: right; font-variant-numeric: tabular-nums; }
   .field__hint :global(.is-near) { color: var(--color-error); }
 
-  /* Invalid state (form.ts sets aria-invalid and appends the message to [data-field]). */
   .card :global([aria-invalid="true"]:not([type="radio"]):not([type="checkbox"])) { border-color: var(--color-error) !important; }
-  .card :global([data-field] > p[id]:not(.field__hint)) {
-    display: flex;
-    gap: var(--space-2);
-    align-items: flex-start;
-    margin: var(--space-2) 0 0;
-    font-size: var(--text-sm);
-    line-height: 1.5;
-    font-weight: var(--font-weight-label);
-    color: var(--color-error);
-  }
-  .card :global([data-field] > p[id]:not(.field__hint))::before {
-    content: "!";
-    display: grid;
-    place-items: center;
-    flex: none;
-    width: 1.1em;
-    height: 1.1em;
-    margin-top: 0.2em;
-    border-radius: 50%;
-    background: var(--color-error);
-    color: var(--color-on-accent);
-    font-size: 0.75em;
-    font-weight: var(--font-weight-heading);
-  }
+  .card :global([data-field] > p[id]:not(.field__hint)) { display: flex; gap: var(--space-2); align-items: flex-start; margin: var(--space-2) 0 0; font-size: var(--text-sm); line-height: 1.5; font-weight: var(--font-weight-label); color: var(--color-error); }
+  .card :global([data-field] > p[id]:not(.field__hint))::before { content: "!"; display: grid; place-items: center; flex: none; width: 1rem; height: 1rem; margin-top: 0.15em; border-radius: 50%; background: var(--color-error); color: var(--color-on-accent); font-size: 0.75em; font-weight: var(--font-weight-heading); }
 
   .check { display: grid; grid-template-columns: auto 1fr; gap: var(--space-3); align-items: start; font-size: var(--text-sm); color: var(--color-text); cursor: pointer; }
-  .check input { width: 1.25rem; height: 1.25rem; margin: 0.1em 0 0; accent-color: var(--color-signal-600); }
+  .check input { width: 1.25rem; height: 1.25rem; margin: 0.1em 0 0; accent-color: var(--color-accent); }
   .consents { display: grid; gap: var(--space-3); margin-top: var(--space-5); }
 
   .step__nav { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-top: var(--space-6); }
   .btn-next, .btn-back, .btn-submit {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-2);
-    min-height: 3rem;
-    padding: var(--space-3) var(--space-6);
-    border-radius: var(--radius-pill);
-    font: inherit;
-    font-size: var(--text-sm);
-    font-weight: var(--font-weight-label);
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+    min-height: 2.75rem; padding: 0 1.125rem;
+    border-radius: var(--radius-md);
+    font: inherit; font-size: var(--text-sm); font-weight: var(--font-weight-label);
     cursor: pointer;
     transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
   }
-  .btn-next { margin-left: auto; border: 1px solid var(--color-accent); background: var(--color-accent); color: var(--color-on-accent); box-shadow: var(--shadow-cta); }
-  .btn-next:hover { background: var(--color-accent-hover); }
-  .btn-submit { margin-left: auto; flex: 1 1 auto; border: 0; background: var(--color-book); color: var(--color-on-book); box-shadow: var(--shadow-book); font-size: var(--text-base); }
-  .btn-submit:hover { background: var(--color-book-hover); }
-  .btn-back { border: 1px solid var(--color-border-strong); background: transparent; color: var(--color-heading); }
-  .btn-back:hover { border-color: var(--color-heading); }
+  .btn-next, .btn-submit { margin-left: auto; border: 1px solid var(--color-accent); background: var(--color-accent); color: var(--color-on-accent); box-shadow: var(--shadow-cta); }
+  .btn-next:hover, .btn-submit:hover { background: var(--color-accent-hover); }
+  .btn-submit { flex: 1 1 auto; min-height: 3rem; font-size: var(--text-base); }
+  .btn-back { border: 1px solid var(--color-border-strong); background: var(--color-surface); color: var(--color-heading); }
+  .btn-back:hover { background: var(--color-bg-alt); }
   .btn-next:focus-visible, .btn-back:focus-visible, .btn-submit:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
   .btn-submit[disabled] { opacity: 0.8; cursor: progress; }
   .spinner { display: none; width: 1em; height: 1em; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin 0.8s linear infinite; }
@@ -482,27 +450,28 @@ const fallbackOk = iE >= 0 && iP > iE;
   .alert .btn-next { margin-left: 0; }
 
   .success { display: grid; gap: var(--space-4); animation: step-in var(--duration-slow) var(--ease-out-expo); }
+  .success__mark { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: var(--radius-pill); background: var(--color-success); color: var(--color-on-accent); }
   .success p { margin: 0; }
   .success__h { margin: 0; font-size: var(--text-2xl); }
   .success__h:focus { outline: none; }
   .success__line { font-size: var(--text-lg); }
-  .success__demo { padding: var(--space-4); border-radius: var(--radius-md); background: var(--color-sunset-100); border: 1px dashed var(--color-sunset-700); font-size: var(--text-sm); }
+  .success__demo { padding: var(--space-4); border-radius: var(--radius-md); background: var(--color-surface-tint); border: 1px dashed var(--color-border-strong); font-size: var(--text-sm); }
   .success__demo p + p { margin-top: var(--space-1); }
   .success__recap { display: grid; gap: var(--space-2); margin: 0; padding: var(--space-4) 0; border-block: 1px solid var(--color-border); }
   .success__recap div { display: grid; grid-template-columns: 7rem 1fr; gap: var(--space-3); }
-  .success__recap dt { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-signal-700); }
+  .success__recap dt { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-muted); }
   .success__recap dd { margin: 0; color: var(--color-heading); overflow-wrap: anywhere; }
   .success__photo { font-weight: var(--font-weight-label); }
-  .success__next-h { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-muted); }
+  .success__next-h { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; color: var(--color-text-muted); }
   .success__next { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-1); font-size: var(--text-sm); }
 
   @media (min-width: 640px) {
-    .card { padding: var(--space-7); }
+    .card { padding: var(--space-7); border-radius: var(--radius-2xl); }
     .row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .row:has(.field--narrow) { grid-template-columns: 10rem minmax(0, 1fr); }
   }
   @media (min-width: 1024px) {
-    .consult__grid { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--space-8); }
-    .consult__intro { position: sticky; top: calc(var(--nav-height) + var(--space-6)); }
+    .consult__intro { grid-column: 1 / span 5; position: sticky; top: calc(var(--nav-height) + var(--space-6)); }
+    .card { grid-column: 6 / -1; }
   }
 </style>

@@ -1,0 +1,76 @@
+---
+/**
+ * Illustrated camera feed (spec §2.1 state A, §2.2 cameras card): flat technical-drawing style,
+ * never a photo. `porch` = front door seen from the doorbell; `driveway` = garage and drive.
+ * The only perspective on the site is the two walkway/drive lines here (spec §3).
+ * The timestamp pill is the visitor's local clock (phone.ts fills [data-clock]); data, not copy.
+ */
+interface Props {
+  view: 'porch' | 'driveway';
+  class?: string;
+}
+const { view, class: cls } = Astro.props;
+---
+<div class:list={['feed', cls]}>
+  <svg viewBox="0 0 160 100" class="feed__svg" aria-hidden="true" focusable="false" preserveAspectRatio="xMidYMid slice">
+    <rect width="160" height="100" class="feed__bg" />
+    {view === 'porch' ? (
+      <g>
+        <path d="M0 74 H160" class="feed__line" />
+        <path d="M58 100 L70 74 M102 100 L90 74" class="feed__line" />
+        <rect x="64" y="22" width="32" height="52" rx="1" class="feed__ink" />
+        <rect x="68" y="27" width="24" height="18" rx="1" class="feed__fine" />
+        <rect x="68" y="49" width="24" height="20" rx="1" class="feed__fine" />
+        <circle cx="90" cy="49" r="1.4" class="feed__accent-dot" />
+        <rect x="45" y="30" width="6" height="9" rx="1.5" class="feed__ink" />
+        <path d="M48 39 v3" class="feed__fine" />
+        <circle cx="48" cy="34.5" r="5.5" class="feed__glow" />
+        <rect x="66" y="76" width="28" height="5" rx="1" class="feed__fine" />
+        <path d="M112 74 l3 -12 h10 l3 12 Z" class="feed__fine" />
+        <path d="M120 62 c-6 -6 -8 -12 -3 -18 M120 62 c4 -6 9 -9 13 -8 M120 62 c0 -8 3 -14 7 -16" class="feed__fine" />
+        <rect x="104" y="40" width="3" height="5" rx="0.8" class="feed__accent" />
+      </g>
+    ) : (
+      <g>
+        <path d="M0 58 H160" class="feed__line" />
+        <path d="M30 100 L62 58 M130 100 L98 58" class="feed__line" />
+        <rect x="56" y="22" width="48" height="36" rx="1" class="feed__ink" />
+        {[30, 37, 44, 51].map((y) => <path d={`M56 ${y} H104`} class="feed__fine" />)}
+        <path d="M44 22 L80 6 L116 22" class="feed__ink" />
+        <rect x="64" y="66" width="32" height="20" rx="4" class="feed__ink feed__car" />
+        <path d="M68 66 l3 -6 h18 l3 6" class="feed__ink" />
+        <rect x="67" y="74" width="5" height="3" rx="1" class="feed__fine" /><rect x="88" y="74" width="5" height="3" rx="1" class="feed__fine" />
+        <rect x="120" y="30" width="12" height="28" class="feed__fine" />
+      </g>
+    )}
+  </svg>
+  <span class="feed__time mono" aria-hidden="true" data-clock="full"></span>
+</div>
+
+<style>
+  .feed { position: relative; aspect-ratio: 16 / 10; overflow: hidden; border-radius: var(--radius-lg); background: var(--illo-fill-2); }
+  .feed__svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .feed__svg * { vector-effect: non-scaling-stroke; }
+  .feed__bg { fill: var(--illo-fill-2); }
+  .feed__line { fill: none; stroke: var(--illo-structure); stroke-width: var(--illo-stroke-fine); }
+  .feed__fine { fill: none; stroke: var(--illo-structure); stroke-width: var(--illo-stroke-fine); }
+  .feed__ink { fill: var(--color-surface); stroke: var(--illo-ink); stroke-width: var(--illo-stroke-fine); opacity: 0.85; }
+  .feed__car { fill: var(--illo-fill); }
+  .feed__accent { fill: var(--color-surface); stroke: var(--illo-accent); stroke-width: var(--illo-stroke-fine); }
+  .feed__accent-dot { fill: var(--illo-accent); }
+  .feed__glow { fill: var(--color-signal-100); opacity: 0.6; }
+  .feed__time {
+    position: absolute;
+    left: var(--space-2);
+    bottom: var(--space-2);
+    padding: 1px 6px;
+    border-radius: var(--radius-pill);
+    background: var(--color-slate);
+    color: var(--color-text-inverse);
+    font-size: var(--text-xs);
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .feed__time:empty { display: none; }
+</style>

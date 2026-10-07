@@ -45,7 +45,7 @@ All markup must work without JS. With JS off, every step renders and the form po
 
 **Opening and prefilling from elsewhere on the page:**
 - A click on any `a`/`button` with `data-prefill-<field>="value"` (comma-separated for checkboxes) prefills the form.
-- A link whose `#hash` targets the form, or a section containing it, focuses the current step heading. Focus uses `preventScroll`, so the anchor does the scrolling.
+- A link whose `#hash` targets the form, or an element between it and its nearest `<section>`, focuses the current step heading. A link to `<main>` or `<body>` (the skip link, `#top`) is not a booking CTA. Focus uses `preventScroll`, so the anchor does the scrolling.
 - The entry is recorded from `data-entry`, then `data-track-id`, otherwise `direct`.
 - Other scripts can dispatch `document.dispatchEvent(new CustomEvent('form:prefill', { detail: { type: 'marine' } }))`.
 - The URL query, and anything after `?` in the hash, prefill **only the fields named in `Object.values(urlParams)` (radios, checkboxes, selects) and `utm_*` hidden fields**. Everything else, consent boxes included, is ignored. They are read once.

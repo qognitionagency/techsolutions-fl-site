@@ -4,17 +4,15 @@
  * AggregateRating: the reviews are samples. Video doorbells sit under the Cameras
  * service (MARS ruling; the tile heading names them).
  */
-import { contact, faq, footer, meta, serviceArea, services, type ServiceTile } from '../data/content';
+import { contact, faq, footer, meta, serviceArea, services, type QuoteServiceKey } from '../data/content';
 import { absolute } from './url';
 
 /** Structured-data facts, not page copy: schema.org serviceType per tile. */
-const SERVICE_TYPE: Record<ServiceTile['id'], string> = {
+const SERVICE_TYPE: Record<QuoteServiceKey, string> = {
   tv: 'TV mounting',
-  theater: 'Home theater installation',
   wifi: 'Home network installation',
   cameras: 'Security camera installation',
   smart: 'Smart home installation',
-  office: 'Office network and AV installation',
 };
 
 const PLACE: Record<string, { type: string; sameAs: string }> = {
@@ -49,16 +47,16 @@ export function buildSchema(site: URL | undefined) {
     description: services.footnote,
   });
 
-  const serviceNodes = services.tiles.map((t) => {
-    const offers = [];
-    if (t.price) offers.push(offer(t.heading, t.price.amount));
+  // v3: the explorer tabs are the services (content.ts services.tabs).
+  const serviceNodes = services.tabs.map((t) => {
+    const offers = [offer(t.title, t.price.amount)];
     if ('alsoFrom' in t && t.alsoFrom) offers.push(offer(t.alsoFrom.label, t.alsoFrom.price.amount));
     return {
       '@type': 'Service',
-      '@id': id(`service-${t.id}`),
-      name: t.heading,
-      serviceType: SERVICE_TYPE[t.id],
-      description: `${t.lede} ${t.body}`,
+      '@id': id(`service-${t.key}`),
+      name: t.title,
+      serviceType: SERVICE_TYPE[t.key],
+      description: t.pitch.join(' '),
       provider: { '@id': id('business') },
       ...(offers.length ? { offers: offers.length === 1 ? offers[0] : offers } : {}),
     };
@@ -86,7 +84,7 @@ export function buildSchema(site: URL | undefined) {
         address: { '@type': 'PostalAddress', addressLocality: 'Miami', addressRegion: 'FL', addressCountry: 'US' },
         areaServed,
         sameAs: [contact.instagramUrl],
-        knowsAbout: services.tiles.map((t) => t.heading),
+        knowsAbout: services.tabs.map((t) => t.title),
       },
       { '@type': 'WebSite', '@id': id('website'), url: SITE, name: meta.ogSiteName, inLanguage: meta.lang, publisher: { '@id': id('business') } },
       {

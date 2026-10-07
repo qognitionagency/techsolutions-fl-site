@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 320 320" width="320" height="320" role="img" aria-labelledby="tssl-title">
+  <title id="tssl-title">TechSolutions, smart home installations</title>
+  <!--
+    Full (stacked) lockup, v3.1, FOR DARK BACKGROUNDS (ink #0E0F11). This is how the client's own
+    logo is shown on Instagram. Same geometry as logo-stacked.svg; chrome #F4F5F6 -> #A9AEB5 with no
+    bevel edge, window #D5D8DC, tagline #BFC4CA. Used for og.png.
+  -->
+  <defs>
+    <linearGradient id="tssl-chrome-roof" gradientUnits="userSpaceOnUse" x1="0" y1="16" x2="0" y2="67">
+      <stop offset="0" stop-color="#F4F5F6"/>
+      <stop offset="1" stop-color="#A9AEB5"/>
+    </linearGradient>
+    <linearGradient id="tssl-chrome-body" gradientUnits="userSpaceOnUse" x1="0" y1="64" x2="0" y2="104">
+      <stop offset="0" stop-color="#F4F5F6"/>
+      <stop offset="1" stop-color="#A9AEB5"/>
+    </linearGradient>
+    <linearGradient id="tssl-chrome-word" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="20">
+      <stop offset="0" stop-color="#F4F5F6"/>
+      <stop offset="1" stop-color="#A9AEB5"/>
+    </linearGradient>
+    <path id="tssl-g-S" d="M7 0.8H2.9A2.1 2.1 0 0 0 0.8 2.9A2.1 2.1 0 0 0 2.9 5H4.9A2.1 2.1 0 0 1 7 7.1A2.1 2.1 0 0 1 4.9 9.2H0"/>
+    <path id="tssl-g-M" d="M0.8 10V0.8L4.5 6.2L8.2 0.8V10"/>
+    <path id="tssl-g-A" d="M0.8 10L4 0.8L7.2 10M2.1 6.6H5.9"/>
+    <path id="tssl-g-R" d="M0.8 10V0.8H4.7A2.3 2.3 0 0 1 4.7 5.4H0.8M4.2 5.4L7 10"/>
+    <path id="tssl-g-T" d="M0 0.8H7.6M3.8 0.8V10"/>
+    <path id="tssl-g-H" d="M0.8 0V10M6.2 0V10M0.8 5H6.2"/>
+    <path id="tssl-g-O" d="M3.2 0.8H5.2A2.4 2.4 0 0 1 7.6 3.2V6.8A2.4 2.4 0 0 1 5.2 9.2H3.2A2.4 2.4 0 0 1 0.8 6.8V3.2A2.4 2.4 0 0 1 3.2 0.8Z"/>
+    <path id="tssl-g-E" d="M6.4 0.8H0.8V9.2H6.4M0.8 5H5.8"/>
+    <path id="tssl-g-I" d="M0.8 0V10"/>
+    <path id="tssl-g-N" d="M0.8 10V0.8L6.2 9.2V0"/>
+    <path id="tssl-g-L" d="M0.8 0V9.2H6.2"/>
+  </defs>
+
+  <g transform="translate(46 24.3) scale(1.9)">
+    <path d="M60 16L114 58V66.9L60 24.9Z" fill="url(#tssl-chrome-roof)"/>
+    <g fill="none" stroke="url(#tssl-chrome-body)" stroke-linejoin="miter">
+      <path d="M103.25 70V101.25H96" stroke-width="5.5"/>
+      <path d="M90 68H75A7 7 0 0 0 68 75V77A7 7 0 0 0 75 84H83A7 7 0 0 1 90 91V93A7 7 0 0 1 83 100H68" stroke-width="8" stroke-linecap="square"/>
+    </g>
+    <path d="M6 58L60 16V24.9L6 66.9Z" fill="#E1251B"/>
+    <g fill="none" stroke="#E1251B" stroke-linejoin="miter">
+      <path d="M16.75 70V101.25H24" stroke-width="5.5"/>
+      <path d="M26 68H56M41 68V104" stroke-width="8"/>
+      <path d="M84 26A6 6 0 0 1 90 32M84 20A12 12 0 0 1 96 32M84 14A18 18 0 0 1 102 32" stroke-width="3.6"/>
+    </g>
+    <g fill="#D5D8DC">
+      <rect x="54" y="34" width="5" height="5"/>
+      <rect x="61" y="34" width="5" height="5"/>
+      <rect x="54" y="41" width="5" height="5"/>
+      <rect x="61" y="41" width="5" height="5"/>
+    </g>
+  </g>
+
+  <g transform="translate(42.1 237.9) scale(0.84) translate(4.25 0) skewX(-12)" stroke-width="4.6" stroke-linejoin="miter">
+    <g fill="none" stroke="#E1251B">
+      <path d="M0 2.3H20M10 2.3V20"/>
+      <path d="M39.2 2.3H24.5V17.7H39.2M24.5 10H37.7"/>
+      <path d="M62.6 2.3H48.9A4 4 0 0 0 44.9 6.3V13.7A4 4 0 0 0 48.9 17.7H62.6"/>
+      <path d="M67.5 0V20M82.9 0V20M67.5 10H82.9"/>
+    </g>
+    <g fill="none" stroke="url(#tssl-chrome-word)">
+      <path d="M108.6 2.3H94.75A3.85 3.85 0 0 0 90.9 6.15A3.85 3.85 0 0 0 94.75 10H102.45A3.85 3.85 0 0 1 106.3 13.85A3.85 3.85 0 0 1 102.45 17.7H88.6"/>
+      <path d="M118.3 2.3H127.7A4 4 0 0 1 131.7 6.3V13.7A4 4 0 0 1 127.7 17.7H118.3A4 4 0 0 1 114.3 13.7V6.3A4 4 0 0 1 118.3 2.3Z"/>
+      <path d="M139.7 0V17.7H153.4"/>
+      <path d="M157.6 0V13.7A4 4 0 0 0 161.6 17.7H169A4 4 0 0 0 173 13.7V0"/>
+      <path d="M177.5 2.3H197.5M187.5 2.3V20"/>
+      <path d="M202 0V20"/>
+      <path d="M214 2.3H223.4A4 4 0 0 1 227.4 6.3V13.7A4 4 0 0 1 223.4 17.7H214A4 4 0 0 1 210 13.7V6.3A4 4 0 0 1 214 2.3Z"/>
+      <path d="M276.5 2.3H262.65A3.85 3.85 0 0 0 258.8 6.15A3.85 3.85 0 0 0 262.65 10H270.35A3.85 3.85 0 0 1 274.2 13.85A3.85 3.85 0 0 1 270.35 17.7H256.5"/>
+    </g>
+    <path d="M233.1 20V0H238.3L248.5 13.6V0H253.1V20H247.9L237.7 6.4V20Z" fill="url(#tssl-chrome-word)" stroke="none"/>
+  </g>
+
+  <path d="M42.1 269.5H91.45M228.55 269.5H277.9" fill="none" stroke="#E1251B" stroke-width="0.9"/>
+  <g transform="translate(97.45 266.7) scale(0.56)" fill="none" stroke="#BFC4CA" stroke-width="1.6" stroke-linecap="butt" stroke-linejoin="round">
+    <use href="#tssl-g-S" xlink:href="#tssl-g-S" x="0"/>
+    <use href="#tssl-g-M" xlink:href="#tssl-g-M" x="10.6"/>
+    <use href="#tssl-g-A" xlink:href="#tssl-g-A" x="22.4"/>
+    <use href="#tssl-g-R" xlink:href="#tssl-g-R" x="33.2"/>
+    <use href="#tssl-g-T" xlink:href="#tssl-g-T" x="43.8"/>
+    <use href="#tssl-g-H" xlink:href="#tssl-g-H" x="58.6"/>
+    <use href="#tssl-g-O" xlink:href="#tssl-g-O" x="68.4"/>
+    <use href="#tssl-g-M" xlink:href="#tssl-g-M" x="79.6"/>
+    <use href="#tssl-g-E" xlink:href="#tssl-g-E" x="91.4"/>
+    <use href="#tssl-g-I" xlink:href="#tssl-g-I" x="105"/>
+    <use href="#tssl-g-N" xlink:href="#tssl-g-N" x="109.4"/>
+    <use href="#tssl-g-S" xlink:href="#tssl-g-S" x="119.2"/>
+    <use href="#tssl-g-T" xlink:href="#tssl-g-T" x="129.8"/>
+    <use href="#tssl-g-A" xlink:href="#tssl-g-A" x="140.2"/>
+    <use href="#tssl-g-L" xlink:href="#tssl-g-L" x="151"/>
+    <use href="#tssl-g-L" xlink:href="#tssl-g-L" x="160"/>
+    <use href="#tssl-g-A" xlink:href="#tssl-g-A" x="169"/>
+    <use href="#tssl-g-T" xlink:href="#tssl-g-T" x="179.8"/>
+    <use href="#tssl-g-I" xlink:href="#tssl-g-I" x="190.2"/>
+    <use href="#tssl-g-O" xlink:href="#tssl-g-O" x="194.6"/>
+    <use href="#tssl-g-N" xlink:href="#tssl-g-N" x="205.8"/>
+    <use href="#tssl-g-S" xlink:href="#tssl-g-S" x="215.6"/>
+  </g>
+</svg>

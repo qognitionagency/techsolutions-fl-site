@@ -1,5 +1,10 @@
 ---
-/** Fixed glass header (Iron Sound port): concept ribbon + nav bar + mobile sheet. */
+/**
+ * Concept ribbon + nav bar + mobile sheet (design-spec-v3 §2.0). Fixed header. At scroll 0 the
+ * bar is transparent; after 8px it becomes white 82% with a 12px blur and a hairline. On scroll
+ * the ribbon slides up under it (transform only, no CLS). Mobile sheet: disclosure pattern,
+ * focus trapped while open, Esc closes and returns focus to the toggle.
+ */
 import { nav, ribbon } from '../../data/content';
 import { uiLabels } from '../../data/ui-labels';
 import { withBase } from '../../lib/url';
@@ -8,7 +13,7 @@ import Button from '../ui/Button.astro';
 <header class="site-header" data-header>
   <p class="ribbon" title={ribbon.disclosure}>
     <span class="ribbon__mark" aria-hidden="true"></span>
-    <span>{ribbon.text}</span>
+    <span class="ribbon__text">{ribbon.text}</span>
   </p>
   <nav class="bar" aria-label={uiLabels.mainNav}>
     <div class="bar__inner frame">
@@ -17,22 +22,12 @@ import Button from '../ui/Button.astro';
       </a>
 
       <ul class="bar__links" role="list">
-        {nav.links.map((l) => (
-          <li><a href={l.href} class="bar__link" data-nav-link>{l.label}</a></li>
-        ))}
+        {nav.links.map((l) => <li><a href={l.href} class="bar__link" data-nav-link>{l.label}</a></li>)}
       </ul>
 
       <div class="bar__actions">
-        <a
-          href={nav.phone.href}
-          class="bar__phone"
-          data-track={nav.phone.track}
-          data-track-id={nav.phone.trackId}
-          data-track-type={nav.phone.kind}
-          data-track-location="nav"
-          aria-label={nav.phone.ariaLabel}
-        >{nav.phone.label}</a>
-        <Button cta={nav.primary} location="nav" size="sm" icon="none" class="bar__book" magnetic />
+        <Button cta={nav.phone} location="nav" variant="text" icon="none" class="bar__phone" />
+        <Button cta={nav.primary} location="nav" size="sm" class="bar__cta" />
         <button
           type="button"
           class="bar__menu"
@@ -43,20 +38,19 @@ import Button from '../ui/Button.astro';
           data-label-close={nav.menuClose}
         >
           <span class="bar__menu-lines" aria-hidden="true"><span></span><span></span></span>
-          <span class="bar__menu-label" data-menu-label>{nav.menuOpen}</span>
+          <span class="visually-hidden" data-menu-label>{nav.menuOpen}</span>
         </button>
       </div>
     </div>
 
     <div id="nav-sheet" class="sheet" data-menu-sheet hidden>
       <ul class="sheet__links frame" role="list">
-        {nav.links.map((l, i) => (
-          <li style={`--i:${i}`}><a href={l.href} class="sheet__link">{l.label}</a></li>
-        ))}
-        <li style={`--i:${nav.links.length}`} class="sheet__cta">
-          <Button cta={nav.phone} location="nav" variant="secondary" />
-        </li>
+        {nav.links.map((l, i) => <li style={`--i:${i}`}><a href={l.href} class="sheet__link">{l.label}</a></li>)}
       </ul>
+      <div class="sheet__ctas frame">
+        <Button cta={nav.primary} location="nav_sheet" uid="sheet" />
+        <Button cta={nav.phone} location="nav_sheet" variant="secondary" uid="sheet" />
+      </div>
     </div>
   </nav>
 </header>
@@ -67,20 +61,20 @@ import Button from '../ui/Button.astro';
   const sheet = header.querySelector<HTMLElement>('[data-menu-sheet]')!;
   const label = header.querySelector<HTMLElement>('[data-menu-label]')!;
 
-  // Collapse the ribbon and firm up the bar once the page moves (transform only: no CLS).
   let scrolled = false;
   const onScroll = () => {
-    const s = window.scrollY > 24;
+    const s = window.scrollY > 8;
     if (s !== scrolled) header.classList.toggle('is-scrolled', (scrolled = s));
   };
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
-  // Mobile menu: disclosure pattern. Esc closes, focus returns to the toggle.
+  const focusables = () => [toggle, ...sheet.querySelectorAll<HTMLElement>('a[href],button')];
   const setOpen = (open: boolean, restoreFocus = false) => {
     toggle.setAttribute('aria-expanded', String(open));
     label.textContent = (open ? toggle.dataset.labelClose : toggle.dataset.labelOpen) ?? '';
     header.classList.toggle('is-open', open);
+    document.documentElement.classList.toggle('has-sheet', open);
     if (open) {
       sheet.hidden = false;
       requestAnimationFrame(() => sheet.classList.add('is-open'));
@@ -91,24 +85,33 @@ import Button from '../ui/Button.astro';
       if (restoreFocus) toggle.focus();
     }
   };
-  toggle.addEventListener('click', () => setOpen(toggle.getAttribute('aria-expanded') !== 'true'));
+  const isOpen = () => toggle.getAttribute('aria-expanded') === 'true';
+  toggle.addEventListener('click', () => setOpen(!isOpen()));
   sheet.addEventListener('click', (e) => {
     if ((e.target as Element).closest('a')) setOpen(false);
   });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') setOpen(false, true);
+    if (!isOpen()) return;
+    if (e.key === 'Escape') return setOpen(false, true);
+    if (e.key !== 'Tab') return;
+    // Focus trap: toggle → sheet links → sheet buttons → toggle.
+    const f = focusables();
+    const i = f.indexOf(document.activeElement as HTMLElement);
+    if (e.shiftKey && i <= 0) (e.preventDefault(), f[f.length - 1]!.focus());
+    else if (!e.shiftKey && i === f.length - 1) (e.preventDefault(), f[0]!.focus());
   });
   window.matchMedia('(min-width: 1024px)').addEventListener('change', (e) => e.matches && setOpen(false));
 
-  // Where am I: mark the nav link for the section in view (aria-current="location").
+  // Where am I: aria-current="location" on the link for the section in view.
   const links = [...header.querySelectorAll<HTMLAnchorElement>('[data-nav-link]')];
   const targets = links.map((a) => document.querySelector<HTMLElement>(a.hash)).filter((el): el is HTMLElement => !!el);
+  const inBand = new Set<string>();
   const io = new IntersectionObserver(
     (entries) => {
-      for (const en of entries) {
-        if (!en.isIntersecting) continue;
-        links.forEach((a) => (a.hash === `#${en.target.id}` ? a.setAttribute('aria-current', 'location') : a.removeAttribute('aria-current')));
-      }
+      for (const en of entries) en.isIntersecting ? inBand.add(en.target.id) : inBand.delete(en.target.id);
+      // The last section (in page order) crossing the middle band is current; none = no marker.
+      const cur = targets.filter((t) => inBand.has(t.id)).pop()?.id;
+      links.forEach((a) => (a.hash === `#${cur}` ? a.setAttribute('aria-current', 'location') : a.removeAttribute('aria-current')));
     },
     { rootMargin: '-45% 0px -50% 0px' },
   );
@@ -125,7 +128,6 @@ import Button from '../ui/Button.astro';
   }
   .site-header.is-scrolled:not(.is-open) { transform: translateY(calc(-1 * var(--ribbon-h))); }
 
-  /* Concept disclosure: signal-700 with white text (>7:1). Brand blue, never black. */
   .ribbon {
     display: flex;
     align-items: center;
@@ -134,32 +136,35 @@ import Button from '../ui/Button.astro';
     height: var(--ribbon-h);
     margin: 0;
     padding-inline: var(--space-gutter);
-    background: var(--color-signal-700);
-    color: var(--color-on-accent);
-    font-family: var(--font-mono);
+    background: var(--color-signal-50);
+    border-bottom: 1px solid var(--color-signal-100);
+    color: var(--color-signal-700);
     font-size: var(--text-xs);
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-weight: var(--font-weight-label);
   }
-  .ribbon__mark { flex: none; width: var(--space-2); height: var(--space-2); border-radius: var(--radius-pill); background: var(--color-bay); }
+  .ribbon__text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ribbon__mark { flex: none; width: 6px; height: 6px; border-radius: var(--radius-pill); background: var(--color-accent); }
 
   .bar {
     position: relative;
-    background: var(--color-surface-glass-strong);
-    -webkit-backdrop-filter: blur(18px) saturate(1.4);
-    backdrop-filter: blur(18px) saturate(1.4);
     border-bottom: 1px solid transparent;
-    transition: border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
+    transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
   }
-  .is-scrolled .bar { border-bottom-color: var(--color-border); box-shadow: var(--shadow-sm); }
-  .bar__inner { display: flex; align-items: center; gap: var(--space-6); height: var(--nav-height); }
-  .bar__logo { display: block; flex: none; padding-block: var(--space-2); border-radius: var(--radius-sm); }
-  .bar__logo img { width: 9.5rem; height: auto; }
-  @media (min-width: 768px) { .bar__logo img { width: 11rem; } }
+  /* Frosted only once content scrolls under it: the blur keeps the bar legible over moving content. */
+  .is-scrolled .bar, .is-open .bar {
+    background: color-mix(in srgb, var(--color-surface) 82%, transparent);
+    -webkit-backdrop-filter: blur(12px) saturate(1.4);
+    backdrop-filter: blur(12px) saturate(1.4);
+    border-bottom-color: var(--color-border);
+  }
+  .is-open .bar { background: var(--color-surface); }
+  .bar__inner { display: flex; align-items: center; gap: var(--space-3); height: var(--nav-height); }
+  @media (min-width: 1024px) { .bar__inner { gap: var(--space-6); } }
+  .bar__logo { display: block; flex: none; border-radius: var(--radius-sm); }
+  .bar__logo img { width: auto; height: 1.375rem; }
+  @media (min-width: 768px) { .bar__logo img { height: 1.75rem; } }
 
-  .bar__links { display: none; gap: var(--space-5); margin: 0 auto; padding: 0; list-style: none; }
+  .bar__links { display: none; gap: var(--space-6); margin: 0 auto; padding: 0; list-style: none; }
   .bar__link {
     position: relative;
     display: inline-block;
@@ -169,47 +174,37 @@ import Button from '../ui/Button.astro';
     font-weight: var(--font-weight-label);
     text-decoration: none;
     white-space: nowrap;
+    transition: color var(--duration-fast) var(--ease-standard);
   }
   .bar__link::after {
     content: "";
     position: absolute;
-    left: 0; right: 0; bottom: 2px;
+    left: 0; right: 0; bottom: -2px;
     height: 2px;
     border-radius: var(--radius-pill);
-    background: var(--color-bay);
+    background: var(--color-link);
     transform: scaleX(0);
     transform-origin: left;
     transition: transform var(--duration-base) var(--ease-out-quart);
   }
-  .bar__link:hover { color: var(--color-signal-700); }
-  .bar__link:hover::after, .bar__link[aria-current]::after { transform: scaleX(1); }
-  .bar__link[aria-current] { color: var(--color-signal-700); }
+  .bar__link:hover, .bar__link[aria-current] { color: var(--color-link); }
+  .bar__link[aria-current]::after { transform: scaleX(1); }
 
   .bar__actions { display: flex; align-items: center; gap: var(--space-3); margin-left: auto; }
-  .bar__phone {
-    display: none;
-    color: var(--color-heading);
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    font-variant-numeric: tabular-nums;
-    text-decoration: none;
-    white-space: nowrap;
-  }
-  .bar__phone:hover { color: var(--color-signal-700); }
+  @media (min-width: 1024px) { .bar__actions { gap: var(--space-5); } }
+  .bar__actions :global(.bar__phone) { display: none; font-family: var(--font-mono); font-feature-settings: var(--font-feature-data); color: var(--color-heading); }
+  .bar__actions :global(.bar__phone:hover) { color: var(--color-link); }
 
   .bar__menu {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    min-height: 2.75rem;
-    padding: 0 var(--space-4);
+    display: inline-grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
     border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-pill);
+    border-radius: var(--radius-md);
     background: var(--color-surface);
     color: var(--color-heading);
-    font: inherit;
-    font-size: var(--text-sm);
-    font-weight: var(--font-weight-label);
     cursor: pointer;
   }
   .bar__menu:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
@@ -218,42 +213,40 @@ import Button from '../ui/Button.astro';
   .is-open .bar__menu-lines span:first-child { transform: translateY(3.25px) rotate(45deg); }
   .is-open .bar__menu-lines span:last-child { transform: translateY(-3.25px) rotate(-45deg); }
 
-  /* The compact Book button is hidden on the smallest phones; the sticky bar carries Book there. */
-  .bar__actions :global(.bar__book) { display: none; }
-  @media (min-width: 480px) { .bar__actions :global(.bar__book) { display: inline-flex; } }
-
   @media (min-width: 1024px) {
     .bar__links { display: flex; }
-    .bar__menu { display: none; }
-    .sheet { display: none; }
+    .bar__menu, .sheet { display: none; }
   }
-  @media (min-width: 1280px) { .bar__phone { display: inline; } }
+  @media (min-width: 1200px) { .bar__actions :global(.bar__phone) { display: inline-flex; } }
 
   .sheet {
-    position: absolute;
-    inset: 100% 0 auto 0;
-    background: var(--color-bg);
-    border-bottom: 1px solid var(--color-border-strong);
-    box-shadow: var(--shadow-lg);
-    padding-block: var(--space-5) var(--space-6);
-  }
-  .sheet__links { display: grid; gap: var(--space-1); margin: 0; list-style: none; }
-  .sheet__links li {
+    position: fixed;
+    inset: calc(var(--ribbon-h) + var(--nav-height)) 0 0 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-block: var(--space-3) calc(var(--space-6) + env(safe-area-inset-bottom));
+    background: var(--color-surface);
+    overflow-y: auto;
     opacity: 0;
-    transform: translateY(var(--space-2));
+    transform: translateY(-8px);
     transition: opacity var(--duration-base) var(--ease-out-quart), transform var(--duration-base) var(--ease-out-quart);
-    transition-delay: calc(var(--i) * 30ms);
   }
-  .sheet.is-open .sheet__links li { opacity: 1; transform: none; }
+  .is-scrolled .sheet { inset-block-start: var(--nav-height); }
+  .sheet.is-open { opacity: 1; transform: none; }
+  .sheet__links { display: grid; margin: 0; list-style: none; }
   .sheet__link {
-    display: block;
-    padding-block: var(--space-3);
+    display: flex;
+    align-items: center;
+    min-height: 3.5rem;
     border-bottom: 1px solid var(--color-border);
     color: var(--color-heading);
+    font-size: var(--text-2xl);
     font-weight: var(--font-weight-heading);
-    letter-spacing: var(--tracking-heading);
-    font-size: var(--text-xl);
+    letter-spacing: var(--tracking-title);
     text-decoration: none;
   }
-  .sheet__cta { padding-top: var(--space-4); }
+  .sheet__ctas { display: grid; gap: var(--space-3); padding-top: var(--space-6); }
+  .sheet__ctas :global(.btn) { width: 100%; min-height: 3rem; }
+  :global(html.has-sheet) { overflow: hidden; }
 </style>

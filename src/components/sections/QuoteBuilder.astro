@@ -1,0 +1,364 @@
+---
+/**
+ * Instant quote builder (#quote; design-spec-v3 §2.3 layout, content.ts quoteBuilder copy,
+ * prices and pricing rules). A receipt, not a form: steps on the left, a sticky receipt on the
+ * right whose total ticks as you choose. Every dollar comes from content.ts (all SAMPLES,
+ * NEEDS DATA); the arithmetic is lib/quote.ts (unit-tested).
+ *
+ * - The builder is its own <form>, so radio names that match the booking form's fields
+ *   (tv_size, wall_type…) stay separate groups and the handoff maps 1:1 by name.
+ * - A $0 delta renders no badge (Ruth, 2026-10-07): never "+$0" or "Included".
+ * - In-wall on concrete renders disabled with its reason; quote.ts swaps a selected in-wall
+ *   to raceway when the wall becomes concrete and says why.
+ * - Five states: empty (no service: the receipt says what to do), error (Book with nothing
+ *   picked: inline error, focus to step 1), populated, overflow (max counts: tabular mono,
+ *   lines wrap), no-JS (static starting prices + Book). Loading does not apply: pricing is
+ *   synchronous and local.
+ */
+import { contact, quoteBuilder as qb, stickyBar, type QuoteField, type QuoteService } from '../../data/content';
+import { uiLabels } from '../../data/ui-labels';
+import { usd } from '../../lib/quote';
+import Button from '../ui/Button.astro';
+import Icon from '../ui/Icon.astro';
+import SectionHead from '../ui/SectionHead.astro';
+
+const SVC_ICON = { tv: 'tv', wifi: 'wifi', cameras: 'camera', smart: 'home' } as const;
+const services = qb.services as readonly QuoteService[];
+const model = JSON.stringify({
+  services,
+  estimate: qb.estimate,
+  notesLine: qb.notesLine,
+  smsBase: contact.smsBase,
+  smsTemplate: decodeURIComponent(qb.secondary.href.slice(contact.smsBase.length)),
+  /** Nothing picked yet: the generic text body, never "my quote: , from $0". */
+  smsDefault: stickyBar.smsBody,
+}).replace(/</g, '\\u003c');
+const badge = (n: number | undefined) => (n && n > 0 ? `+${usd(n)}` : null);
+const fid = (f: QuoteField, key?: string) => `qb-${f.name}${key ? `-${key}` : ''}`;
+---
+<section id="quote" class="section qb" aria-labelledby="quote-h2">
+  <div class="frame frame--wide">
+    <SectionHead eyebrow={qb.eyebrow} heading={qb.heading} lead={qb.intro} id="quote-h2" />
+
+    <!-- No-JS: static starting prices + Book (replaced by the builder when JS runs). -->
+    <div class="stage qb__fallback" data-qb-fallback>
+      <ul class="qb__fallback-list" role="list">
+        {services.map((s) => (
+          <li><span>{s.label}</span><span class="mono">{s.base.prefix} {usd(s.base.amount)}{s.base.unit ? ` ${s.base.unit}` : ''}</span></li>
+        ))}
+      </ul>
+      <p class="qb__disc">{qb.disclaimer}</p>
+      <Button cta={qb.primary} location="quote_fallback" uid="fallback" />
+    </div>
+
+    <div class="stage qb__stage" data-qb hidden>
+      <form class="qb__steps" novalidate data-qb-form aria-labelledby="quote-h2">
+        <!-- Step 1: services -->
+        <fieldset class="qb__step" data-qb-step="1">
+          <legend class="qb__legend" tabindex="-1" data-qb-legend="1"><span class="qb__n" aria-hidden="true">1</span>{qb.steps[0].legend}</legend>
+          <p class="qb__help">{qb.steps[0].helper}</p>
+          <div class="qb__chips qb__chips--svc">
+            {services.map((s) => (
+              <label class="chip chip--svc">
+                <input type="checkbox" name="qb_services" value={s.key} aria-describedby="qb-svc-error" />
+                <span class="chip__body">
+                  <Icon name={SVC_ICON[s.key]} size={20} />
+                  <span class="chip__text"><span class="chip__label">{s.label}</span><span class="chip__sub mono">{s.base.prefix} {usd(s.base.amount)}</span></span>
+                  <span class="chip__tick" aria-hidden="true"><Icon name="check" size={14} /></span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <p class="qb__error" id="qb-svc-error" data-qb-error hidden>{qb.servicesError}</p>
+        </fieldset>
+
+        <!-- Step 2: details per selected service -->
+        <fieldset class="qb__step" data-qb-step="2">
+          <legend class="qb__legend" tabindex="-1" data-qb-legend="2"><span class="qb__n" aria-hidden="true">2</span>{qb.steps[1].legend}</legend>
+          <p class="qb__help">{qb.steps[1].helper}</p>
+          <p class="qb__empty-step" data-qb-details-empty>{qb.estimate.empty}</p>
+
+          {services.map((s) => (
+            <div class="qb__group" data-qb-group={s.key} hidden>
+              <div class="qb__group-head">
+                <p class="qb__group-title"><Icon name={SVC_ICON[s.key]} size={18} />{s.label}</p>
+                <p class="qb__group-sub">{s.baseIncludes}</p>
+              </div>
+              {s.fields.map((f) => {
+                if (f.kind === 'stepper') {
+                  return (
+                    <div class="qb__field qb__field--row">
+                      <label class="qb__flabel" for={fid(f)}>{f.label}{f.helper && <span class="qb__fhelp">{f.helper}</span>}</label>
+                      <div class="stepper">
+                        <button type="button" class="stepper__btn" data-step-by="-1" data-for={f.name} aria-label={uiLabels.decrease.replace('{field}', f.label)} aria-controls={fid(f)}><Icon name="minus" size={16} /></button>
+                        <input class="stepper__val mono" id={fid(f)} type="number" inputmode="numeric" name={f.name} min={f.min} max={f.max} value={f.initial} />
+                        <button type="button" class="stepper__btn" data-step-by="1" data-for={f.name} aria-label={uiLabels.increase.replace('{field}', f.label)} aria-controls={fid(f)}><Icon name="plus" size={16} /></button>
+                      </div>
+                      {badge(f.unitDelta) && <span class="chip__delta mono qb__unit-delta">{badge(f.unitDelta)}</span>}
+                    </div>
+                  );
+                }
+                if (f.kind === 'checkbox') {
+                  return (
+                    <div class="qb__field">
+                      <label class="chip chip--wide">
+                        <input type="checkbox" name={f.name} value="yes" />
+                        <span class="chip__body"><span class="chip__box" aria-hidden="true"><Icon name="check" size={12} /></span><span class="chip__label">{f.label}</span>{badge(f.unitDelta) && <span class="chip__delta mono">{badge(f.unitDelta)}</span>}</span>
+                      </label>
+                    </div>
+                  );
+                }
+                const reasons = [...new Set((f.choices ?? []).flatMap((c) => (c.disabledWhen ? [c.disabledWhen.reason] : [])))];
+                return (
+                  <fieldset class="qb__field">
+                    <legend class="qb__flabel">{f.label}</legend>
+                    {f.helper && <p class="qb__fhelp" id={`${fid(f)}-help`}>{f.helper}</p>}
+                    <div class="qb__chips">
+                      {(f.choices ?? []).map((c) => (
+                        <label class="chip">
+                          <input
+                            type={f.kind === 'multi' ? 'checkbox' : 'radio'}
+                            name={f.name}
+                            value={c.key}
+                            checked={String(f.initial) === c.key}
+                            data-disabled-field={c.disabledWhen?.field}
+                            data-disabled-equals={c.disabledWhen?.equals}
+                            aria-describedby={c.disabledWhen ? `${fid(f)}-reason` : f.helper ? `${fid(f)}-help` : undefined}
+                          />
+                          <span class="chip__body">
+                            <span class="chip__tick" aria-hidden="true"><Icon name="check" size={14} /></span>
+                            <span class="chip__label">{c.label}</span>
+                            {c.hint && <span class="chip__hint">{c.hint}</span>}
+                            {badge(c.delta) && <span class="chip__delta mono">{badge(c.delta)}</span>}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    {reasons.map((r) => <p class="qb__reason" id={`${fid(f)}-reason`} data-qb-reason={f.name} hidden>{r}</p>)}
+                  </fieldset>
+                );
+              })}
+            </div>
+          ))}
+        </fieldset>
+      </form>
+
+      <!-- Step 3: the receipt -->
+      <aside class="qb__receipt" aria-labelledby="qb-receipt-h" data-qb-receipt>
+        <div class="qb__receipt-card">
+          <div class="qb__rhead">
+            <h3 id="qb-receipt-h" class="qb__rtitle"><span class="qb__n" aria-hidden="true">3</span>{qb.estimate.heading}</h3>
+            <span class="sample-tag">{qb.estimate.sampleBadge}</span>
+          </div>
+          <p class="qb__rempty" data-qb-empty>{qb.estimate.empty}</p>
+          <div class="qb__rbody" data-qb-body hidden>
+            <p class="qb__rlabel">{qb.estimate.breakdownLabel}</p>
+            <ul class="qb__lines" role="list" data-qb-lines></ul>
+            <p class="qb__note" data-qb-blocked hidden></p>
+            <p class="qb__note" data-qb-mixed hidden>{qb.estimate.mixedWalls}</p>
+          </div>
+          <div class="qb__total" data-qb-total-row hidden>
+            <span class="qb__tlabel">{qb.estimate.totalLabel}</span>
+            <span class="qb__tval mono"><span class="qb__from">{qb.estimate.totalPrefix}</span> <span data-qb-total>{usd(0)}</span></span>
+          </div>
+          <p class="qb__disc">{qb.disclaimer}</p>
+          <div class="qb__actions">
+            <Button cta={qb.primary} location="quote" data={{ 'qb-book': '' }} class="qb__book" />
+            <Button cta={qb.secondary} location="quote" variant="text" data={{ 'qb-text': '' }} />
+            <button type="button" class="qb__reset" data-qb-reset>{qb.reset}</button>
+          </div>
+          <p class="visually-hidden" aria-live="polite" data-qb-live data-template={qb.estimate.live}></p>
+        </div>
+      </aside>
+
+      <!-- Mobile: in-section sticky total while the steps are on screen and the receipt is not. -->
+      <div class="qb__pill" data-qb-pill>
+        <span class="qb__pill-l">{qb.estimate.totalLabel}</span>
+        <span class="qb__pill-v mono"><span class="qb__from">{qb.estimate.totalPrefix}</span> <span data-qb-pill-total>{usd(0)}</span></span>
+        <button type="button" class="qb__pill-cta" data-qb-pill-book>{qb.primary.label}</button>
+      </div>
+    </div>
+  </div>
+  <script type="application/json" id="qb-model" set:html={model} />
+</section>
+
+<script>
+  import '../../scripts/quote';
+</script>
+
+<style>
+  .qb__fallback { display: grid; gap: var(--space-4); padding: var(--space-card); justify-items: start; }
+  .qb__fallback-list { width: 100%; margin: 0; padding: 0; list-style: none; }
+  .qb__fallback-list li { display: flex; justify-content: space-between; gap: var(--space-4); padding-block: var(--space-3); border-top: 1px solid var(--color-border); }
+
+  .qb__stage { display: grid; gap: var(--space-6); padding: var(--space-card); }
+  .qb__steps { display: grid; gap: var(--space-7); min-width: 0; }
+  .qb__step { position: relative; margin: 0; padding: 0 0 0 calc(1.5rem + var(--space-4)); border: 0; min-width: 0; }
+  .qb__step + .qb__step::before {
+    content: "";
+    position: absolute;
+    left: 0.75rem;
+    top: calc(-1 * var(--space-7) + 0.25rem);
+    height: calc(var(--space-7) - 0.5rem);
+    border-left: 1px solid var(--color-border);
+  }
+  .qb__legend { display: flex; align-items: center; gap: var(--space-4); margin: 0 0 var(--space-1) calc(-1 * (1.5rem + var(--space-4))); padding: 0; font-size: var(--text-lg); font-weight: var(--font-weight-heading); letter-spacing: var(--tracking-title); color: var(--color-heading); }
+  .qb__legend:focus { outline: none; }
+  .qb__legend:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 4px; }
+  .qb__n {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border-strong);
+    background: var(--color-surface);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-data);
+    color: var(--color-heading);
+    transition: background-color var(--duration-base) var(--ease-standard), color var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard);
+  }
+  .qb__step.is-done .qb__n, .qb__receipt.is-done .qb__n { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-on-accent); }
+  .qb__help { margin: 0 0 var(--space-4); font-size: var(--text-sm); color: var(--color-text-muted); }
+  .qb__error { display: flex; align-items: center; gap: var(--space-2); margin: var(--space-3) 0 0; font-size: var(--text-sm); font-weight: var(--font-weight-label); color: var(--color-error); }
+  .qb__empty-step { margin: 0; padding: var(--space-4); border: 1px dashed var(--color-line-strong); border-radius: var(--radius-lg); font-size: var(--text-sm); color: var(--color-text-muted); }
+
+  /* Chips (spec §1.3) */
+  .qb__chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .qb__chips--svc { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+  .chip { position: relative; display: block; min-width: 0; }
+  .chip input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+  .chip input:disabled { cursor: not-allowed; }
+  .chip__body {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 2.75rem;
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--color-surface);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-label);
+    line-height: var(--leading-ui);
+    color: var(--color-heading);
+    transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+  }
+  .chip:hover .chip__body { background: var(--color-bg-alt); }
+  .chip input:checked + .chip__body { background: var(--color-surface-tint); border-color: var(--color-accent); box-shadow: inset 0 0 0 0.5px var(--color-accent); color: var(--color-link-hover); }
+  .chip input:focus-visible + .chip__body { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+  .chip input:disabled + .chip__body { border-style: dashed; border-color: var(--color-line-strong); background: var(--color-surface); color: var(--color-text-muted); }
+  .chip__tick { display: none; flex: none; }
+  .chip input:checked + .chip__body .chip__tick { display: inline-flex; animation: tick-in var(--duration-fast) var(--ease-spring); }
+  @keyframes tick-in { from { opacity: 0; transform: translateX(-4px); } }
+  .chip__hint { font-size: var(--text-xs); font-weight: var(--font-weight-body); color: var(--color-text-muted); }
+  .chip__delta { margin-left: auto; padding-left: var(--space-2); font-size: var(--text-xs); color: var(--color-text-muted); }
+  .chip input:checked + .chip__body .chip__delta { color: var(--color-link-hover); }
+
+  .chip--svc .chip__body { min-height: 4rem; border-radius: var(--radius-lg); padding: var(--space-3) var(--space-4); }
+  .chip--svc .chip__body > :global(.icon) { color: var(--color-text-muted); }
+  .chip--svc input:checked + .chip__body > :global(.icon) { color: var(--color-accent); }
+  .chip__text { display: grid; gap: 2px; min-width: 0; }
+  .chip__sub { font-size: var(--text-xs); font-weight: var(--font-weight-body); color: var(--color-text-muted); }
+  .chip--svc .chip__tick { margin-left: auto; }
+
+  .chip--wide .chip__body { border-radius: var(--radius-md); }
+  .chip__box { display: grid; place-items: center; flex: none; width: 1.125rem; height: 1.125rem; border: 1px solid var(--color-border-strong); border-radius: var(--radius-xs); color: transparent; }
+  .chip--wide input:checked + .chip__body .chip__box { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-on-accent); }
+
+  .qb__group { display: grid; gap: var(--space-5); padding-block: var(--space-5); border-top: 1px solid var(--color-border); }
+  .qb__group:first-of-type { border-top: 0; padding-top: 0; }
+  .qb__group:not([hidden]) { animation: qb-in var(--duration-base) var(--ease-out-expo); }
+  @keyframes qb-in { from { opacity: 0; transform: translateY(calc(-1 * var(--reveal-distance) / 2)); } }
+  .qb__group-head { display: grid; gap: 2px; }
+  .qb__group-title { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-weight: var(--font-weight-heading); color: var(--color-heading); }
+  .qb__group-sub { margin: 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+  .qb__field { margin: 0; padding: 0; border: 0; min-width: 0; }
+  .qb__flabel { display: grid; gap: 2px; padding: 0; margin-bottom: var(--space-2); font-size: var(--text-sm); font-weight: var(--font-weight-label); color: var(--color-heading); }
+  .qb__fhelp { display: block; margin: 0 0 var(--space-2); font-size: var(--text-xs); font-weight: var(--font-weight-body); color: var(--color-text-muted); }
+  .qb__flabel .qb__fhelp { margin: 0; }
+  .qb__field--row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
+  .qb__field--row .qb__flabel { margin: 0; flex: 1 1 12rem; }
+  .qb__unit-delta { margin-left: 0; }
+  .qb__reason { display: flex; gap: var(--space-2); margin: var(--space-2) 0 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: var(--color-surface-tint); font-size: var(--text-sm); color: var(--color-heading); }
+
+  .stepper { display: inline-flex; align-items: center; gap: var(--space-1); padding: 3px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); }
+  .stepper__btn { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border: 0; border-radius: var(--radius-sm); background: var(--color-mist); color: var(--color-heading); cursor: pointer; }
+  .stepper__btn:hover:not(:disabled) { background: var(--color-line-strong); }
+  .stepper__btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .stepper__btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 1px; }
+  .stepper__val { width: 3rem; height: 2.25rem; border: 0; background: transparent; text-align: center; font-size: var(--text-base); color: var(--color-heading); -moz-appearance: textfield; }
+  .stepper__val::-webkit-inner-spin-button, .stepper__val::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .stepper__val:focus-visible { outline: 2px solid var(--color-focus); border-radius: var(--radius-sm); }
+
+  /* Receipt */
+  .qb__receipt { min-width: 0; }
+  .qb__receipt-card { display: grid; gap: var(--space-4); padding: var(--space-5); border-radius: var(--radius-xl); background: var(--color-bg-alt); box-shadow: inset 0 0 0 1px var(--color-border); }
+  .qb__rhead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding-bottom: var(--space-4); border-bottom: 1px dashed var(--color-line-strong); }
+  .qb__rtitle { display: flex; align-items: center; gap: var(--space-3); font-size: var(--text-lg); }
+  .qb__rempty { margin: 0; font-family: var(--font-mono); font-size: var(--text-sm); color: var(--color-text-muted); }
+  .qb__rbody { display: grid; gap: var(--space-2); }
+  .qb__rlabel { margin: 0; font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; color: var(--color-text-muted); }
+  .qb__lines { display: grid; margin: 0; padding: 0; list-style: none; }
+  .qb__lines :global(li) { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-4); padding-block: var(--space-2); border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); animation: line-in var(--duration-base) var(--ease-out-expo); }
+  .qb__lines :global(li span:last-child) { font-family: var(--font-mono); font-feature-settings: var(--font-feature-data); white-space: nowrap; color: var(--color-price); }
+  @keyframes line-in { from { opacity: 0; transform: translateY(-8px); } }
+  .qb__note { margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: var(--color-surface); font-size: var(--text-xs); color: var(--color-text-muted); }
+  .qb__total { display: grid; gap: var(--space-1); padding-top: var(--space-4); border-top: 1px dashed var(--color-line-strong); }
+  .qb__tlabel { font-size: var(--text-sm); font-weight: var(--font-weight-label); color: var(--color-text-muted); }
+  .qb__tval { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); font-size: var(--text-data-xl); font-weight: var(--font-weight-data); letter-spacing: -0.03em; line-height: 1.05; color: var(--color-price); font-feature-settings: var(--font-feature-data); overflow-wrap: anywhere; }
+  .qb__from { font-size: var(--text-base); letter-spacing: 0; color: var(--color-text-muted); }
+  .qb__disc { margin: 0; font-size: var(--text-xs); line-height: var(--leading-ui); color: var(--color-text-muted); }
+  .qb__actions { display: grid; gap: var(--space-2); justify-items: center; }
+  .qb__actions :global(.qb__book) { width: 100%; }
+  .qb__reset { min-height: 2.75rem; padding: 0 var(--space-3); border: 0; background: transparent; font-size: var(--text-sm); color: var(--color-text-muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .qb__reset:hover { color: var(--color-heading); }
+  .qb__reset:focus-visible { outline: 2px solid var(--color-focus); border-radius: var(--radius-xs); }
+
+  .qb__pill { display: none; }
+  @media (max-width: 767px) {
+    .qb__step { padding-left: 0; }
+    .qb__legend { margin-left: 0; gap: var(--space-3); }
+    .qb__step + .qb__step::before { display: none; }
+    .chip--svc .chip__body { flex-wrap: wrap; align-content: flex-start; min-height: 5.5rem; }
+    .chip--svc .chip__text { flex: 1 1 100%; order: 2; }
+  }
+  @media (max-width: 1023px) {
+    .qb__pill {
+      position: fixed;
+      left: var(--space-gutter);
+      right: var(--space-gutter);
+      bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+      z-index: var(--z-sticky);
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      min-height: 3.25rem;
+      padding: var(--space-1) var(--space-1) var(--space-1) var(--space-5);
+      border-radius: var(--radius-pill);
+      background: var(--color-surface);
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(var(--space-3));
+      transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-out-expo), visibility 0s linear var(--duration-base);
+      pointer-events: none;
+    }
+    @media (min-width: 768px) { .qb__pill { bottom: var(--space-5); left: auto; width: 26rem; } }
+    .qb__pill.is-shown { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; pointer-events: auto; }
+    .qb__pill-l { font-size: var(--text-xs); color: var(--color-text-muted); }
+    .qb__pill-v { font-size: var(--text-lg); font-weight: var(--font-weight-data); color: var(--color-price); }
+    .qb__pill-v .qb__from { font-size: var(--text-xs); }
+    .qb__pill-cta { margin-left: auto; display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 var(--space-4); border: 0; border-radius: var(--radius-pill); background: var(--color-accent); color: var(--color-on-accent); font-size: var(--text-sm); font-weight: var(--font-weight-label); cursor: pointer; }
+    .qb__pill-cta:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+  }
+  @media (min-width: 1024px) {
+    .qb__stage { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--grid-gap); padding: var(--space-8) var(--space-7); }
+    .qb__steps { grid-column: 1 / span 7; padding-right: var(--space-6); }
+    .qb__receipt { grid-column: 8 / -1; }
+    .qb__receipt-card { position: sticky; top: calc(var(--nav-height) + var(--space-6)); padding: var(--space-6); }
+    .qb__chips--svc { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+</style>

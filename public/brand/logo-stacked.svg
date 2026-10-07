@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 320 320" width="320" height="320" role="img" aria-labelledby="tss-title">
+  <title id="tss-title">TechSolutions, smart home installations</title>
+  <!--
+    Full (stacked) lockup, v3.1, FOR WHITE BACKGROUNDS. Faithful to the IG avatar: mark over
+    wordmark, tagline tracked between thin red rules. Square box so logo-512.png needs no crop.
+    - Mark at scale 1.9: x 57.4-262.6, y 47.5-221.9.
+    - Wordmark at scale 0.84 (cap 16.8): x 42.1-277.9, y 237.9-254.7. 16 units under the mark.
+    - Tagline "SMART HOME INSTALLATIONS": monoline caps, cap 5.6, stroke 0.9, tracking ~0.28em,
+      x 97.45-222.55, y 266.7-272.3. Red rules 0.9 thick at y 269.5, 6 units clear of the type,
+      outer ends flush with the wordmark baseline extents.
+    Use this lockup at 160px wide or more. Below that, use logo-horizontal.svg.
+  -->
+  <defs>
+    <linearGradient id="tss-chrome-roof" gradientUnits="userSpaceOnUse" x1="0" y1="16" x2="0" y2="67">
+      <stop offset="0" stop-color="#E4E6E9"/>
+      <stop offset="1" stop-color="#9BA1A8"/>
+    </linearGradient>
+    <linearGradient id="tss-chrome-body" gradientUnits="userSpaceOnUse" x1="0" y1="64" x2="0" y2="104">
+      <stop offset="0" stop-color="#E4E6E9"/>
+      <stop offset="1" stop-color="#9BA1A8"/>
+    </linearGradient>
+    <linearGradient id="tss-chrome-word" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="20">
+      <stop offset="0" stop-color="#E4E6E9"/>
+      <stop offset="1" stop-color="#9BA1A8"/>
+    </linearGradient>
+    <g id="tss-silver-mark" stroke-linejoin="miter">
+      <path d="M60 16L114 58V66.9L60 24.9Z" stroke="none"/>
+      <path d="M103.25 70V101.25H96" fill="none" stroke-width="5.5"/>
+      <path d="M90 68H75A7 7 0 0 0 68 75V77A7 7 0 0 0 75 84H83A7 7 0 0 1 90 91V93A7 7 0 0 1 83 100H68" fill="none" stroke-width="8" stroke-linecap="square"/>
+    </g>
+    <g id="tss-silver-word" stroke-width="4.6" stroke-linejoin="miter">
+      <g fill="none">
+        <path d="M108.6 2.3H94.75A3.85 3.85 0 0 0 90.9 6.15A3.85 3.85 0 0 0 94.75 10H102.45A3.85 3.85 0 0 1 106.3 13.85A3.85 3.85 0 0 1 102.45 17.7H88.6"/>
+        <path d="M118.3 2.3H127.7A4 4 0 0 1 131.7 6.3V13.7A4 4 0 0 1 127.7 17.7H118.3A4 4 0 0 1 114.3 13.7V6.3A4 4 0 0 1 118.3 2.3Z"/>
+        <path d="M139.7 0V17.7H153.4"/>
+        <path d="M157.6 0V13.7A4 4 0 0 0 161.6 17.7H169A4 4 0 0 0 173 13.7V0"/>
+        <path d="M177.5 2.3H197.5M187.5 2.3V20"/>
+        <path d="M202 0V20"/>
+        <path d="M214 2.3H223.4A4 4 0 0 1 227.4 6.3V13.7A4 4 0 0 1 223.4 17.7H214A4 4 0 0 1 210 13.7V6.3A4 4 0 0 1 214 2.3Z"/>
+        <path d="M276.5 2.3H262.65A3.85 3.85 0 0 0 258.8 6.15A3.85 3.85 0 0 0 262.65 10H270.35A3.85 3.85 0 0 1 274.2 13.85A3.85 3.85 0 0 1 270.35 17.7H256.5"/>
+      </g>
+      <path d="M233.1 20V0H238.3L248.5 13.6V0H253.1V20H247.9L237.7 6.4V20Z" stroke="none"/>
+    </g>
+    <!-- Tagline glyphs, cap 10 before scaling -->
+    <path id="tss-g-S" d="M7 0.8H2.9A2.1 2.1 0 0 0 0.8 2.9A2.1 2.1 0 0 0 2.9 5H4.9A2.1 2.1 0 0 1 7 7.1A2.1 2.1 0 0 1 4.9 9.2H0"/>
+    <path id="tss-g-M" d="M0.8 10V0.8L4.5 6.2L8.2 0.8V10"/>
+    <path id="tss-g-A" d="M0.8 10L4 0.8L7.2 10M2.1 6.6H5.9"/>
+    <path id="tss-g-R" d="M0.8 10V0.8H4.7A2.3 2.3 0 0 1 4.7 5.4H0.8M4.2 5.4L7 10"/>
+    <path id="tss-g-T" d="M0 0.8H7.6M3.8 0.8V10"/>
+    <path id="tss-g-H" d="M0.8 0V10M6.2 0V10M0.8 5H6.2"/>
+    <path id="tss-g-O" d="M3.2 0.8H5.2A2.4 2.4 0 0 1 7.6 3.2V6.8A2.4 2.4 0 0 1 5.2 9.2H3.2A2.4 2.4 0 0 1 0.8 6.8V3.2A2.4 2.4 0 0 1 3.2 0.8Z"/>
+    <path id="tss-g-E" d="M6.4 0.8H0.8V9.2H6.4M0.8 5H5.8"/>
+    <path id="tss-g-I" d="M0.8 0V10"/>
+    <path id="tss-g-N" d="M0.8 10V0.8L6.2 9.2V0"/>
+    <path id="tss-g-L" d="M0.8 0V9.2H6.2"/>
+  </defs>
+
+  <!-- Mark -->
+  <g transform="translate(46 24.3) scale(1.9)">
+    <use href="#tss-silver-mark" xlink:href="#tss-silver-mark" x="-0.6" y="-0.6" fill="#8A9097" stroke="#8A9097"/>
+    <use href="#tss-silver-mark" xlink:href="#tss-silver-mark" x="0.6" y="-0.6" fill="#6E747B" stroke="#6E747B"/>
+    <use href="#tss-silver-mark" xlink:href="#tss-silver-mark" x="-0.6" y="0.6" fill="#6E747B" stroke="#6E747B"/>
+    <use href="#tss-silver-mark" xlink:href="#tss-silver-mark" x="0.6" y="0.6" fill="#50555C" stroke="#50555C"/>
+    <path d="M60 16L114 58V66.9L60 24.9Z" fill="url(#tss-chrome-roof)"/>
+    <g fill="none" stroke="url(#tss-chrome-body)" stroke-linejoin="miter">
+      <path d="M103.25 70V101.25H96" stroke-width="5.5"/>
+      <path d="M90 68H75A7 7 0 0 0 68 75V77A7 7 0 0 0 75 84H83A7 7 0 0 1 90 91V93A7 7 0 0 1 83 100H68" stroke-width="8" stroke-linecap="square"/>
+    </g>
+    <path d="M6 58L60 16V24.9L6 66.9Z" fill="#E1251B"/>
+    <g fill="none" stroke="#E1251B" stroke-linejoin="miter">
+      <path d="M16.75 70V101.25H24" stroke-width="5.5"/>
+      <path d="M26 68H56M41 68V104" stroke-width="8"/>
+      <path d="M84 26A6 6 0 0 1 90 32M84 20A12 12 0 0 1 96 32M84 14A18 18 0 0 1 102 32" stroke-width="3.6"/>
+    </g>
+    <g fill="#7D838A">
+      <rect x="54" y="34" width="5" height="5"/>
+      <rect x="61" y="34" width="5" height="5"/>
+      <rect x="54" y="41" width="5" height="5"/>
+      <rect x="61" y="41" width="5" height="5"/>
+    </g>
+  </g>
+
+  <!-- Wordmark -->
+  <g transform="translate(42.1 237.9) scale(0.84) translate(4.25 0) skewX(-12)">
+    <g fill="none" stroke="#E1251B" stroke-width="4.6" stroke-linejoin="miter">
+      <path d="M0 2.3H20M10 2.3V20"/>
+      <path d="M39.2 2.3H24.5V17.7H39.2M24.5 10H37.7"/>
+      <path d="M62.6 2.3H48.9A4 4 0 0 0 44.9 6.3V13.7A4 4 0 0 0 48.9 17.7H62.6"/>
+      <path d="M67.5 0V20M82.9 0V20M67.5 10H82.9"/>
+    </g>
+    <use href="#tss-silver-word" xlink:href="#tss-silver-word" x="-0.45" y="-0.45" fill="#8A9097" stroke="#8A9097"/>
+    <use href="#tss-silver-word" xlink:href="#tss-silver-word" x="0.45" y="-0.45" fill="#6E747B" stroke="#6E747B"/>
+    <use href="#tss-silver-word" xlink:href="#tss-silver-word" x="-0.45" y="0.45" fill="#6E747B" stroke="#6E747B"/>
+    <use href="#tss-silver-word" xlink:href="#tss-silver-word" x="0.45" y="0.45" fill="#50555C" stroke="#50555C"/>
+    <use href="#tss-silver-word" xlink:href="#tss-silver-word" fill="url(#tss-chrome-word)" stroke="url(#tss-chrome-word)"/>
+  </g>
+
+  <!-- Tagline + rules -->
+  <path d="M42.1 269.5H91.45M228.55 269.5H277.9" fill="none" stroke="#E1251B" stroke-width="0.9"/>
+  <g transform="translate(97.45 266.7) scale(0.56)" fill="none" stroke="#575C63" stroke-width="1.6" stroke-linecap="butt" stroke-linejoin="round">
+    <use href="#tss-g-S" xlink:href="#tss-g-S" x="0"/>
+    <use href="#tss-g-M" xlink:href="#tss-g-M" x="10.6"/>
+    <use href="#tss-g-A" xlink:href="#tss-g-A" x="22.4"/>
+    <use href="#tss-g-R" xlink:href="#tss-g-R" x="33.2"/>
+    <use href="#tss-g-T" xlink:href="#tss-g-T" x="43.8"/>
+    <use href="#tss-g-H" xlink:href="#tss-g-H" x="58.6"/>
+    <use href="#tss-g-O" xlink:href="#tss-g-O" x="68.4"/>
+    <use href="#tss-g-M" xlink:href="#tss-g-M" x="79.6"/>
+    <use href="#tss-g-E" xlink:href="#tss-g-E" x="91.4"/>
+    <use href="#tss-g-I" xlink:href="#tss-g-I" x="105"/>
+    <use href="#tss-g-N" xlink:href="#tss-g-N" x="109.4"/>
+    <use href="#tss-g-S" xlink:href="#tss-g-S" x="119.2"/>
+    <use href="#tss-g-T" xlink:href="#tss-g-T" x="129.8"/>
+    <use href="#tss-g-A" xlink:href="#tss-g-A" x="140.2"/>
+    <use href="#tss-g-L" xlink:href="#tss-g-L" x="151"/>
+    <use href="#tss-g-L" xlink:href="#tss-g-L" x="160"/>
+    <use href="#tss-g-A" xlink:href="#tss-g-A" x="169"/>
+    <use href="#tss-g-T" xlink:href="#tss-g-T" x="179.8"/>
+    <use href="#tss-g-I" xlink:href="#tss-g-I" x="190.2"/>
+    <use href="#tss-g-O" xlink:href="#tss-g-O" x="194.6"/>
+    <use href="#tss-g-N" xlink:href="#tss-g-N" x="205.8"/>
+    <use href="#tss-g-S" xlink:href="#tss-g-S" x="215.6"/>
+  </g>
+</svg>

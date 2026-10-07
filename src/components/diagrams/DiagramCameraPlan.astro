@@ -1,0 +1,90 @@
+---
+/**
+ * C. Camera plan (design-spec-v3 §3.7-C), states from content.ts (`two`, `three`):
+ *   two   — front door + driveway cameras; the side gate is a hatched blind spot.
+ *   three — + a side-gate camera + the video doorbell; the blind spot clears.
+ * Cones grow from each camera (scale from its point) and are clipped at the property line.
+ * Desktop 800×500; mobile is the same plan rotated 90° into 360×450.
+ */
+import type { DiagramState } from '../../data/content';
+import DgPins, { type Coords } from './DgPins.astro';
+import CameraArt, { type Cam } from './CameraArt.astro';
+
+interface Props {
+  modes: readonly string[];
+  states: Record<string, DiagramState>;
+}
+const { modes, states } = Astro.props;
+// A camera exists in every mode whose state labels it; the gate zone is blind where it's "bad".
+const inModes = (id: string, good = true) =>
+  modes
+    .map((m, i) => ({ i, l: states[m]?.labels.find((x) => x.id === id) }))
+    .filter(({ l }) => (good ? !!l && l.tone !== 'bad' : l?.tone === 'bad'))
+    .map(({ i }) => String(i))
+    .join(' ');
+const cams: Cam[] = [
+  { id: 'cam-front', x: 200, y: 290, dir: 50, spread: 80, range: 150, modes: inModes('cam-front') },
+  { id: 'cam-drive', x: 590, y: 290, dir: 115, spread: 70, range: 150, modes: inModes('cam-drive') },
+  { id: 'gate', x: 200, y: 170, dir: 180, spread: 84, range: 120, modes: inModes('gate') },
+  { id: 'doorbell', x: 333, y: 292, dir: 90, spread: 70, range: 100, modes: inModes('doorbell') },
+];
+const blindIn = inModes('gate', false);
+
+const dCoords: Coords = {
+  'cam-front': [200, 290, 'l'],
+  'cam-drive': [590, 290, 'r'],
+  gate: [150, 200, 'l'],
+  doorbell: [333, 292, 'b'],
+};
+// Gate pin sits in the zone (blind) or on the camera (live): same id, different state; use the zone.
+const s = 0.6;
+const ox = (360 - 446 * s) / 2;
+const oy = 22;
+// rotate: x' = s(476 − y) + ox, y' = s(x − 100) + oy  (lot + street fit the 4:5 board)
+const rot = ([x, y]: readonly [number, number]) => [+(s * (476 - y) + ox).toFixed(1), +(s * (x - 100) + oy).toFixed(1)] as const;
+const mCoords: Coords = Object.fromEntries(Object.entries(dCoords).map(([k, v]) => [k, rot([v[0], v[1]])]));
+const matrix = `matrix(0 ${s} ${-s} 0 ${(s * 476 + ox).toFixed(2)} ${(-s * 100 + oy).toFixed(2)})`;
+---
+<div class="dgw cmp">
+  <div class="dg dg--d" style="aspect-ratio:800/500">
+    <svg viewBox="0 0 800 500" class="dg__svg" aria-hidden="true" focusable="false">
+      <CameraArt p="cmp-d" cams={cams} blindIn={blindIn} />
+    </svg>
+    <DgPins W={800} H={500} coords={dCoords} modes={modes} states={states} callouts />
+  </div>
+  <div class="dg dg--m" style="aspect-ratio:360/450">
+    <svg viewBox="0 0 360 450" class="dg__svg" aria-hidden="true" focusable="false">
+      <g transform={matrix}><CameraArt p="cmp-m" cams={cams} blindIn={blindIn} /></g>
+    </svg>
+    <DgPins W={360} H={450} coords={mCoords} modes={modes} states={states} />
+  </div>
+</div>
+
+<style>
+  .cmp :global(.cmp__neighbor) { fill: var(--illo-fill); }
+  .cmp :global(.cmp__street) { fill: var(--illo-fill-2); }
+  .cmp :global(.cmp__lot) { fill: var(--color-surface); }
+  .cmp :global(.cmp__paved) { fill: var(--illo-fill); stroke: var(--illo-structure); stroke-width: var(--illo-stroke-fine); }
+  .cmp :global(.cmp__house) { fill: var(--illo-fill-2); stroke: var(--illo-ink); stroke-width: var(--illo-stroke); stroke-linejoin: round; }
+  .cmp :global(.cmp__inner) { fill: none; stroke: var(--illo-structure); stroke-width: var(--illo-stroke-fine); }
+  .cmp :global(.cmp__fence) { fill: none; stroke: var(--illo-ink); stroke-width: var(--illo-stroke); }
+  .cmp :global(.cmp__fine) { fill: none; stroke: var(--illo-structure); stroke-width: var(--illo-stroke-fine); }
+  .cmp :global(.cmp__propline) { fill: none; stroke: var(--illo-structure); stroke-width: var(--illo-stroke-fine); stroke-dasharray: 8 4 2 4; }
+  .cmp :global(.cmp__blind) { fill: var(--illo-alert-fill); stroke: var(--illo-alert); stroke-width: var(--illo-stroke-fine); stroke-dasharray: var(--illo-dash); }
+  .cmp :global(.cmp__blind-hatch) { fill: none; stroke: var(--illo-alert); stroke-width: var(--illo-stroke-fine); opacity: 0.5; }
+  .cmp :global(.cmp__cone) {
+    fill: var(--illo-accent-fill);
+    stroke: var(--illo-accent);
+    stroke-width: var(--illo-stroke-bold);
+    stroke-linejoin: round;
+    transform-box: view-box;
+    transition: transform var(--duration-slow) var(--ease-out-expo);
+  }
+  .cmp :global(.cmp__stub) { stroke: var(--illo-accent); stroke-width: var(--illo-stroke-bold); stroke-linecap: round; }
+  .cmp :global(.cmp__cam) { fill: var(--color-surface); stroke: var(--illo-accent); stroke-width: var(--illo-stroke-bold); }
+  /* Cones grow in while the diagram is pending → drawn, and when a mode adds them. */
+  :global(.is-pending) .cmp :global(.cmp__cone),
+  :global([data-modes]:has([data-mode-i="0"]:checked) .cmp [data-fade-mode]:not([data-fade-mode~="0"]) .cmp__cone),
+  :global([data-modes]:has([data-mode-i="1"]:checked) .cmp [data-fade-mode]:not([data-fade-mode~="1"]) .cmp__cone),
+  :global([data-modes]:has([data-mode-i="2"]:checked) .cmp [data-fade-mode]:not([data-fade-mode~="2"]) .cmp__cone) { transform: scale(0.001); }
+</style>

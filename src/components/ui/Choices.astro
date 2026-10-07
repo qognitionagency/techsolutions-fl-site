@@ -1,12 +1,12 @@
 ---
 /**
- * Radio/checkbox "chips" for the booking form. Native inputs stay in the
- * accessibility tree and keyboard order; the label is the target.
- * `cards` renders photo tiles (step 1), `list` full-width rows.
+ * Radio/checkbox choices for the booking form (design-spec-v3 §1.3 chip). Native inputs stay in
+ * the accessibility tree and keyboard order; the label is the hit target.
+ * `cards` = icon cards (steps 1 and 3: icons, never photos), `chips` = pills, `list` = rows.
  */
-import Img from './Img.astro';
-
-interface Opt { key: string; label: string; marker?: string; image?: string }
+import Icon from './Icon.astro';
+import type { IconName } from './icon-names';
+interface Opt { key: string; label: string; icon?: IconName }
 interface Props {
   name: string;
   type: 'radio' | 'checkbox';
@@ -14,7 +14,7 @@ interface Props {
   required?: boolean;
   variant?: 'chips' | 'cards' | 'list';
   idPrefix: string;
-  /** cards per row at desktop */
+  /** cards per row from 640px */
   columns?: 2 | 3 | 4;
   /** Key of the option checked by default (radio). */
   checked?: string;
@@ -33,83 +33,64 @@ const { name, type, options, required = false, variant = 'chips', idPrefix, colu
         required={type === 'radio' && required ? true : undefined}
         checked={checked === o.key ? true : undefined}
       />
-      {o.image && (
-        <span class="choice__media" aria-hidden="true">
-          <Img slot={o.image} alt="" ratio={4 / 3} widths={[200, 320, 400]} sizes="(min-width: 768px) 12rem, 30vw" class="choice__img" />
-        </span>
-      )}
-      <span class="choice__text">
-        <span class="choice__label">{o.label}</span>
-        {o.marker && <span class="choice__marker">{o.marker}</span>}
-      </span>
-      <span class="choice__tick" aria-hidden="true">
-        <svg viewBox="0 0 12 12" width="12" height="12"><path d="M2.5 6.2 5 8.6l4.5-5" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
-      </span>
+      {o.icon && <span class="choice__icon" aria-hidden="true"><Icon name={o.icon} size={22} /></span>}
+      <span class="choice__label">{o.label}</span>
+      <span class="choice__tick" aria-hidden="true"><Icon name="check" size={12} /></span>
     </label>
   ))}
 </div>
 
 <style>
   .choices { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-  .choices--cards { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: var(--space-3); }
+  .choices--cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
   .choices--list { display: grid; gap: var(--space-2); }
 
   .choice {
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: var(--space-3);
+    gap: var(--space-2);
     min-height: 2.75rem;
     padding: var(--space-2) var(--space-4);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-pill);
     background: var(--color-surface);
-    color: var(--color-text);
+    color: var(--color-heading);
     font-size: var(--text-sm);
+    font-weight: var(--font-weight-label);
+    line-height: var(--leading-ui);
     cursor: pointer;
-    transition: border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
+    transition: border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
   }
-  .choice:hover { border-color: var(--color-signal-300); }
+  .choice:hover { background: var(--color-bg-alt); }
   .choice__input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
-  .choice:has(.choice__input:focus-visible) { box-shadow: var(--shadow-focus); }
-  .choice:has(.choice__input:checked) { border-color: var(--color-signal-500); background: var(--color-signal-50); color: var(--color-heading); box-shadow: inset 0 0 0 1px var(--color-signal-500); }
-  .choice__text { display: grid; gap: 2px; }
-  .choice__marker { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-price); }
+  .choice:has(.choice__input:focus-visible) { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+  .choice:has(.choice__input:checked) { border-color: var(--color-accent); background: var(--color-surface-tint); color: var(--color-link-hover); box-shadow: inset 0 0 0 0.5px var(--color-accent); }
   .choice__tick {
     display: grid;
     place-items: center;
     flex: none;
     width: 1.125rem;
     height: 1.125rem;
-    margin-left: auto;
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-xs);
     color: transparent;
     transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
   }
-  .choice:has(input[type="radio"]) .choice__tick { border-radius: 50%; }
-  .choice:has(.choice__input:checked) .choice__tick { background: var(--color-signal-600); border-color: var(--color-signal-600); color: var(--color-on-accent); }
+  .choices--chips .choice__tick, .choices--list .choice__tick { order: -1; }
+  .choice:has(input[type="radio"]) .choice__tick { border-radius: var(--radius-pill); }
+  .choice:has(.choice__input:checked) .choice__tick { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-on-accent); }
 
   .choices--list .choice { width: 100%; border-radius: var(--radius-md); }
 
-  .choices--cards .choice {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
-    padding: 0;
-    overflow: hidden;
-    border-radius: var(--radius-lg);
-  }
-  .choice__media { display: block; position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: var(--color-mist); }
-  .choice__media :global(picture), .choice__media :global(.choice__img) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform var(--duration-scene) var(--ease-out-expo); }
-  .choice:hover .choice__media :global(.choice__img) { transform: scale(1.04); }
-  .choices--cards .choice__text { padding: var(--space-3) var(--space-4); font-weight: var(--font-weight-heading); font-size: var(--text-base); color: var(--color-heading); }
-  .choices--cards .choice__tick { position: absolute; top: var(--space-2); right: var(--space-2); background: var(--color-surface); }
+  .choices--cards .choice { border-radius: var(--radius-lg); min-height: 3.5rem; padding: var(--space-3); }
+  .choice__icon { display: grid; place-items: center; flex: none; width: 2.25rem; height: 2.25rem; border-radius: var(--radius-md); background: var(--color-bg-alt); color: var(--color-text-muted); transition: color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard); }
+  .choice:has(.choice__input:checked) .choice__icon { background: var(--color-surface); color: var(--color-accent); }
+  .choices--cards .choice__tick { margin-left: auto; }
 
-  @media (max-width: 639px) {
-    .choices--cards { grid-template-columns: 1fr; gap: var(--space-2); }
-    .choices--cards .choice { flex-direction: row; align-items: center; }
-    .choices--cards .choice__media { width: 5.5rem; flex: none; }
-    .choices--cards .choice__tick { position: static; margin-right: var(--space-4); }
+  @media (min-width: 640px) {
+    .choices--cards { grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); }
+    .choices--cards .choice { flex-direction: column; align-items: flex-start; gap: var(--space-3); min-height: 7rem; padding: var(--space-4); }
+    .choices--cards .choice__tick { position: absolute; top: var(--space-3); right: var(--space-3); }
   }
 </style>

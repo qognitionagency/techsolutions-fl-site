@@ -1,0 +1,190 @@
+---
+/**
+ * A. TV wall (design-spec-v3 §3.7-A): front elevation + plan-section inset, two states.
+ *   drywall  — a cutaway under the TV shows the cavity between two studs: HDMI + power run
+ *              inside it (hidden route = dashed accent) from a recessed box behind the TV to
+ *              a listed in-wall power-kit inlet; a short cord to the existing outlet.
+ *   concrete — the face hatches, the cutaway closes, and a paint-matched raceway grows down the
+ *              surface to the outlet. Nothing is drawn inside the concrete (content.ts rule).
+ * Mode index follows content.ts toggle order (0 drywall, 1 concrete). The mobile artboard is a
+ * re-composition (TV and route only, inset under the TV), not a scaled copy.
+ * Pins/labels: DgPins from content.ts states. SVG is aria-hidden; the list is the text.
+ */
+import type { DiagramState } from '../../data/content';
+import DgPins, { type Coords } from './DgPins.astro';
+
+interface Props {
+  modes: readonly string[];
+  states: Record<string, DiagramState>;
+}
+const { modes, states } = Astro.props;
+const D = modes.indexOf('drywall');
+const C = modes.indexOf('concrete');
+const dry = String(D);
+const con = String(C);
+
+// Desktop 800×500
+const dCoords: Coords = {
+  wall: [700, 214, 'b'],
+  cable: [292, 330, 'l'],
+  'power-top': [292, 213, 'l'],
+  'power-bottom': [292, 405, 'l'],
+  mount: [352, 120, 'r'],
+  anchors: [232, 192, 'l'],
+  outlet: [441, 384, 'r'],
+};
+// Mobile 360×450
+const mCoords: Coords = {
+  wall: [180, 398],
+  cable: [180, 252],
+  'power-top': [180, 158],
+  'power-bottom': [180, 314],
+  mount: [228, 72],
+  anchors: [108, 146],
+  outlet: [243, 292],
+};
+const hatchLines = (x0: number, y0: number, x1: number, y1: number, step = 6) =>
+  Array.from({ length: Math.ceil((x1 - x0 + (y1 - y0)) / step) }, (_, i) => {
+    const k = x0 + i * step;
+    return `M${k} ${y0} L${k - (y1 - y0)} ${y1}`;
+  }).join(' ');
+---
+<div class="dgw tvw">
+  <!-- ── Desktop artboard ───────────────────────────── -->
+  <div class="dg dg--d" style="aspect-ratio:800/500">
+    <svg viewBox="0 0 800 500" class="dg__svg" aria-hidden="true" focusable="false">
+      <defs>
+        <clipPath id="tvw-d-face"><rect x="24" y="24" width="536" height="416" /></clipPath>
+        <clipPath id="tvw-d-inset"><rect x="604" y="230" width="176" height="56" /></clipPath>
+      </defs>
+      <!-- wall face -->
+      <rect x="24" y="24" width="536" height="416" class="tvw__face" />
+      <g clip-path="url(#tvw-d-face)" data-fade-mode={con}>
+        <path d={hatchLines(24, 24, 560 + 416, 440)} class="tvw__hatch grow-x" />
+      </g>
+      <line x1="24" y1="428" x2="560" y2="428" class="dg__fine" />
+      <line x1="8" y1="440" x2="576" y2="440" class="dg__ink" />
+      <g class="dg__ground">{Array.from({ length: 36 }, (_, i) => <line x1={12 + i * 16} y1="450" x2={22 + i * 16} y2="440" />)}</g>
+
+      <!-- drywall cutaway: studs, cavity, hidden route -->
+      <g data-fade-mode={dry}>
+        <rect x="244" y="276" width="96" height="150" class="tvw__cavity" />
+        <rect x="244" y="276" width="14" height="150" class="tvw__stud" />
+        <rect x="326" y="276" width="14" height="150" class="tvw__stud" />
+        <rect x="244" y="276" width="96" height="150" class="tvw__cut" />
+        <path d="M292 221 V 396" class="dg__route dg__route--hidden grow-y" />
+        <rect x="281" y="396" width="22" height="20" rx="2" class="tvw__plate" />
+        <circle cx="292" cy="406" r="3.5" class="tvw__plate-hole" />
+        <path d="M303 410 C 340 414, 380 420, 433 410" class="tvw__cord grow-x" />
+      </g>
+
+      <!-- concrete: raceway on the surface, anchors -->
+      <g data-fade-mode={con}>
+        <path d="M286 239 H298 V392 H433 V404 H286 Z" class="tvw__raceway grow-y" />
+      </g>
+
+      <!-- TV, soundbar, outlet -->
+      <rect x="142" y="70" width="300" height="169" rx="4" class="tvw__tv" />
+      <rect x="149" y="77" width="286" height="155" rx="2" class="tvw__screen" />
+      <!-- mount: hidden line, drawn over the TV (drafting convention) -->
+      <g class="dg__hidden"><rect x="232" y="110" width="120" height="90" rx="2" /><line x1="252" y1="110" x2="252" y2="200" /><line x1="332" y1="110" x2="332" y2="200" /></g>
+      <rect x="284" y="205" width="16" height="16" rx="2" class="dg__hidden-accent" data-fade-mode={dry} />
+      <g data-fade-mode={con}>{[[232, 118], [352, 118], [232, 192], [352, 192]].map(([x, y]) => <path d={`M${x - 5} ${y} h10 M${x} ${y - 5} v10`} class="tvw__anchor" />)}</g>
+      <rect x="222" y="252" width="140" height="14" rx="7" class="tvw__obj" />
+      <rect x="433" y="398" width="16" height="22" rx="2" class="tvw__obj" />
+      <path d="M438 405 v5 M444 405 v5" class="dg__ink" />
+      <!-- dimension: TV width -->
+      <g class="dg__dim"><path d="M142 50 H442 M142 44 v12 M442 44 v12 M138 54 l8 -8 M438 54 l8 -8" /></g>
+
+      <!-- inset: plan section through the wall -->
+      <rect x="590" y="150" width="190" height="170" class="tvw__inset" />
+      <!-- room side (bottom) → TV profile, mount, wall -->
+      <rect x="638" y="186" width="94" height="10" rx="2" class="tvw__tv" />
+      <rect x="664" y="196" width="42" height="34" class="dg__hidden" />
+      <g data-fade-mode={dry}>
+        <rect x="604" y="230" width="176" height="8" class="tvw__board" />
+        <rect x="604" y="238" width="176" height="40" class="tvw__cavity" />
+        <rect x="604" y="238" width="14" height="40" class="tvw__stud" /><rect x="766" y="238" width="14" height="40" class="tvw__stud" />
+        <rect x="604" y="278" width="176" height="8" class="tvw__board" />
+        <circle cx="685" cy="258" r="5" class="tvw__dot" />
+      </g>
+      <g data-fade-mode={con}>
+        <rect x="604" y="230" width="176" height="56" class="tvw__slab" />
+        <g clip-path="url(#tvw-d-inset)"><path d={hatchLines(604, 230, 780 + 56, 286)} class="tvw__hatch" /></g>
+        <rect x="676" y="221" width="18" height="9" rx="1.5" class="tvw__raceway" />
+        <circle cx="685" cy="225.5" r="2.5" class="tvw__dot" />
+      </g>
+      <path d="M604 230 H780 M604 286 H780" class="dg__ink" />
+    </svg>
+    <DgPins W={800} H={500} coords={dCoords} modes={modes} states={states} callouts />
+  </div>
+
+  <!-- ── Mobile artboard ────────────────────────────── -->
+  <div class="dg dg--m" style="aspect-ratio:360/450">
+    <svg viewBox="0 0 360 450" class="dg__svg" aria-hidden="true" focusable="false">
+      <defs>
+        <clipPath id="tvw-m-face"><rect x="24" y="24" width="312" height="312" /></clipPath>
+        <clipPath id="tvw-m-inset"><rect x="40" y="384" width="280" height="30" /></clipPath>
+      </defs>
+      <rect x="24" y="24" width="312" height="312" class="tvw__face" />
+      <g clip-path="url(#tvw-m-face)" data-fade-mode={con}><path d={hatchLines(24, 24, 336 + 312, 336)} class="tvw__hatch grow-x" /></g>
+      <line x1="12" y1="336" x2="348" y2="336" class="dg__ink" />
+      <g data-fade-mode={dry}>
+        <rect x="146" y="200" width="68" height="132" class="tvw__cavity" />
+        <rect x="146" y="200" width="12" height="132" class="tvw__stud" />
+        <rect x="202" y="200" width="12" height="132" class="tvw__stud" />
+        <rect x="146" y="200" width="68" height="132" class="tvw__cut" />
+        <path d="M180 166 V 304" class="dg__route dg__route--hidden grow-y" />
+        <rect x="169" y="304" width="22" height="20" rx="2" class="tvw__plate" />
+        <circle cx="180" cy="314" r="3.5" class="tvw__plate-hole" />
+        <path d="M191 318 C 210 322, 222 322, 236 316" class="tvw__cord grow-x" />
+      </g>
+      <g data-fade-mode={con}>
+        <path d="M174 175 H186 V300 H236 V312 H174 Z" class="tvw__raceway grow-y" />
+      </g>
+      <rect x="60" y="40" width="240" height="135" rx="4" class="tvw__tv" />
+      <rect x="66" y="46" width="228" height="123" rx="2" class="tvw__screen" />
+      <g class="dg__hidden"><rect x="132" y="66" width="96" height="80" rx="2" /></g>
+      <rect x="172" y="150" width="16" height="16" rx="2" class="dg__hidden-accent" data-fade-mode={dry} />
+      <g data-fade-mode={con}>{[[140, 72], [220, 72], [140, 140], [220, 140]].map(([x, y]) => <path d={`M${x - 4} ${y} h8 M${x} ${y - 4} v8`} class="tvw__anchor" />)}</g>
+      <rect x="120" y="184" width="120" height="12" rx="6" class="tvw__obj" />
+      <rect x="236" y="304" width="14" height="20" rx="2" class="tvw__obj" />
+      <!-- inset under the TV -->
+      <rect x="24" y="356" width="312" height="78" class="tvw__inset" />
+      <rect x="128" y="366" width="104" height="8" rx="2" class="tvw__tv" />
+      <g data-fade-mode={dry}>
+        <rect x="40" y="384" width="280" height="6" class="tvw__board" />
+        <rect x="40" y="390" width="280" height="18" class="tvw__cavity" />
+        <rect x="40" y="408" width="280" height="6" class="tvw__board" />
+        <circle cx="180" cy="399" r="4" class="tvw__dot" />
+      </g>
+      <g data-fade-mode={con}>
+        <rect x="40" y="384" width="280" height="30" class="tvw__slab" />
+        <g clip-path="url(#tvw-m-inset)"><path d={hatchLines(40, 384, 320 + 30, 414)} class="tvw__hatch" /></g>
+        <rect x="172" y="377" width="16" height="7" rx="1.5" class="tvw__raceway" />
+      </g>
+      <path d="M40 384 H320 M40 414 H320" class="dg__ink" />
+    </svg>
+    <DgPins W={360} H={450} coords={mCoords} modes={modes} states={states} />
+  </div>
+</div>
+
+<style>
+  .tvw__face { fill: var(--illo-fill-2); }
+  .tvw__hatch { fill: none; stroke: var(--illo-hatch); stroke-width: var(--illo-stroke-fine); }
+  .tvw__cavity { fill: var(--illo-fill); }
+  .tvw__stud { fill: var(--color-surface); stroke: var(--illo-structure); stroke-width: var(--illo-stroke-fine); }
+  .tvw__cut { fill: none; stroke: var(--illo-ink); stroke-width: var(--illo-stroke); }
+  .tvw__tv { fill: var(--color-surface); stroke: var(--illo-ink); stroke-width: var(--illo-stroke-bold); }
+  .tvw__screen { fill: var(--illo-fill); }
+  .tvw__obj { fill: var(--color-surface); stroke: var(--illo-ink); stroke-width: var(--illo-stroke); }
+  .tvw__plate { fill: var(--color-surface); stroke: var(--illo-accent); stroke-width: var(--illo-stroke); }
+  .tvw__plate-hole { fill: none; stroke: var(--illo-accent); stroke-width: var(--illo-stroke-fine); }
+  .tvw__cord { fill: none; stroke: var(--illo-ink); stroke-width: var(--illo-stroke); stroke-linecap: round; }
+  .tvw__raceway { fill: var(--color-surface); stroke: var(--illo-accent); stroke-width: var(--illo-stroke-bold); stroke-linejoin: round; }
+  .tvw__anchor { stroke: var(--illo-accent); stroke-width: var(--illo-stroke); stroke-linecap: round; }
+  .tvw__inset { fill: var(--color-surface); stroke: var(--illo-structure); stroke-width: var(--illo-stroke-fine); }
+  .tvw__board { fill: var(--illo-fill-2); stroke: var(--illo-ink); stroke-width: var(--illo-stroke-fine); }
+  .tvw__slab { fill: var(--illo-fill); }
+  .tvw__dot { fill: var(--illo-accent); }
+</style>

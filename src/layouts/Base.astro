@@ -1,7 +1,7 @@
 ---
 /**
  * <head>, meta/OG, JSON-LD, font preload, skip link (ADR §2; Iron Sound port).
- * Indexing: noindex,nofollow unless PUBLIC_INDEXABLE=true (ADR §5). Every string from content.ts.
+ * v3: page is white; theme-color matches. Indexing: noindex,nofollow unless PUBLIC_INDEXABLE=true (ADR §5). Every string from content.ts.
  * The concept ribbon lives in Nav.astro (fixed header), as on Iron Sound.
  */
 import '../styles/global.css';
@@ -25,7 +25,7 @@ const graph = JSON.stringify(buildSchema(site)).replace(/</g, '\\u003c');
     <meta name="description" content={meta.description} />
     <meta name="robots" content={indexable ? 'index,follow' : 'noindex,nofollow'} />
     <link rel="canonical" href={canonical} />
-    <meta name="theme-color" content="#F5F8FC" />
+    <meta name="theme-color" content="#FFFFFF" />
     <meta name="color-scheme" content="light" />
 
     <!-- One font preload: the latin Geist face (display + body). Geist Mono loads from the inline CSS. -->
@@ -56,13 +56,10 @@ const graph = JSON.stringify(buildSchema(site)).replace(/</g, '\\u003c');
     <a class="skip" href="#main">{nav.skipLink}</a>
     <slot />
     <script>
+      // v3: no GSAP/Lenis on the page (spec §3.6 bans parallax, pins and scroll-jacking).
       import '../scripts/analytics';
-      import '../scripts/video';
-      // Motion (GSAP + Lenis, ~55 KB gzip) is not needed for first paint: fetch it after load
-      // so it never competes with the LCP poster or the font.
-      const motion = () => import('../scripts/motion');
-      if (document.readyState === 'complete') motion();
-      else window.addEventListener('load', motion, { once: true });
+      import '../scripts/reveal';
+      import '../scripts/anchors';
     </script>
   </body>
 </html>
@@ -74,12 +71,12 @@ const graph = JSON.stringify(buildSchema(site)).replace(/</g, '\\u003c');
     left: var(--space-3);
     z-index: var(--z-overlay);
     padding: var(--space-3) var(--space-4);
-    background: var(--color-slate);
-    color: var(--color-cloud);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
     border-radius: var(--radius-md);
     font-size: var(--text-sm);
     transform: translateY(-200%);
     transition: transform var(--duration-fast) var(--ease-standard);
   }
-  .skip:focus-visible { transform: none; color: var(--color-cloud); }
+  .skip:focus-visible { transform: none; color: var(--color-on-accent); }
 </style>

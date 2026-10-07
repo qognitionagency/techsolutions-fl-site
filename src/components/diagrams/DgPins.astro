@@ -1,0 +1,48 @@
+---
+/**
+ * Callout pins for one diagram artboard (design-spec-v3 §3.3, §3.5). HTML, not SVG text, so
+ * they never render below 12px. One pin per label of each mode's state (content.ts
+ * services.tabs[].diagram.states[mode].labels), numbered in label order, shown only while its
+ * mode is selected ([data-fade-mode]). `callouts` adds the label (+ status chip) beside the pin:
+ * desktop artboard only; on mobile the numbers key into the visible ordered list instead.
+ * Labels without a coordinate are list-only. Pins are aria-hidden: the list is the text.
+ */
+import type { DiagramState } from '../../data/content';
+
+export type Side = 'l' | 'r' | 't' | 'b';
+export type Coords = Record<string, readonly [number, number, Side?]>;
+
+interface Props {
+  W: number;
+  H: number;
+  coords: Coords;
+  modes: readonly string[];
+  states: Record<string, DiagramState>;
+  callouts?: boolean;
+}
+const { W, H, coords, modes, states, callouts = false } = Astro.props;
+const pct = (v: number, of: number) => `${((v / of) * 100).toFixed(2)}%`;
+---
+{modes.map((m, mi) =>
+  (states[m]?.labels ?? []).map((l, li) => {
+    const c = coords[l.id];
+    if (!c) return null;
+    const [x, y, side = 'r'] = c;
+    return (
+      <span
+        class:list={['dg__pin', l.tone === 'bad' && 'dg__pin--bad', callouts && `dg__pin--${side}`]}
+        style={`--x:${pct(x, W)};--y:${pct(y, H)};--d:${li * 80}ms`}
+        data-fade-mode={String(mi)}
+        aria-hidden="true"
+      >
+        {li + 1}
+        {callouts && (
+          <span class="dg__call">
+            <span class="dg__call-t">{l.text}</span>
+            {l.value && <span class:list={['status', `status--${l.tone ?? 'neutral'}`]}>{l.value}</span>}
+          </span>
+        )}
+      </span>
+    );
+  }),
+)}

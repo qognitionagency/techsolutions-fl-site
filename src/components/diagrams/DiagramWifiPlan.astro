@@ -1,0 +1,90 @@
+---
+/**
+ * B. Wi-Fi floor plan (design-spec-v3 §3.7-B), two states from content.ts:
+ *   router — router in the entry closet; kitchen weak, bedroom 2 and balcony dead zones.
+ *   mesh   — one mesh point outside the bedroom (content.ts: "A mesh point outside the
+ *            bedroom"); every room strong. (The spec drew two nodes; the copy says one, and the
+ *            drawing must not contradict the caption.)
+ * Room tones for labelled rooms come from the state labels' `tone`; unlabelled rooms (entry,
+ * hall, bath, primary) follow the nearest labelled room. Desktop 800×500; mobile is the same
+ * plan rotated 90° into a 360×450 artboard.
+ */
+import type { DiagramState } from '../../data/content';
+import DgPins, { type Coords } from './DgPins.astro';
+import WifiArt from './WifiArt.astro';
+
+interface Props {
+  modes: readonly string[];
+  states: Record<string, DiagramState>;
+}
+const { modes, states } = Astro.props;
+const R = modes.indexOf('router');
+const M = modes.indexOf('mesh');
+const ROUTER = [75, 365] as const;
+const NODE = [520, 170] as const;
+
+// Labelled rooms: tone straight from content. Unlabelled rooms: borrow a neighbour's tone.
+const toneOf = (mode: string, id: string) => states[mode]?.labels.find((l) => l.id === id)?.tone ?? 'good';
+const BORROW: Record<string, string> = { entry: 'living', hall: 'kitchen', corridor: 'kitchen', bath: 'kitchen', primary: 'kitchen' };
+const keys = ['entry', 'kitchen', 'hall', 'corridor', 'living', 'bath', 'primary', 'bedroom-2', 'balcony'];
+const tones: Record<string, Record<number, string>> = Object.fromEntries(
+  keys.map((k) => [k, Object.fromEntries(modes.map((m, i) => [i, toneOf(m, BORROW[k] ?? k)]))]),
+);
+
+const dCoords: Coords = {
+  router: [ROUTER[0], ROUTER[1], 'r'],
+  'mesh-point': [NODE[0], NODE[1], 'r'],
+  kitchen: [170, 110, 'r'],
+  living: [300, 236, 'r'],
+  'bedroom-2': [690, 296, 'l'],
+  balcony: [690, 430, 'l'],
+};
+// Mobile: rotate 90° (x' = s(460 − y) + ox, y' = s(x − 40) + oy) into 360×450.
+const s = 0.555;
+const ox = (360 - 420 * s) / 2;
+const oy = 25;
+const rot = ([x, y]: readonly [number, number]) => [+(s * (460 - y) + ox).toFixed(1), +(s * (x - 40) + oy).toFixed(1)] as const;
+const mCoords: Coords = Object.fromEntries(Object.entries(dCoords).map(([k, v]) => [k, rot([v[0], v[1]])]));
+const matrix = `matrix(0 ${s} ${-s} 0 ${(s * 460 + ox).toFixed(2)} ${(-s * 40 + oy).toFixed(2)})`;
+---
+<div class="dgw wfp">
+  <div class="dg dg--d" style="aspect-ratio:800/500">
+    <svg viewBox="0 0 800 500" class="dg__svg" aria-hidden="true" focusable="false">
+      <WifiArt p="wfp-d" R={R} M={M} tones={tones} router={ROUTER} node={NODE} />
+    </svg>
+    <DgPins W={800} H={500} coords={dCoords} modes={modes} states={states} callouts />
+  </div>
+  <div class="dg dg--m" style="aspect-ratio:360/450">
+    <svg viewBox="0 0 360 450" class="dg__svg" aria-hidden="true" focusable="false">
+      <g transform={matrix}><WifiArt p="wfp-m" R={R} M={M} tones={tones} router={ROUTER} node={NODE} /></g>
+    </svg>
+    <DgPins W={360} H={450} coords={mCoords} modes={modes} states={states} />
+  </div>
+</div>
+
+<style>
+  .wfp :global(.wfp__floor) { fill: var(--color-surface); }
+  .wfp :global(.wfp__room) { fill: transparent; stroke: none; transition: fill var(--duration-slow) var(--ease-in-out); }
+  .wfp :global(.wfp__wall) { fill: none; stroke: var(--illo-ink); stroke-width: 4; stroke-linecap: square; opacity: 0.85; }
+  .wfp :global(.wfp__wall--ext) { stroke-width: 6; }
+  .wfp :global(.wfp__router) { fill: var(--color-surface); stroke: var(--illo-accent); stroke-width: var(--illo-stroke-bold); }
+  .wfp :global(.wfp__node) { fill: var(--color-surface); stroke: var(--illo-accent); stroke-width: var(--illo-stroke-bold); }
+  .wfp :global(.wfp__node-core) { fill: var(--illo-accent); }
+  .wfp :global(.wfp__rings circle) { fill: none; stroke: var(--illo-signal); stroke-width: var(--illo-stroke-fine); opacity: 0; transform-origin: inherit; }
+
+  /* Room tone per selected mode. */
+  :global([data-modes]:has([data-mode-i="0"]:checked) .wfp .wfp__room[data-t0="good"]),
+  :global([data-modes]:has([data-mode-i="1"]:checked) .wfp .wfp__room[data-t1="good"]) { fill: var(--illo-signal-fill); }
+  :global([data-modes]:has([data-mode-i="0"]:checked) .wfp .wfp__room[data-t0="weak"]),
+  :global([data-modes]:has([data-mode-i="1"]:checked) .wfp .wfp__room[data-t1="weak"]) { fill: color-mix(in srgb, var(--illo-signal-fill) 45%, transparent); }
+  :global([data-modes]:has([data-mode-i="0"]:checked) .wfp .wfp__room[data-t0="bad"]),
+  :global([data-modes]:has([data-mode-i="1"]:checked) .wfp .wfp__room[data-t1="bad"]) { fill: var(--illo-alert-fill); stroke: var(--illo-alert); stroke-width: var(--illo-stroke-fine); stroke-dasharray: var(--illo-dash); }
+
+  /* Ambient rings (spec §3.6): only while the stage is on screen, never under reduced motion. */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(.is-live) .wfp :global(.wfp__rings circle) { animation: wfp-ring 2.4s var(--ease-out-quart) infinite; transform-box: view-box; }
+    :global(.is-live) .wfp :global(.wfp__rings circle:nth-child(2)) { animation-delay: 0.8s; }
+    :global(.is-live) .wfp :global(.wfp__rings circle:nth-child(3)) { animation-delay: 1.6s; }
+  }
+  @keyframes wfp-ring { from { transform: scale(0.12); opacity: 0.55; } to { transform: scale(1); opacity: 0; } }
+</style>

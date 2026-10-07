@@ -1,19 +1,14 @@
-/* TechSolutions FL — global styles ("Miami Signal" on the Iron Sound section architecture).
-   Every value comes from tokens.css (Elena). This file exposes the tokens to Tailwind,
-   derives the few composite roles the layout needs, and sets page-level defaults. */
+/* TechSolutions FL — global styles, v3 (product-grade).
+   Every value comes from tokens.css (Elena, v3). This file exposes tokens to Tailwind, sets
+   page defaults, and holds the shared primitives every section uses: layout frame + 12-col
+   grid, section head, eyebrow, cards, chips/segmented controls, diagram primitives, tags. */
 @import "tailwindcss";
 @import "@fontsource-variable/geist";
 @import "@fontsource-variable/geist-mono";
 @import "./tokens.css";
-@import "lenis/dist/lenis.css";
 
 @theme inline reference {
   --color-*: initial;
-  --color-cloud: var(--color-cloud);
-  --color-mist: var(--color-mist);
-  --color-slate: var(--color-slate);
-  --color-signal-500: var(--color-signal-500);
-  --color-signal-600: var(--color-signal-600);
   --color-surface: var(--color-surface);
   --color-text: var(--color-text);
   --color-text-muted: var(--color-text-muted);
@@ -22,27 +17,6 @@
   --font-mono: var(--font-mono);
   --radius-*: initial;
   --shadow-*: initial;
-}
-
-/*
-  Composite roles. Each is built from Elena's tokens; none introduces a new colour value.
-  - glass: the nav, hero panel and controls over imagery (pair with backdrop-filter).
-  - deep: the one slate band (testimonials). Text on it: cloud 13.60:1, mist 12.19:1, bay 6.89:1.
-  - rule: hairlines. Signal-200 on light surfaces; bay is the "signal" accent stroke.
-*/
-:root {
-  --color-surface-glass: color-mix(in srgb, var(--color-surface) 76%, transparent);
-  --color-surface-glass-strong: color-mix(in srgb, var(--color-cloud) 88%, transparent);
-  --color-surface-deep: var(--color-slate);
-  --color-text-on-deep: var(--color-cloud);
-  --color-text-on-deep-muted: var(--color-mist);
-  --color-rule: var(--color-signal-200);
-  --color-rule-signal: var(--color-bay);
-  --shadow-glass: inset 0 1px 0 color-mix(in srgb, var(--color-surface) 70%, transparent), var(--shadow-lg);
-  --shadow-glow-signal: var(--shadow-signal-glow);
-  --nav-height: 4.5rem;
-  --mobilebar-height: var(--mobile-bar-height);
-  --container-wide: 90rem; /* full-bleed stages with inset text */
 }
 
 @layer base {
@@ -57,7 +31,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    scroll-padding-top: calc(var(--nav-height) + var(--space-4));
+    scroll-padding-top: calc(var(--nav-height) + var(--space-5));
   }
   body { font-size: var(--text-base); overflow-x: clip; }
   h1, h2, h3, h4 {
@@ -65,104 +39,291 @@
     font-weight: var(--font-weight-heading);
     color: var(--color-heading);
     line-height: var(--leading-heading);
-    letter-spacing: var(--tracking-heading);
+    letter-spacing: var(--tracking-title);
     text-wrap: balance;
+    margin: 0;
   }
   p { text-wrap: pretty; }
   ::selection { background: var(--color-signal-100); color: var(--color-slate); }
-  :focus-visible {
-    outline: 2px solid var(--color-focus);
-    outline-offset: 3px;
-    border-radius: var(--radius-xs);
-  }
+  :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; border-radius: var(--radius-xs); }
   a { color: var(--color-link); }
   a:hover { color: var(--color-link-hover); }
-  img, video { display: block; max-width: 100%; }
+  img, video, svg { display: block; max-width: 100%; }
   summary { cursor: pointer; }
   summary::-webkit-details-marker { display: none; }
+  button { font: inherit; color: inherit; }
+  /* Anchor targets focused programmatically (scripts/anchors.ts): no ring around a whole section. */
+  main[tabindex="-1"]:focus, section[tabindex="-1"]:focus, [role="tabpanel"][tabindex="-1"]:focus { outline: none; }
 }
 
 @layer components {
+  /* ── Layout ─────────────────────────────────────────────────────── */
   .frame {
     width: 100%;
     max-width: calc(var(--container-max) + 2 * var(--space-gutter));
     margin-inline: auto;
     padding-inline: var(--space-gutter);
   }
+  .frame--wide { max-width: calc(var(--container-wide) + 2 * var(--space-gutter)); }
+  .frame--narrow { max-width: calc(var(--container-narrow) + 2 * var(--space-gutter)); }
+  .grid12 { display: grid; grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr)); gap: var(--grid-gap); }
+  .grid12 > * { grid-column: 1 / -1; }
   .section { padding-block: var(--space-section); }
+  .section--alt { background: var(--color-bg-alt); }
+  .rule-top { border-top: 1px solid var(--color-border); }
 
-  /* Mono eyebrow with a bay "signal" dot: the Miami Signal counterpart of Iron Sound's brass rule. */
+  /* ── Section head: eyebrow, H2 (the keyword line), display (the memorable line) ── */
+  .shead { display: grid; gap: var(--space-4); margin-bottom: var(--space-head); max-width: 46rem; }
+  .shead--center { margin-inline: auto; text-align: center; justify-items: center; }
   .eyebrow {
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
+    margin: 0;
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     font-weight: var(--font-weight-label);
-    letter-spacing: var(--tracking-label);
+    letter-spacing: var(--tracking-eyebrow);
     text-transform: uppercase;
-    color: var(--color-signal-700);
+    color: var(--color-eyebrow);
   }
-  .eyebrow::before {
-    content: "";
-    flex: none;
-    width: var(--space-2);
-    height: var(--space-2);
-    border-radius: var(--radius-pill);
-    background: var(--color-bay);
-    box-shadow: var(--shadow-signal-glow);
-  }
-  .on-deep .eyebrow { color: var(--color-bay); }
-
-  .display {
-    font-family: var(--font-sans);
+  .shead__h2 {
+    font-size: var(--text-3xl);
     font-weight: var(--font-weight-display);
-    line-height: var(--leading-display);
-    letter-spacing: var(--tracking-display);
-    color: var(--color-heading);
+    line-height: var(--leading-heading);
+    letter-spacing: var(--tracking-heading);
   }
-  .h2 { font-size: var(--text-3xl); line-height: var(--leading-heading); }
-  .lede { font-size: var(--text-lg); color: var(--color-text-muted); max-width: 52ch; }
+  .shead__display { margin: 0; font-size: var(--text-lg); line-height: var(--leading-ui); color: var(--color-text-muted); max-width: var(--measure-lead); }
+  .lede { margin: 0; font-size: var(--text-lg); color: var(--color-text-muted); max-width: var(--measure-lead); }
 
-  /* Mono price chip: sunset pill, slate text (5.64:1). Miami Signal's price language. */
-  .price-chip {
-    display: inline-flex;
-    align-items: baseline;
-    gap: var(--space-1);
-    padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-pill);
-    background: var(--color-sunset);
-    color: var(--color-on-book);
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    font-weight: var(--font-weight-heading);
-    font-variant-numeric: tabular-nums;
-    line-height: 1.3;
-    white-space: nowrap;
+  /* ── Surfaces ───────────────────────────────────────────────────── */
+  .card {
+    position: relative;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
   }
-  .price-chip__from { font-weight: var(--font-weight-body); font-size: var(--text-xs); }
-
-  .link-draw {
-    color: var(--color-link);
-    text-decoration: none;
-    background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
-    transition: background-size var(--duration-base) var(--ease-out-quart), color var(--duration-fast) var(--ease-standard);
-    padding-bottom: 2px;
+  .stage {
+    position: relative;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-md);
   }
-  .link-draw:hover, .link-draw:focus-visible { background-size: 100% 1px; color: var(--color-link-hover); }
+  /* Blue-tint dot grid: hero and diagram wells only. */
+  .dotgrid {
+    background-color: var(--color-surface-sunken);
+    background-image: radial-gradient(circle at 1px 1px, var(--color-signal-200) 1px, transparent 0);
+    background-size: var(--space-5) var(--space-5);
+  }
 
+  /* ── Chips, tags, sample label ──────────────────────────────────── */
   .sample-tag {
     display: inline-flex;
     align-items: center;
-    padding: 2px var(--space-2);
+    gap: var(--space-1);
+    padding: 1px var(--space-2);
     border-radius: var(--radius-pill);
     border: 1px dashed var(--color-border-strong);
     background: var(--color-surface);
     font-family: var(--font-mono);
     font-size: var(--text-xs);
-    line-height: 1.4;
+    font-weight: var(--font-weight-label);
+    line-height: 1.5;
+    letter-spacing: 0;
+    text-transform: none;
     color: var(--color-text-muted);
     white-space: nowrap;
+  }
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-pill);
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-label);
+    line-height: 1.5;
+    white-space: nowrap;
+    background: var(--color-mist);
+    color: var(--color-text);
+  }
+  .status--good, .status--ok { background: var(--color-success-bg); color: var(--color-success); }
+  /* v3.1 §00.2: coverage gaps are absence, not alarm. Only "live" is red. */
+  .status--weak { background: var(--color-mist); color: var(--color-text-muted); }
+  .status--bad { background: var(--color-surface); color: var(--color-heading); box-shadow: inset 0 0 0 1px var(--color-border-strong); }
+  .status--live { background: var(--color-sunset-100); color: var(--color-live-text); }
+  .status__dot { width: 6px; height: 6px; border-radius: var(--radius-pill); background: currentColor; }
+  .status--live .status__dot { background: var(--color-live); }
+
+  /* Segmented control: native radios, the label is the hit target. */
+  .seg {
+    display: inline-flex;
+    gap: 2px;
+    margin: 0;
+    padding: 3px;
+    min-width: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    background: var(--color-mist);
+  }
+  .seg__legend { padding: 0; }
+  .seg__opt { position: relative; display: block; }
+  .seg__opt input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+  .seg__opt span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.25rem;
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-pill);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-label);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+  }
+  .seg__opt:hover span { color: var(--color-text); }
+  .seg__opt input:checked + span { background: var(--color-surface); color: var(--color-heading); box-shadow: var(--shadow-sm); }
+  .seg__opt input:focus-visible + span { outline: 2px solid var(--color-focus); outline-offset: 1px; }
+
+  /* Mode visibility for anything driven by a [data-modes] radio group (diagram states,
+     captions, legends). Radios carry data-mode-i="0|1|2". No JS needed. */
+  [data-modes]:has([data-mode-i="0"]:checked) [data-in-mode]:not([data-in-mode~="0"]),
+  [data-modes]:has([data-mode-i="1"]:checked) [data-in-mode]:not([data-in-mode~="1"]),
+  [data-modes]:has([data-mode-i="2"]:checked) [data-in-mode]:not([data-in-mode~="2"]) { display: none; }
+  [data-fade-mode] { transition: opacity var(--duration-base) var(--ease-standard), visibility 0s; }
+  [data-modes]:has([data-mode-i="0"]:checked) [data-fade-mode]:not([data-fade-mode~="0"]),
+  [data-modes]:has([data-mode-i="1"]:checked) [data-fade-mode]:not([data-fade-mode~="1"]),
+  [data-modes]:has([data-mode-i="2"]:checked) [data-fade-mode]:not([data-fade-mode~="2"]) {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--duration-base) var(--ease-standard), visibility 0s linear var(--duration-base);
+  }
+
+  /* ── Diagram primitives (flat technical drawing; hairlines never scale) ── */
+  .dg { position: relative; width: 100%; }
+  .dg__svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .dg__svg * { vector-effect: non-scaling-stroke; }
+  .dg__ink { stroke: var(--illo-ink); stroke-width: var(--illo-stroke); fill: none; }
+  .dg__fine { stroke: var(--illo-structure); stroke-width: var(--illo-stroke-fine); fill: none; }
+  .dg__fine-g { stroke: var(--illo-structure); stroke-width: var(--illo-stroke-fine); fill: none; }
+  .dg__structure { stroke: var(--illo-structure); stroke-width: var(--illo-stroke-fine); fill: var(--color-surface); }
+  .dg__ground line { stroke: var(--illo-structure); stroke-width: var(--illo-stroke-fine); }
+  .dg__hidden { stroke: var(--illo-ink); stroke-width: var(--illo-stroke-fine); stroke-dasharray: var(--illo-dash); fill: none; opacity: 0.55; }
+  .dg__hidden-accent { stroke: var(--illo-accent); stroke-width: var(--illo-stroke-fine); stroke-dasharray: 3 3; fill: var(--illo-accent-fill); }
+  .dg__route { stroke: var(--illo-accent); stroke-width: var(--illo-stroke-bold); fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .dg__route--hidden { stroke-dasharray: var(--illo-dash); stroke-linecap: butt; }
+  .dg__route-solid { stroke: var(--illo-accent); stroke-width: var(--illo-stroke-bold); fill: none; }
+  .dg__dim { stroke: var(--illo-label); stroke-width: var(--illo-stroke-fine); fill: none; }
+
+  /* Numbered callout pin (HTML over the SVG, keyed to the legend list). */
+  .dg__pin {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    display: grid;
+    place-items: center;
+    width: 1.375rem;
+    height: 1.375rem;
+    margin: -0.6875rem 0 0 -0.6875rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-surface);
+    border: 1.5px solid var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-surface), var(--shadow-sm);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-data);
+    line-height: 1;
+    color: var(--color-signal-700);
+    pointer-events: none;
+  }
+  .dg__pin--bad { border-style: dashed; border-color: var(--illo-alert); color: var(--color-heading); }
+  .dg__tag {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    transform: translate(-50%, -50%);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-data);
+    letter-spacing: var(--tracking-label);
+    color: var(--illo-label);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  /* Callout label beside a pin (desktop artboard). */
+  .dg__call {
+    position: absolute;
+    top: 50%;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 3px var(--space-2) 3px var(--space-3);
+    border-radius: var(--radius-pill);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-label);
+    color: var(--color-heading);
+    white-space: nowrap;
+    transform: translateY(-50%);
+  }
+  .dg__call:not(:has(.status)) { padding-right: var(--space-3); }
+  .dg__pin--r .dg__call { left: calc(100% + var(--space-2)); }
+  .dg__pin--l .dg__call { right: calc(100% + var(--space-2)); }
+  .dg__pin--t .dg__call { left: 50%; top: auto; bottom: calc(100% + var(--space-2)); transform: translateX(-50%); }
+  .dg__pin--b .dg__call { left: 50%; top: calc(100% + var(--space-2)); transform: translateX(-50%); }
+
+  /* Artboards: desktop 800×500, mobile 4:5 re-composition, swapped by the stage width (spec §3.4). */
+  .dgw { container-type: inline-size; }
+  .dg--m { display: none; }
+  @container (max-width: 560px) {
+    .dg--d { display: none; }
+    .dg--m { display: block; }
+  }
+
+  /* Draw-on (spec §3.6): routes and raceways reveal by clip when their mode is active.
+     JS adds .is-pending until the diagram is in view / its tab opens; without JS all show. */
+  .grow-y, .grow-x { clip-path: inset(0); transition: clip-path var(--duration-scene) var(--ease-in-out); }
+  .is-pending .grow-y,
+  [data-modes]:has([data-mode-i="0"]:checked) [data-fade-mode]:not([data-fade-mode~="0"]) .grow-y,
+  [data-modes]:has([data-mode-i="1"]:checked) [data-fade-mode]:not([data-fade-mode~="1"]) .grow-y,
+  [data-modes]:has([data-mode-i="2"]:checked) [data-fade-mode]:not([data-fade-mode~="2"]) .grow-y { clip-path: inset(0 0 100% 0); }
+  .is-pending .grow-x,
+  [data-modes]:has([data-mode-i="0"]:checked) [data-fade-mode]:not([data-fade-mode~="0"]) .grow-x,
+  [data-modes]:has([data-mode-i="1"]:checked) [data-fade-mode]:not([data-fade-mode~="1"]) .grow-x,
+  [data-modes]:has([data-mode-i="2"]:checked) [data-fade-mode]:not([data-fade-mode~="2"]) .grow-x { clip-path: inset(0 100% 0 0); }
+  .dgw:not(.is-pending) .dg__pin { animation: pin-in var(--duration-base) var(--ease-out-expo) calc(var(--duration-slow) + var(--d, 0ms)) both; }
+  @keyframes pin-in { from { opacity: 0; transform: scale(0.8); } }
+
+  /* Legend list under/beside a diagram (the diagram's text alternative). */
+  .legend { display: grid; margin: 0; padding: 0; list-style: none; }
+  .legend li {
+    display: grid;
+    grid-template-columns: 1.375rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-3);
+    padding-block: var(--space-2);
+    border-top: 1px solid var(--color-border);
+    font-size: var(--text-sm);
+    line-height: var(--leading-ui);
+  }
+  .legend li:first-child { border-top: 0; }
+  .legend__n {
+    display: grid;
+    place-items: center;
+    width: 1.375rem;
+    height: 1.375rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-signal-200);
+    background: var(--color-signal-50);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-signal-700);
   }
 
   .visually-hidden {
@@ -172,4 +333,12 @@
     overflow: hidden; clip: rect(0 0 0 0);
     white-space: nowrap; border: 0;
   }
+  .mono { font-family: var(--font-mono); font-feature-settings: var(--font-feature-data); }
+}
+
+@layer utilities {
+  .reveal { opacity: 0; transform: translateY(var(--reveal-distance)); }
+  .reveal.is-in { opacity: 1; transform: none; transition: opacity var(--duration-slow) var(--ease-out-expo), transform var(--duration-slow) var(--ease-out-expo); }
+  @media print { .reveal { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 }

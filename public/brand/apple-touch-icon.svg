@@ -1,17 +1,37 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
   <!--
-    apple-touch-icon SOURCE. Rasterise to /public/apple-touch-icon.png at 180x180, sRGB, no alpha.
-    Full-bleed square (iOS masks the corners). Same small-size cut as favicon.svg, content ~62% of tile.
+    apple-touch-icon SOURCE, v3.1. Rasterise to /public/apple-touch-icon.png at 180x180, sRGB, no alpha
+    (scripts/brand-raster.mjs flattens on ink). Full-bleed ink square (iOS masks the corners).
+    Full-detail mark (logo-mark.svg geometry, light chrome) at scale 1.0: content 108 x 92 = 60% of the tile.
   -->
-  <rect width="180" height="180" fill="#1A6BFF"/>
-  <g transform="translate(90 90) scale(1.65) translate(-53.1 -47.75)" fill="none" stroke="#FFFFFF">
-    <g stroke-width="7">
-      <path d="M56.747 33.747A14.5 14.5 0 0 1 77.253 33.747"/>
-      <path d="M49.322 26.322A25 25 0 0 1 84.678 26.322"/>
+  <defs>
+    <linearGradient id="tsa-chrome-roof" gradientUnits="userSpaceOnUse" x1="0" y1="16" x2="0" y2="67">
+      <stop offset="0" stop-color="#F4F5F6"/>
+      <stop offset="1" stop-color="#A9AEB5"/>
+    </linearGradient>
+    <linearGradient id="tsa-chrome-body" gradientUnits="userSpaceOnUse" x1="0" y1="64" x2="0" y2="104">
+      <stop offset="0" stop-color="#F4F5F6"/>
+      <stop offset="1" stop-color="#A9AEB5"/>
+    </linearGradient>
+  </defs>
+  <rect width="180" height="180" fill="#0E0F11"/>
+  <g transform="translate(30 31.9)">
+    <path d="M60 16L114 58V66.9L60 24.9Z" fill="url(#tsa-chrome-roof)"/>
+    <g fill="none" stroke="url(#tsa-chrome-body)" stroke-linejoin="miter">
+      <path d="M103.25 70V101.25H96" stroke-width="5.5"/>
+      <path d="M90 68H75A7 7 0 0 0 68 75V77A7 7 0 0 0 75 84H83A7 7 0 0 1 90 91V93A7 7 0 0 1 83 100H68" stroke-width="8" stroke-linecap="square"/>
     </g>
-    <g stroke-width="9">
-      <path d="M19 44.5H47M33 44.5V80"/>
-      <path d="M81 44.5H65.125A7.625 7.625 0 0 0 57.5 52.125A7.625 7.625 0 0 0 65.125 59.75H68.625A7.875 7.875 0 0 1 76.5 67.625A7.875 7.875 0 0 1 68.625 75.5H53"/>
+    <path d="M6 58L60 16V24.9L6 66.9Z" fill="#E1251B"/>
+    <g fill="none" stroke="#E1251B" stroke-linejoin="miter">
+      <path d="M16.75 70V101.25H24" stroke-width="5.5"/>
+      <path d="M26 68H56M41 68V104" stroke-width="8"/>
+      <path d="M84 26A6 6 0 0 1 90 32M84 20A12 12 0 0 1 96 32M84 14A18 18 0 0 1 102 32" stroke-width="3.6"/>
+    </g>
+    <g fill="#D5D8DC">
+      <rect x="54" y="34" width="5" height="5"/>
+      <rect x="61" y="34" width="5" height="5"/>
+      <rect x="54" y="41" width="5" height="5"/>
+      <rect x="61" y="41" width="5" height="5"/>
     </g>
   </g>
 </svg>

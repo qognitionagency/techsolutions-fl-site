@@ -1,0 +1,245 @@
+---
+/**
+ * Service explorer (#services; design-spec-v3 §2.2, copy content.ts services). ARIA tabs over
+ * four stage panels. Each panel is a [data-modes] scope: its toggle radios drive the diagram,
+ * the callouts, the caption and the numbered list with CSS alone (works without JS).
+ * explorer.ts adds: draw-on when a panel opens / enters view, the caption live region, the
+ * Wi-Fi "show the problem, then the fix" auto-switch, tile flashes, and hash → tab.
+ * Without JS the tablist stays hidden and all four panels render in order.
+ * Photos (approved list, spec §4): TV = band-detail-mount, Wi-Fi = svc-wifi. Cameras get an
+ * illustrated driveway feed card; smart home has none.
+ */
+import { services, type ServiceTab } from '../../data/content';
+import { uiLabels } from '../../data/ui-labels';
+import { usd } from '../../lib/quote';
+import Button from '../ui/Button.astro';
+import Icon from '../ui/Icon.astro';
+import Img from '../ui/Img.astro';
+import SectionHead from '../ui/SectionHead.astro';
+import DiagramTvWall from '../diagrams/DiagramTvWall.astro';
+import DiagramWifiPlan from '../diagrams/DiagramWifiPlan.astro';
+import DiagramCameraPlan from '../diagrams/DiagramCameraPlan.astro';
+import PhoneSmartHome from '../diagrams/PhoneSmartHome.astro';
+import CameraFeed from '../diagrams/CameraFeed.astro';
+
+const TAB_ICON = { tv: 'tv', wifi: 'wifi', cameras: 'camera', smart: 'home' } as const;
+const PHOTO: Partial<Record<ServiceTab['key'], { slot: string; pos: string }>> = {
+  tv: { slot: 'band-detail-mount', pos: '55% 45%' },
+  wifi: { slot: 'svc-wifi', pos: '40% 55%' },
+};
+// content.ts declares the tabs with `satisfies readonly ServiceTab[]`; widen the inferred union back to the interface.
+const tabs: readonly ServiceTab[] = services.tabs as unknown as readonly ServiceTab[];
+---
+<section id="services" class="section section--alt xp" aria-labelledby="services-h2">
+  <div class="frame frame--wide">
+    <SectionHead eyebrow={services.eyebrow} heading={services.heading} display={services.display} id="services-h2" />
+
+    <div class="xp__tabs" data-tabs="services" data-explorer>
+      <div class="xp__tablist-wrap" data-js-only hidden>
+        <div class="seg xp__tablist" role="tablist" aria-label={services.tablistLabel}>
+          {tabs.map((t, i) => (
+            <button type="button" role="tab" id={`tab-${t.key}`} aria-controls={t.id} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1} data-tab-id={t.key} class="xp__tab">
+              <Icon name={TAB_ICON[t.key]} size={18} class="xp__tab-icon" />
+              <span>{t.tabLabel}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {tabs.map((t) => {
+        const modes = t.diagram.toggle.options.map((o) => o.key);
+        const photo = PHOTO[t.key];
+        const drive = t.key === 'cameras' ? t.diagram.states[modes[0]!]?.labels.find((l) => l.id === 'cam-drive') : undefined;
+        return (
+          <div role="tabpanel" id={t.id} aria-labelledby={`tab-${t.key}`} tabindex="0" class="stage xp__panel" data-modes data-panel={t.key}>
+            <div class="xp__copy">
+              <h3 class="xp__title">{t.title}</h3>
+              <p class="xp__pitch"><span>{t.pitch[0]}</span> <span>{t.pitch[1]}</span></p>
+              <ul class="xp__bullets" role="list">
+                {t.bullets.map((b) => <li><Icon name="check" size={16} /><span>{b}</span></li>)}
+              </ul>
+              <div class="xp__price">
+                <p class="xp__price-main">
+                  {t.price.sample && <span class="sample-tag">{uiLabels.sample}</span>}
+                  <span class="mono xp__amount">{t.price.prefix} {usd(t.price.amount)}</span>
+                  {t.price.unit && <span class="xp__unit">{t.price.unit}</span>}
+                </p>
+                {t.alsoFrom && (
+                  <p class="xp__also"><span>{t.alsoFrom.label}</span> <span class="mono">{t.alsoFrom.price.prefix} {usd(t.alsoFrom.price.amount)}</span></p>
+                )}
+              </div>
+              <div class="xp__cta"><Button cta={t.cta} location="services" variant="secondary" icon="arrow" uid={t.key} /></div>
+              {photo && (
+                <div class="xp__photo" aria-hidden="true">
+                  <Img slot={photo.slot} alt="" widths={[320, 480, 640]} sizes="(min-width: 1024px) 11rem, 92vw" class="xp__img" />
+                  <span class="sample-tag xp__stock">{uiLabels.stockPhoto}</span>
+                </div>
+              )}
+              {drive && (
+                <div class="xp__feed" aria-hidden="true">
+                  <CameraFeed view="driveway" />
+                  <p class="xp__feed-row"><span>{drive.text}</span>{drive.value && <span class="status status--live"><span class="status__dot"></span>{drive.value}</span>}</p>
+                </div>
+              )}
+            </div>
+
+            <div class="xp__viz">
+              <figure class="xp__fig" aria-label={t.diagram.ariaLabel}>
+                <div class:list={['xp__well', 'dotgrid', t.key === 'smart' && 'xp__well--phone']}>
+                  {t.key !== 'smart' && (
+                    <fieldset class="seg xp__toggle">
+                      <legend class="visually-hidden">{t.diagram.toggle.label}</legend>
+                      {t.diagram.toggle.options.map((o, i) => (
+                        <label class="seg__opt">
+                          <input type="radio" name={`xp-${t.key}`} value={o.key} data-mode-i={i} data-mode={o.key} checked={i === 0} />
+                          <span>{o.label}</span>
+                        </label>
+                      ))}
+                    </fieldset>
+                  )}
+                  {t.key === 'tv' && <DiagramTvWall modes={modes} states={t.diagram.states} />}
+                  {t.key === 'wifi' && <DiagramWifiPlan modes={modes} states={t.diagram.states} />}
+                  {t.key === 'cameras' && <DiagramCameraPlan modes={modes} states={t.diagram.states} />}
+                  {t.key === 'smart' && <PhoneSmartHome name={`xp-${t.key}`} toggle={t.diagram.toggle} states={t.diagram.states} />}
+                </div>
+
+                <figcaption class="xp__under">
+                  {modes.map((m, i) => <p class="xp__caption" data-in-mode={String(i)}>{t.diagram.states[m]?.caption}</p>)}
+                  <p class="visually-hidden" aria-live="polite" data-caption-live></p>
+                  {t.diagram.legend && (
+                    <ul class="xp__key" role="list">
+                      {t.diagram.legend.map((l) => <li><span class:list={['xp__swatch', `xp__swatch--${l.tone ?? 'neutral'}`]} aria-hidden="true"></span>{l.text}</li>)}
+                    </ul>
+                  )}
+                  {t.key !== 'smart' && modes.map((m, i) => (
+                    <ol class="legend xp__list" data-in-mode={String(i)}>
+                      {t.diagram.states[m]?.labels.map((l, li) => (
+                        <li>
+                          <span class="legend__n" aria-hidden="true">{li + 1}</span>
+                          <span>{l.text}</span>
+                          {l.value ? <span class:list={['status', `status--${l.tone ?? 'neutral'}`]}>{l.value}</span> : <span></span>}
+                        </li>
+                      ))}
+                    </ol>
+                  ))}
+                </figcaption>
+              </figure>
+
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+    <div class="xp__foot">
+      <p>{services.footnote}</p>
+      <p>{services.more}</p>
+    </div>
+  </div>
+</section>
+
+<script>
+  import '../../scripts/explorer';
+</script>
+
+<style>
+  .xp__tablist-wrap { display: flex; justify-content: center; margin-bottom: var(--space-5); }
+  .xp__tablist { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); width: 100%; max-width: 40rem; }
+  .xp__tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 2.75rem;
+    padding: 0 var(--space-3);
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-label);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color var(--duration-base) var(--ease-standard), color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
+  }
+  .xp__tab:hover { color: var(--color-heading); }
+  .xp__tab[aria-selected="true"] { background: var(--color-surface); color: var(--color-heading); box-shadow: var(--shadow-sm); }
+  .xp__tab[aria-selected="true"] :global(.xp__tab-icon) { color: var(--color-accent); }
+  .xp__tab:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+
+  .xp__panel { display: grid; gap: var(--space-6); padding: var(--space-card); }
+  .xp__panel + .xp__panel { margin-top: var(--space-5); }
+  :global(.is-tabs) .xp__panel + .xp__panel { margin-top: 0; }
+  .xp__panel:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 4px; }
+  .xp__panel:not([hidden]) .xp__copy { animation: xp-fade var(--duration-base) var(--ease-standard); }
+  .xp__panel:not([hidden]) .xp__viz { animation: xp-shift var(--duration-slow) var(--ease-out-expo); }
+  @keyframes xp-fade { from { opacity: 0; } }
+  @keyframes xp-shift { from { opacity: 0; transform: translateX(calc(var(--reveal-distance) * var(--xp-dir, 1))); } }
+
+  /* Copy column */
+  .xp__copy { display: grid; align-content: start; gap: var(--space-4); }
+  .xp__title { font-size: var(--text-2xl); font-weight: var(--font-weight-heading); letter-spacing: var(--tracking-title); }
+  .xp__pitch { margin: 0; color: var(--color-text-muted); }
+  .xp__pitch span { display: block; }
+  .xp__bullets { display: grid; gap: var(--space-3); margin: 0; padding: var(--space-4) 0; list-style: none; border-block: 1px solid var(--color-border); font-size: var(--text-sm); line-height: var(--leading-ui); }
+  .xp__bullets li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-3); align-items: start; }
+  .xp__bullets :global(.icon) { margin-top: 1px; color: var(--color-accent); }
+  .xp__price p { margin: 0; }
+  .xp__price-main { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); }
+  .xp__price-main .sample-tag { align-self: center; }
+  .xp__amount { font-size: var(--text-xl); font-weight: var(--font-weight-data); letter-spacing: -0.01em; color: var(--color-price); }
+  .xp__unit { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .xp__also { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); margin-top: var(--space-2) !important; font-size: var(--text-sm); color: var(--color-text-muted); }
+  .xp__also .mono { color: var(--color-price); }
+  .xp__cta :global(.btn) { width: 100%; }
+
+  /* Diagram column */
+  .xp__viz { position: relative; min-width: 0; container-type: inline-size; }
+  .xp__fig { margin: 0; }
+  .xp__well { position: relative; display: grid; gap: var(--space-3); padding: var(--space-3); border-radius: var(--radius-lg); box-shadow: inset 0 0 0 1px var(--color-border); }
+  .xp__toggle { justify-self: start; width: 100%; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+  .xp__toggle :global(.seg__opt span) { padding-inline: var(--space-3); }
+  .xp__under { display: grid; gap: var(--space-3); padding-top: var(--space-4); }
+  .xp__caption { margin: 0; font-size: var(--text-sm); font-weight: var(--font-weight-label); color: var(--color-heading); line-height: var(--leading-ui); }
+  .xp__key { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin: 0; padding: 0; list-style: none; font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-text-muted); }
+  .xp__key li { display: inline-flex; align-items: center; gap: var(--space-2); }
+  .xp__swatch { width: 0.75rem; height: 0.75rem; border-radius: 2px; }
+  .xp__swatch--good { background: var(--illo-signal-fill); box-shadow: inset 0 0 0 1px var(--illo-signal); }
+  .xp__swatch--weak { background: color-mix(in srgb, var(--illo-signal-fill) 45%, transparent); box-shadow: inset 0 0 0 1px var(--illo-signal); }
+  .xp__swatch--bad { background: var(--illo-alert-fill); outline: 1px dashed var(--illo-alert); outline-offset: -1px; }
+  .xp__swatch--neutral { background: var(--illo-accent-fill); box-shadow: inset 0 0 0 1px var(--illo-accent); }
+  /* Camera legend: "Field of view" is the accent cone, not Wi-Fi cyan. */
+  [data-panel="cameras"] .xp__swatch--good { background: var(--illo-accent-fill); box-shadow: inset 0 0 0 1px var(--illo-accent); }
+
+  .xp__photo, .xp__feed { position: relative; margin-top: var(--space-2); border-radius: var(--radius-xl); background: var(--color-surface); box-shadow: var(--shadow-sm); padding: 6px; }
+  .xp__photo { aspect-ratio: 16 / 9; }
+  .xp__photo :global(picture), .xp__photo :global(.xp__img) { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: calc(var(--radius-xl) - 6px); }
+  .xp__stock { position: absolute; right: var(--space-3); bottom: var(--space-3); }
+  .xp__feed-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin: 0; padding: var(--space-2) var(--space-2) var(--space-1); font-size: var(--text-sm); font-weight: var(--font-weight-label); }
+
+  .xp__foot { display: grid; gap: var(--space-1); margin-top: var(--space-5); font-size: var(--text-sm); color: var(--color-text-muted); }
+  .xp__foot p { margin: 0; }
+
+  /* Callouts on the drawing (wide stage) vs numbered list (narrow stage). */
+  @container (min-width: 561px) {
+    .xp__list { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  }
+
+  @media (max-width: 479px) {
+    .xp__tab :global(.xp__tab-icon) { display: none; }
+    .xp__tab { padding-inline: var(--space-2); font-size: var(--text-xs); }
+  }
+  @media (max-width: 1023px) {
+    .xp__copy { order: 2; }
+    .xp__viz { order: 1; }
+  }
+  @media (min-width: 1024px) {
+    .xp__panel { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-6) var(--grid-gap); padding: var(--space-6); }
+    .xp__copy { grid-column: 1 / span 4; padding-right: var(--space-4); }
+    .xp__viz { grid-column: 5 / -1; }
+    .xp__cta :global(.btn) { width: auto; justify-self: start; }
+    .xp__well { padding: var(--space-4); }
+    .xp__toggle { width: auto; }
+    .xp__photo { aspect-ratio: 16 / 10; }
+  }
+</style>

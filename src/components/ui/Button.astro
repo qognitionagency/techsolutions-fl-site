@@ -1,40 +1,48 @@
 ---
 /**
- * Every CTA on the page (Iron Sound port). Renders content.ts `Cta` objects with the
- * analytics attributes (ADR §6, cro-spec §5) and the prefill attributes form.ts reads
- * (data-prefill-services / -property-type / -wires / -role → snake-cased field names).
- * Variants carry the CTA hierarchy: primary = sunset Book (the only sunset button),
- * secondary = signal outline (Text), text = link, inverse/ghost-inverse = on the slate band.
+ * Every CTA on the page. Renders a content.ts `Cta` with the analytics attributes (ADR §6)
+ * and the prefill attributes the two consumers read:
+ *   href #book  → data-prefill-services / -property-type / -wires / -wall-type / -role (form.ts)
+ *   href #quote → data-quote-services (quote.ts). Never data-prefill-*: form.ts would prefill the
+ *                 booking form, fire form_start and pull focus into it from a "Price this" click.
+ * Variants (spec §1.3): primary = signal blue, secondary = white with a 3:1 border,
+ * text = link with an arrow, inverse = text link on the slate footer.
  */
 import type { Cta } from '../../data/content';
 import { withBase } from '../../lib/url';
+import Icon from './Icon.astro';
 
 interface Props {
   cta: Cta;
-  /** Section key for data-track-location (cro-spec §5). */
+  /** Section key for data-track-location. */
   location: string;
-  variant?: 'primary' | 'secondary' | 'inverse' | 'ghost-inverse' | 'text';
+  variant?: 'primary' | 'secondary' | 'text' | 'inverse';
   size?: 'md' | 'sm';
-  magnetic?: boolean;
-  icon?: 'arrow' | 'phone' | 'text' | 'none';
+  icon?: 'arrow' | 'phone' | 'sms' | 'none';
   class?: string;
-  /** Override the visible label (e.g. compact nav button). */
+  /** Override the visible label (e.g. compact nav button). The full label stays the accessible name. */
   label?: string;
-  /** Disambiguates the description id when one CTA renders more than once in a section (e.g. per tab panel). */
+  /** Disambiguates the description id when one CTA renders more than once. */
   uid?: string;
+  /** Extra data attributes (e.g. data-quote-book). */
+  data?: Record<string, string>;
 }
 
-const { cta, location, variant = 'primary', size = 'md', magnetic = false, icon, class: cls = '', label, uid } = Astro.props;
+const { cta, location, variant = 'primary', size = 'md', icon, class: cls = '', label, uid, data = {} } = Astro.props;
 const href = withBase(cta.href);
+const toQuote = cta.href === '#quote';
 const glyph =
   icon ??
-  (cta.href.startsWith('tel:') ? 'phone' : cta.href.startsWith('sms:') ? 'text' : variant === 'text' || cta.kind === 'contextual' || cta.kind === 'trade' ? 'arrow' : 'none');
+  (cta.href.startsWith('tel:') ? 'phone' : cta.href.startsWith('sms:') ? 'sms' : variant === 'text' || variant === 'inverse' ? 'arrow' : 'none');
 const p = cta.prefill;
 const visible = label ?? cta.label;
-// WCAG 2.5.3 Label in Name: the accessible name must contain the visible text.
-// A longer aria-label that does not is demoted to a description instead.
-const nameOk = !cta.ariaLabel || cta.ariaLabel.toLowerCase().includes(visible.toLowerCase());
+// WCAG 2.5.3 Label in Name: the accessible name must contain the visible text. A short visible
+// label (nav "Book") gets the full CTA label as its name; a longer aria-label that does not
+// contain the visible text is demoted to a description.
+const name = cta.ariaLabel ?? (label && label !== cta.label ? cta.label : undefined);
+const nameOk = !name || name.toLowerCase().includes(visible.toLowerCase());
 const descId = !nameOk ? `d-${cta.trackId}-${location}${uid ? `-${uid}` : ''}` : undefined;
+const dataAttrs = Object.fromEntries(Object.entries(data).map(([k, v]) => [`data-${k}`, v]));
 ---
 <a
   href={href}
@@ -43,33 +51,23 @@ const descId = !nameOk ? `d-${cta.trackId}-${location}${uid ? `-${uid}` : ''}` :
   data-track-id={cta.trackId}
   data-track-type={cta.kind}
   data-track-location={location}
-  data-prefill-services={p?.services?.join(',')}
-  data-prefill-property-type={p?.propertyType}
-  data-prefill-wires={p?.wires}
-  data-prefill-role={p?.role}
-  data-magnetic={magnetic ? '' : undefined}
-  aria-label={nameOk ? cta.ariaLabel : undefined}
+  data-prefill-services={!toQuote ? p?.services?.join(',') : undefined}
+  data-prefill-property-type={!toQuote ? p?.propertyType : undefined}
+  data-prefill-wires={!toQuote ? p?.wires : undefined}
+  data-prefill-wall-type={!toQuote ? p?.wallType : undefined}
+  data-prefill-role={!toQuote ? p?.role : undefined}
+  data-quote-services={toQuote ? p?.services?.join(',') : undefined}
+  aria-label={nameOk ? name : undefined}
   aria-describedby={descId}
   target={cta.external ? '_blank' : undefined}
   rel={cta.external ? 'noopener' : undefined}
+  {...dataAttrs}
 >
-  {glyph === 'phone' && (
-    <svg class="btn__icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
-      <path d="M4.2 1.8 6 4.6 4.7 6.2c.8 1.9 2.2 3.3 4.1 4.1l1.6-1.3 2.8 1.8-.7 2.6c-.2.6-.8 1-1.4.9C5.9 13.6 2.4 10.1 1.8 4.9c-.1-.6.3-1.2.9-1.4l1.5-1.7Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
-    </svg>
-  )}
-  {glyph === 'text' && (
-    <svg class="btn__icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
-      <path d="M2.5 3.5h11v7.5h-6L4.5 13.5V11h-2z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
-    </svg>
-  )}
+  {glyph === 'phone' && <Icon name="phone" size={16} />}
+  {glyph === 'sms' && <Icon name="sms" size={16} />}
   <span class="btn__label">{visible}</span>
   {descId && <span id={descId} class="visually-hidden">{cta.ariaLabel}</span>}
-  {glyph === 'arrow' && (
-    <svg class="btn__icon btn__icon--arrow" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
-      <path d="M2 8h11M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-    </svg>
-  )}
+  {glyph === 'arrow' && <Icon name="arrow-right" size={16} class="btn__arrow" />}
 </a>
 
 <style>
@@ -82,10 +80,10 @@ const descId = !nameOk ? `d-${cta.trackId}-${location}${uid ? `-${uid}` : ''}` :
     align-items: center;
     justify-content: center;
     gap: var(--space-2);
-    min-height: 3rem;
-    padding: var(--space-3) var(--space-5);
+    min-height: 2.75rem;
+    padding: 0 1.125rem;
     border: 1px solid var(--btn-border);
-    border-radius: var(--radius-pill);
+    border-radius: var(--radius-md);
     background: var(--btn-bg);
     color: var(--btn-fg);
     font-family: var(--font-sans);
@@ -98,37 +96,27 @@ const descId = !nameOk ? `d-${cta.trackId}-${location}${uid ? `-${uid}` : ''}` :
       background-color var(--duration-fast) var(--ease-standard),
       border-color var(--duration-fast) var(--ease-standard),
       color var(--duration-fast) var(--ease-standard),
-      box-shadow var(--duration-base) var(--ease-standard);
-    will-change: transform;
+      box-shadow var(--duration-fast) var(--ease-standard),
+      transform var(--duration-instant) var(--ease-standard);
   }
-  .btn--sm { min-height: 2.5rem; padding: var(--space-2) var(--space-4); }
+  .btn--sm { min-height: 2.5rem; padding: 0 var(--space-4); }
+  .btn:active { transform: translateY(1px); }
   .btn:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
 
-  /* Book: sunset with slate text (5.64:1). White on sunset fails (2.56:1). */
-  .btn--primary { --btn-bg: var(--color-book); --btn-fg: var(--color-on-book); box-shadow: var(--shadow-book); }
-  .btn--primary:hover { --btn-bg: var(--color-book-hover); --btn-fg: var(--color-on-book); }
+  .btn--primary { --btn-bg: var(--color-accent); --btn-fg: var(--color-on-accent); box-shadow: var(--shadow-cta); }
+  .btn--primary:hover { --btn-bg: var(--color-accent-hover); --btn-fg: var(--color-on-accent); }
+  .btn--primary:focus-visible { box-shadow: var(--shadow-focus), var(--shadow-cta); }
 
-  .btn--secondary { --btn-bg: var(--color-surface); --btn-border: var(--color-signal-500); --btn-fg: var(--color-signal-700); }
-  .btn--secondary:hover { --btn-bg: var(--color-signal-50); --btn-fg: var(--color-signal-700); --btn-border: var(--color-signal-600); }
+  .btn--secondary { --btn-bg: var(--color-surface); --btn-border: var(--color-border-strong); --btn-fg: var(--color-heading); }
+  .btn--secondary:hover { --btn-bg: var(--color-bg-alt); --btn-fg: var(--color-heading); }
 
-  /* On the slate band: cloud button, slate text (13.60:1). */
-  .btn--inverse { --btn-bg: var(--color-cloud); --btn-fg: var(--color-slate); }
-  .btn--inverse:hover { --btn-bg: var(--color-surface); --btn-fg: var(--color-slate); box-shadow: var(--shadow-signal-glow); }
-  .btn--ghost-inverse { --btn-border: color-mix(in srgb, var(--color-cloud) 40%, transparent); --btn-fg: var(--color-cloud); }
-  .btn--ghost-inverse:hover { --btn-border: var(--color-cloud); --btn-fg: var(--color-cloud); }
-  .btn--inverse:focus-visible, .btn--ghost-inverse:focus-visible { box-shadow: 0 0 0 2px var(--color-slate), 0 0 0 4px var(--color-cloud); }
-
-  .btn--text { min-height: 2.75rem; padding: 0; gap: var(--space-2); color: var(--color-link); border-radius: 0; }
-  .btn--text .btn__label {
-    background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
-    transition: background-size var(--duration-base) var(--ease-out-quart);
-    padding-bottom: 2px;
-  }
+  .btn--text, .btn--inverse { min-height: 2.75rem; padding: 0; border: 0; border-radius: var(--radius-xs); }
+  .btn--text { color: var(--color-link); }
   .btn--text:hover { color: var(--color-link-hover); }
-  .btn--text:hover .btn__label, .btn--text:focus-visible .btn__label { background-size: 100% 1px; }
-  .btn--text:focus-visible { box-shadow: none; outline: 2px solid var(--color-focus); outline-offset: 4px; }
+  .btn--inverse { color: var(--color-text-inverse); }
+  .btn--inverse:hover { color: var(--color-signal-300); }
+  .btn--text:focus-visible, .btn--inverse:focus-visible { box-shadow: none; outline: 2px solid var(--color-focus); outline-offset: 2px; }
 
-  .btn__icon { flex: none; }
-  .btn__icon--arrow { transition: transform var(--duration-base) var(--ease-out-quart); }
-  .btn:hover .btn__icon--arrow, .btn:focus-visible .btn__icon--arrow { transform: translateX(3px); }
+  .btn :global(.btn__arrow) { transition: transform var(--duration-fast) var(--ease-out-quart); }
+  .btn:hover :global(.btn__arrow), .btn:focus-visible :global(.btn__arrow) { transform: translateX(2px); }
 </style>
