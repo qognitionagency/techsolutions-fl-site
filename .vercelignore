@@ -1,0 +1,7 @@
+.env
+.env.*
+!.env.example
+media-raw/
+node_modules/
+dist/
+.astro/
