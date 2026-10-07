@@ -71,6 +71,9 @@ const MAP_SRC = 'https://www.google.com/maps/embed?pb=!1m10!1m8!1m3!1d459284.352
     .area__map { order: -1; }
     .area__gmap { max-height: max(20rem, 70svh); }
   }
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .area__gmap { aspect-ratio: 16 / 10; }
+  }
   @media (min-width: 1024px) {
     .area__text { grid-column: 1 / span 5; }
     .area__map { grid-column: 6 / -1; position: sticky; top: calc(var(--nav-height) + var(--space-6)); }

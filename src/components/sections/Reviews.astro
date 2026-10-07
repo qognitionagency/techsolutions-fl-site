@@ -34,7 +34,7 @@ import SectionHead from '../ui/SectionHead.astro';
   .rv__grid { display: grid; gap: var(--grid-gap); margin: 0; padding: 0; list-style: none; }
   .rv__card { padding: var(--space-6); border: 1px solid var(--color-border); border-radius: var(--radius-xl); background: var(--color-surface); }
   .rv__fig { display: grid; gap: var(--space-4); height: 100%; grid-template-rows: auto 1fr auto; margin: 0; }
-  .rv__top { display: flex; align-items: center; gap: var(--space-3); }
+  .rv__top { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
   .rv__initial { display: grid; place-items: center; flex: none; width: 2rem; height: 2rem; border-radius: var(--radius-pill); background: var(--color-mist); font-size: var(--text-sm); font-weight: var(--font-weight-heading); color: var(--color-heading); }
   .rv__author { font-size: var(--text-sm); font-weight: var(--font-weight-heading); color: var(--color-heading); }
   .rv__tag { margin-left: auto; }
@@ -42,6 +42,9 @@ import SectionHead from '../ui/SectionHead.astro';
   .rv__quote p { margin: 0; font-size: var(--text-lg); line-height: 1.5; color: var(--color-heading); }
   .rv__svc { margin: 0; padding-top: var(--space-4); border-top: 1px solid var(--color-border); font-size: var(--text-xs); color: var(--color-text-muted); }
   .rv__cta { display: flex; justify-content: center; margin-top: var(--space-7); }
-  @media (min-width: 768px) { .rv__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  /* Tablet: two columns, the third card spans both; three columns only from 1024px, where each
+     card is wide enough for the author line and the tag. */
+  @media (min-width: 768px) { .rv__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rv__grid > :last-child:nth-child(odd) { grid-column: 1 / -1; } }
   @media (min-width: 768px) and (max-width: 1023px) { .rv__card { padding: var(--space-5); } .rv__quote p { font-size: var(--text-base); } }
+  @media (min-width: 1024px) { .rv__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .rv__grid > :last-child:nth-child(odd) { grid-column: auto; } }
 </style>

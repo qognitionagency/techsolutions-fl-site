@@ -218,6 +218,9 @@ import Button from '../ui/Button.astro';
     .bar__menu, .sheet { display: none; }
   }
   @media (min-width: 1200px) { .bar__actions :global(.bar__phone) { display: inline-flex; } }
+  /* Under 380px (360px Android, 375px iPhone SE and mini) logo + CTA + menu overflow; the sticky bottom bar
+     already carries "Get a quote" at this width. */
+  @media (max-width: 379px) { .bar__actions :global(.bar__cta) { display: none; } }
 
   .sheet {
     position: fixed;
