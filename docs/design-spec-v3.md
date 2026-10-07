@@ -444,10 +444,10 @@ Centred head: H2 **EXISTING** `testimonials.heading` · Display **EXISTING** "Sa
 
 ### 2.7 Service area (`#service-area`, bg-alt)
 
-Keep `ServiceArea.astro` and its SVG approach. Restyle it to §3:
-- Layout desktop: c1–5 head + body + neighborhood chips (**EXISTING** list, chips non-interactive, mono 12px) + **EXISTING** out-of-area note + CTAs (**EXISTING** `ask` primary, `secondary` text link). c6–12: the map in a white stage panel, radius 24, padding 24.
-- Map: county outlines `--illo-stroke` `--illo-ink`. Miami-Dade and Broward filled `--illo-accent-fill`. Ocean: no fill. Coastline 1px `--illo-structure`. Neighborhood points are 6px `--illo-accent` dots with a 1px white ring, and labels in mono 11px `--illo-label`. "Downtown Miami" gets a 12px dot and a single pulse ring. Draw no route lines or radius circles: the radius is NEEDS DATA.
-- Mobile: map first (aspect 4:5 viewBox variant), then copy. Labels: only every second neighborhood is labelled on the map, and the full list appears as chips below.
+The map is a real Google Maps embed (operator request, 2026-10-07). It replaces the SVG approach.
+- Layout desktop: c1–5 head + body + neighborhood chips (**EXISTING** list, chips non-interactive, mono 12px) + **EXISTING** out-of-area note + CTAs (**EXISTING** `ask` primary, `secondary` text link). c6–12: the map in a white stage panel, radius 24, with no padding, sticky under the nav.
+- Map card: a header bar with a pin icon, "Miami-Dade + Broward" and a mono neighborhood count, then a keyless `/maps/embed?pb=…` iframe centred at 25.93, −80.22, zoom 10 (Kendall to Fort Lauderdale in view). The iframe is 4:5, its height capped to the viewport (minimum 20rem), and `loading="lazy"`; its `title` is `serviceArea.mapLabel`. Draw no pins or radius over the embed: the radius is NEEDS DATA, and the full neighborhood list is the chips.
+- Mobile: map first (4:5, max 70svh), then copy.
 - Sample tag next to the H2 (EXISTING `sample: true`).
 
 ### 2.8 FAQ (`#faq`, white, container-narrow)

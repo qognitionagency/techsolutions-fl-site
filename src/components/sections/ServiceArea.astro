@@ -1,12 +1,11 @@
 ---
 /**
- * Service area (#service-area; design-spec-v3 §2.7 restyle, content.ts serviceArea). Re-drawn for Miami-Dade + Broward. A stylised SVG of the
- * coast from approximate lon/lat (equirectangular, x scaled by cos 25.9°). The county line
- * sits at the real Broward/Miami-Dade latitude (≈25.957°N). It is a diagram, not a survey map.
- * Neighborhood points are accent dots; their labels are HTML over the map (never below 12px).
- * The chip list carries the names for search and screen readers; the map is one labelled image.
- * No route lines, no radius circle: the radius is NEEDS DATA. Every neighborhood is a sample
- * until Jay confirms his radius (content.ts serviceArea.sample).
+ * Service area (#service-area; design-spec-v3 §2.7, content.ts serviceArea). The map is
+ * a real Google Maps embed (keyless /maps/embed, no API key) framed as a product card, centred
+ * on Miami-Dade and Broward so every listed neighborhood from Kendall to Fort Lauderdale is in
+ * view. It loads lazily, below the fold. The chip list carries the names for search and screen
+ * readers. No radius circle: the radius is NEEDS DATA. Every neighborhood is a sample until Jay
+ * confirms his radius (content.ts serviceArea.sample).
  */
 import { anchors, serviceArea } from '../../data/content';
 import { uiLabels } from '../../data/ui-labels';
@@ -14,63 +13,8 @@ import Button from '../ui/Button.astro';
 import SectionHead from '../ui/SectionHead.astro';
 import Icon from '../ui/Icon.astro';
 
-const K = 700; // px per degree of latitude
-const COS = Math.cos((25.9 * Math.PI) / 180);
-const LON0 = -80.48;
-const LON1 = -80.02;
-const LAT0 = 26.19; // north edge: just above Fort Lauderdale (the northernmost sample point)
-const LAT1 = 25.62; // south edge: just below Kendall
-const px = (lon: number) => +((lon - LON0) * K * COS).toFixed(1);
-const py = (lat: number) => +((LAT0 - lat) * K).toFixed(1);
-const W = Math.ceil(px(LON1));
-const H = Math.ceil(py(LAT1));
-const COUNTY_LINE = 25.957;
-
-// [lat, lon] pairs, approximate.
-const oceanCoast: [number, number][] = [[26.33, -80.073], [26.25, -80.085], [26.12, -80.1], [26.0, -80.113], [25.94, -80.118]];
-const bayShore: [number, number][] = [
-  [25.93, -80.14], [25.9, -80.15], [25.86, -80.165], [25.82, -80.184], [25.79, -80.186], [25.765, -80.188],
-  [25.745, -80.205], [25.73, -80.225], [25.715, -80.255], [25.68, -80.29], [25.65, -80.31], [25.6, -80.33],
-  [25.55, -80.345], [25.5, -80.36], [25.45, -80.372],
-];
-const island: [number, number][] = [
-  [25.94, -80.118], [25.87, -80.12], [25.82, -80.122], [25.78, -80.128], [25.765, -80.135], [25.768, -80.146],
-  [25.8, -80.143], [25.85, -80.138], [25.9, -80.133], [25.94, -80.131],
-];
-const keyBiscayne: [number, number][] = [[25.705, -80.165], [25.695, -80.152], [25.665, -80.156], [25.672, -80.17]];
-
-const pt = ([la, lo]: [number, number]) => `${px(lo)} ${py(la)}`;
-const mainland = `M${px(LON0)} ${py(LAT0)} L${[...oceanCoast, ...bayShore].map(pt).join(' L')} L${px(LON0)} ${py(LAT1)} Z`;
-const poly = (pts: [number, number][]) => `M${pts.map(pt).join(' L')} Z`;
-const coastLine = `M${[...oceanCoast, ...bayShore].map(pt).join(' L')}`;
-
-// Neighborhood positions [lat, lon]. Labels come from content.ts; unknown names stay list-only.
-const pos: Record<string, [number, number]> = {
-  'Downtown Miami': [25.776, -80.19],
-  Brickell: [25.757, -80.2],
-  Edgewater: [25.805, -80.188],
-  Wynwood: [25.803, -80.212],
-  'Coconut Grove': [25.728, -80.243],
-  'Coral Gables': [25.721, -80.27],
-  Doral: [25.819, -80.355],
-  Kendall: [25.679, -80.36],
-  'Miami Beach': [25.8, -80.133],
-  Aventura: [25.956, -80.142],
-  Hollywood: [26.011, -80.149],
-  'Fort Lauderdale': [26.122, -80.137],
-};
-const marks = serviceArea.cities.flatMap((c, i) => {
-  const p = pos[c];
-  return p ? [{ n: i + 1, name: c, x: px(p[1]), y: py(p[0]) }] : [];
-});
-const pct = (v: number, of: number) => `${((v / of) * 100).toFixed(2)}%`;
-// Label side per point, set so neighbours never collide (checked at 390 and 1440).
-const SIDE: Record<string, 'l' | 'r' | 't' | 'b'> = {
-  'Downtown Miami': 'r', Brickell: 'l', Edgewater: 't', Wynwood: 'l', 'Coconut Grove': 'r', 'Coral Gables': 'l',
-  Doral: 'l', Kendall: 'l', 'Miami Beach': 'r', Aventura: 'l', Hollywood: 'l', 'Fort Lauderdale': 'l',
-};
-const HUB = 'Downtown Miami';
-const [mdLabel, brLabel] = serviceArea.counties;
+// Google's own Share → Embed format (the legacy ?output=embed URL 301s to this).
+const MAP_SRC = 'https://www.google.com/maps/embed?pb=!1m10!1m8!1m3!1d459284.35231408966!2d-80.22!3d25.93!3m2!1i1024!2i768!4f13.1!6i10';
 ---
 <section id={anchors.area} class="section section--alt area" aria-labelledby="area-heading">
   <div class="frame grid12 area__grid">
@@ -92,30 +36,12 @@ const [mdLabel, brLabel] = serviceArea.counties;
     </div>
 
     <figure class="stage area__map" data-reveal>
-      <div class="area__canvas" style={`aspect-ratio:${W}/${H}`}>
-        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={serviceArea.mapLabel} class="map">
-          <defs>
-            <clipPath id="land-clip"><path d={mainland} /><path d={poly(island)} /><path d={poly(keyBiscayne)} /></clipPath>
-          </defs>
-          <g clip-path="url(#land-clip)">
-            <rect class="map__county" x="0" y="0" width={W} height={H} />
-          </g>
-          <path class="map__coast" d={coastLine} />
-          <path class="map__coast" d={poly(island)} />
-          <path class="map__coast" d={poly(keyBiscayne)} />
-          <line class="map__line" x1="0" x2={px(-80.118)} y1={py(COUNTY_LINE)} y2={py(COUNTY_LINE)} />
-          {marks.map((m) => (
-            <g class:list={['map__mark', m.name === HUB && 'map__mark--hub']}>
-              {m.name === HUB && <circle class="map__pulse" cx={m.x} cy={m.y} r="14" />}
-              <circle cx={m.x} cy={m.y} r={m.name === HUB ? 6 : 3.5} />
-            </g>
-          ))}
-        </svg>
-        <span class="map__county-label" style={`left:${pct(14, W)};top:${pct(py(COUNTY_LINE) - 22, H)}`} aria-hidden="true">{brLabel}</span>
-        <span class="map__county-label" style={`left:${pct(14, W)};top:${pct(py(COUNTY_LINE) + 10, H)}`} aria-hidden="true">{mdLabel}</span>
-        {marks.map((m, i) => (
-          <span class:list={['map__label', `map__label--${SIDE[m.name] ?? 'r'}`, i % 2 === 1 && 'map__label--alt', m.name === HUB && 'map__label--hub']} style={`left:${pct(m.x, W)};top:${pct(m.y, H)}`} aria-hidden="true">{m.name}</span>
-        ))}
+      <figcaption class="area__bar">
+        <span class="area__bar-t"><Icon name="pin" size={16} />{serviceArea.counties.map((c) => c.replace(/ County$/, '')).join(' + ')}</span>
+        <span class="mono area__bar-n">{serviceArea.cities.length} {serviceArea.neighborhoodsCountLabel}</span>
+      </figcaption>
+      <div class="area__gmap">
+        <iframe src={MAP_SRC} title={serviceArea.mapLabel} loading="lazy" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" allowfullscreen></iframe>
       </div>
     </figure>
   </div>
@@ -133,25 +59,17 @@ const [mdLabel, brLabel] = serviceArea.counties;
   .area__note { margin: var(--space-5) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); max-width: 46ch; }
   .area__ctas { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); margin-top: var(--space-6); }
 
-  .area__map { margin: 0; padding: var(--space-5); }
-  .area__canvas { position: relative; width: 100%; max-width: 30rem; margin-inline: auto; }
-  .map { display: block; width: 100%; height: 100%; overflow: hidden; }
-  .map * { vector-effect: non-scaling-stroke; }
-  .map__county { fill: var(--illo-fill-2); }
-  .map__line { stroke: var(--illo-ink); stroke-width: var(--illo-stroke-fine); stroke-dasharray: 3 4; }
-  .map__coast { fill: none; stroke: var(--illo-ink); stroke-width: var(--illo-stroke); stroke-linejoin: round; }
-  .map__mark circle { fill: var(--illo-accent); stroke: var(--color-surface); stroke-width: 1.5; }
-  .map__mark .map__pulse { fill: none; stroke: var(--illo-accent); stroke-width: var(--illo-stroke-fine); opacity: 0.5; }
-  .map__county-label { position: absolute; transform: translateY(-50%); font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; color: var(--color-text-muted); white-space: nowrap; }
-  .map__label { position: absolute; transform: translate(10px, -50%); font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-heading); white-space: nowrap; pointer-events: none; text-shadow: 0 0 3px var(--color-surface), 0 0 3px var(--color-surface); }
-  .map__label--l { transform: translate(calc(-100% - 10px), -50%); }
-  .map__label--t { transform: translate(-50%, calc(-100% - 8px)); }
-  .map__label--b { transform: translate(-50%, 8px); }
-  .map__label--hub { font-weight: var(--font-weight-heading); }
+  .area__map { margin: 0; overflow: hidden; }
+  .area__bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-border); }
+  .area__bar-t { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); font-weight: var(--font-weight-heading); color: var(--color-heading); }
+  .area__bar-t :global(.icon) { color: var(--color-accent); }
+  .area__bar-n { font-size: var(--text-xs); color: var(--color-text-muted); white-space: nowrap; }
+  .area__gmap { aspect-ratio: 4 / 5; max-height: max(20rem, calc(100svh - var(--nav-height) - 7rem)); width: 100%; background: var(--color-surface-sunken); }
+  .area__gmap iframe { display: block; width: 100%; height: 100%; border: 0; }
 
   @media (max-width: 767px) {
-    .area__map { order: -1; padding: var(--space-3); }
-    .map__label--alt:not(.map__label--hub) { display: none; }
+    .area__map { order: -1; }
+    .area__gmap { max-height: max(20rem, 70svh); }
   }
   @media (min-width: 1024px) {
     .area__text { grid-column: 1 / span 5; }

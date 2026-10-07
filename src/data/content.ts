@@ -1072,6 +1072,7 @@ export const serviceArea = {
   body: "We work in high-rises, houses, townhouses and offices across Miami-Dade and Broward.", // NEEDS DATA: office jobs; Broward
   counties: ["Miami-Dade County", "Broward County"],
   neighborhoodsLabel: "Neighborhoods",
+  neighborhoodsCountLabel: "neighborhoods",
   cities: [
     "Downtown Miami", // observed: IG "Downtown MIA" highlight
     "Brickell", // NEEDS DATA: confirm
@@ -1634,6 +1635,7 @@ export const footer = {
   },
   /** Illustrations and app screens are drawn for the concept. */
   illustrationNote: "Diagrams and app screens are illustrations, not screenshots of a specific product.",
+  mapNote: "The service-area map is embedded from Google Maps. When it loads, your browser connects to Google, which may read and set cookies.",
   concept: ribbon.disclosure + " For real contact details, use Instagram " + contact.instagramHandle + ".",
   conceptCredit: "Concept and build by Qognition Agency",
   legal: "© 2026 TechSolutions FL", // NEEDS DATA: legal business name (Sunbiz)

@@ -142,8 +142,21 @@ const checklist = tested?.micro.kind === 'checklist' ? tested.micro : null;
     .anno__v { font-size: var(--text-xl); }
     .hero__stock { right: auto; bottom: auto; left: var(--space-3); top: var(--space-3); }
   }
+  /* Phone and tablet: the device shrinks (zoom keeps its screens in proportion) and overlaps
+     the photo's lower-left corner; the caption sits beside it and the switcher runs full width
+     underneath at normal size, so its tap targets stay 40px+. */
+  @media (max-width: 1023px) {
+    .hero__grid { row-gap: var(--space-7); }
+    .hero__copy { gap: var(--space-4); }
+    .hero__phone { justify-self: stretch; margin-top: 50%; padding-left: var(--space-4); }
+    .hero__phone :global(.hp) { grid-template-columns: auto minmax(0, 1fr); align-items: end; justify-items: start; column-gap: var(--space-4); }
+    .hero__phone :global(.hp__device) { zoom: 0.56; }
+    .hero__phone :global(.hp__cap) { grid-column: 2; grid-row: 1; text-align: left; padding-bottom: var(--space-2); }
+    .hero__phone :global(.hp__switch) { grid-column: 1 / -1; justify-self: center; }
+  }
   @media (min-width: 768px) and (max-width: 1023px) {
     .hero__visual { max-width: 36rem; justify-self: center; width: 100%; }
+    .hero__phone :global(.hp__device) { zoom: 0.7; }
   }
   @media (min-width: 1024px) {
     .hero__grid { grid-template-rows: auto auto; align-items: start; row-gap: 0; }
@@ -151,6 +164,7 @@ const checklist = tested?.micro.kind === 'checklist' ? tested.micro : null;
     .hero__copy { grid-column: 1 / span 6; grid-row: 1; align-self: center; padding-right: var(--space-6); }
     .hero__photo { grid-column: 7 / -1; grid-row: 1; }
     .hero__phone { grid-column: 7 / span 4; grid-row: 1 / span 2; justify-self: start; margin-top: 38%; margin-left: calc(-1 * var(--space-7)); }
+    .hero__h1 { font-size: min(var(--text-4xl), 8svh); }
     .check-card {
       grid-column: 10 / -1;
       grid-row: 2;
@@ -171,5 +185,27 @@ const checklist = tested?.micro.kind === 'checklist' ? tested.micro : null;
     .check-card li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-2); padding-block: var(--space-2); border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
     .check-card__tick { display: grid; place-items: center; width: 1.125rem; height: 1.125rem; border-radius: var(--radius-pill); background: var(--color-success); color: var(--color-on-accent); }
     .check-card__v { font-size: var(--text-xs); color: var(--color-success); }
+  }
+  /* Desktop and laptop: the whole composition (copy, photo, phone and its switcher) fits the
+     first screen. The phone scales with the window height; zoom keeps its screens in proportion. */
+  @media (min-width: 1024px) and (max-height: 1000px) {
+    .hero { padding-top: calc(var(--nav-height) + var(--space-7)); }
+    .hero__phone :global(.hp__device) { zoom: 0.86; }
+  }
+  @media (min-width: 1024px) and (max-height: 900px) { .hero__phone :global(.hp__device) { zoom: 0.76; } }
+  @media (min-width: 1024px) and (max-height: 800px) {
+    .hero__photo { aspect-ratio: 4 / 3; }
+    .hero__phone :global(.hp__device) { zoom: 0.66; }
+    .hero__phone :global(.hp__cap) { display: none; }
+  }
+  @media (min-width: 1024px) and (max-height: 700px) { .hero__phone :global(.hp__device) { zoom: 0.58; } }
+  /* Short browser windows (a 720–768px laptop screen minus browser chrome): the photo's height
+     follows the width, so it is capped here too, the phone tucks higher over it, and the
+     decorative checklist card (aria-hidden) drops out. */
+  @media (min-width: 1024px) and (max-height: 660px) {
+    .hero__photo { aspect-ratio: auto; height: calc(100svh - var(--nav-height) - var(--space-7) - 6rem); }
+    .hero__phone { margin-top: 18%; }
+    .hero__phone :global(.hp__device) { zoom: 0.5; }
+    .check-card { display: none; }
   }
 </style>

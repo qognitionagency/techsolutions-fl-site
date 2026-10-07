@@ -144,6 +144,8 @@ Use when Pages is unavailable (private repo on a free plan) or the prospect want
    # expect all three lines
    ```
 
+   The CSP's `frame-src https://www.google.com/maps/embed` exists for the Google Maps embed in `ServiceArea.astro`. Remove it if the embed goes. If the embed ever moves to another Google host, the map renders blank and the console shows "Refused to frame".
+
    The CSP allows inline scripts by **sha256 hash only**. Editing an inline script (`Nav.astro`, `MobileBar.astro`, or any component script small enough for Astro to inline) or upgrading Astro changes the hashes. `npm run build` fails in postbuild (`csp-hashes: vercel.json script-src does not match`) until you run `npm run build; node scripts/csp-hashes.mjs`, paste the printed hashes into `script-src` in `vercel.json` and rebuild. Symptom if this is bypassed: no mobile menu button, sticky bar renders as a static block, browser console shows "Refused to execute inline script".
 
 Back to Pages: `gh workflow enable deploy.yml --repo $REPO`, section 0 step 1, section 1.
