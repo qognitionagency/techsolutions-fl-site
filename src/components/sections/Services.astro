@@ -1,0 +1,121 @@
+---
+/**
+ * Services with "from" prices (cro-spec §2 row 4). Card CTAs are signal outline,
+ * not sunset, so four cards do not mean four Book buttons. Each prefills the form.
+ * Desktop: the heading column is CSS-sticky while the cards scroll (no JS pin).
+ */
+import Img from '../ui/Img.astro';
+import Button from '../ui/Button.astro';
+import Price from '../ui/Price.astro';
+import { services } from '../../data/content';
+
+const imageSlot: Record<string, { slot: string; position: string }> = {
+  tv: { slot: 'svc-tv-mounting', position: '62% 50%' },
+  wifi: { slot: 'svc-wifi', position: '40% 50%' },
+  cameras: { slot: 'svc-cameras', position: '45% 42%' },
+  smart: { slot: 'svc-smart-home', position: '40% 50%' },
+};
+---
+<section class="services section-y" id={services.id} aria-labelledby="services-h2">
+  <div class="container-x services-grid">
+    <header class="services-head">
+      <h2 id="services-h2" class="h-section" data-split>{services.h2}</h2>
+      <p class="lede">{services.intro}</p>
+      <p class="services-foot">
+        <span class="sample-dot" aria-hidden="true"></span>{services.footnote}
+      </p>
+      <!-- NEEDS DATA: real prices, trip fee, warranty terms -->
+    </header>
+
+    <ul class="cards" data-reveal-group>
+      {services.items.map((s) => (
+        <li class="card" data-reveal>
+          <div class="card-media">
+            <Img slot={imageSlot[s.id]!.slot} alt="" sizes="(min-width: 1024px) 22vw, (min-width: 640px) 40vw, 100vw" widths={[360, 540, 720, 960]} position={imageSlot[s.id]!.position} />
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">{s.h3}</h3>
+            <Price price={s.fromPrice} />
+            <p class="card-text">{s.body}</p>
+            <ul class="card-points">
+              {s.points.map((p) => <li>{p}</li>)}
+            </ul>
+            {s.alsoFrom && (
+              <div class="card-also">
+                <span>{s.alsoFrom.label}</span>
+                <Price price={s.alsoFrom.price} />
+              </div>
+            )}
+            <div class="card-actions">
+              <Button link={s.cta} variant="outline" service={s.id} prefill={{ services: s.id }} data-entry="section" />
+              {s.alsoFrom && (
+                <Button link={s.alsoFrom.cta} variant="ghost" service={s.id} prefill={{ services: s.id, wires: 'in_wall' }} data-entry="section" />
+              )}
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .services-grid { display: grid; gap: var(--space-7); }
+  .services-head { display: grid; gap: var(--space-4); align-content: start; }
+  .services-head .lede { margin: 0; }
+  .services-foot { display: flex; gap: var(--space-2); align-items: baseline; margin: 0; font-size: var(--text-sm); color: var(--color-text-muted); max-width: 40ch; }
+  .sample-dot { width: var(--space-2); height: var(--space-2); border-radius: var(--radius-pill); background: var(--color-sunset); flex: none; transform: translateY(-0.1em); }
+
+  .cards { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-5); }
+  .card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-out-quart);
+  }
+  .card:hover { box-shadow: var(--shadow-md); }
+  .card-media { position: relative; aspect-ratio: 16 / 10; background: var(--color-mist); overflow: hidden; }
+  .card-media :global(img) { width: 100%; height: 100%; object-fit: cover; transition: transform var(--duration-scene) var(--ease-out-expo); }
+  .card:hover .card-media :global(img) { transform: scale(1.03); }
+  .card-body { display: grid; gap: var(--space-3); padding: var(--space-5); align-content: start; }
+  .card-title { margin: 0; font-size: var(--text-xl); }
+  .card-text { margin: 0; color: var(--color-text-muted); font-size: var(--text-sm); }
+  .card-points { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-1); font-size: var(--text-sm); }
+  .card-points li { position: relative; padding-left: var(--space-4); }
+  .card-points li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.62em;
+    width: var(--space-2);
+    height: 1.5px;
+    background: var(--color-signal-500);
+  }
+  .card-also {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--color-sunset-100);
+    font-size: var(--text-sm);
+  }
+  .card-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+
+  @media (min-width: 640px) {
+    .card { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
+    .card-media { aspect-ratio: auto; min-height: 100%; }
+    .card-media :global(picture) { position: absolute; inset: 0; }
+  }
+  @media (min-width: 1024px) {
+    .services-grid { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: var(--space-8); }
+    .services-head { position: sticky; top: calc(var(--spacing) * 28); align-self: start; }
+    .card-body { padding: var(--space-6); }
+  }
+</style>

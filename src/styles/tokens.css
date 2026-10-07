@@ -1,0 +1,192 @@
+/* ==========================================================================
+   TechSolutions FL — "Miami Signal" design tokens
+   Light theme only. Tokens first; components consume roles, never primitives.
+   Names follow Tailwind v4 namespaces (--color-*, --radius-*, --shadow-*,
+   --ease-*, --font-*, --text-*, --spacing) so global.css can expose them with
+   `@theme inline { ... }` without renaming.
+   ==========================================================================
+
+   WCAG 2.2 contrast — pairs approved for TEXT (ratios computed from relative
+   luminance, rounded down to 2 dp). Anything not on this list is decorative only.
+
+   AA normal text (>= 4.5:1)
+     --color-slate       #1E2A3B on --color-cloud #F5F8FC        13.60
+     --color-slate       #1E2A3B on #FFFFFF                       14.48
+     --color-slate       #1E2A3B on --color-mist  #E6ECF4         12.19
+     --color-slate       #1E2A3B on --color-signal-100 #DCE8FF    11.75
+     --color-steel-ink   #5B6878 on --color-cloud                  5.33
+     --color-steel-ink   #5B6878 on --color-mist                   4.78
+     --color-steel-ink   #5B6878 on #FFFFFF                        5.68
+     --color-signal-600  #1259E0 on --color-cloud                  5.58  (links, text accents)
+     --color-signal-600  #1259E0 on --color-mist                   5.00
+     --color-signal-600  #1259E0 on --color-signal-50 #EEF4FF      5.38
+     --color-signal-700  #0F49B8 on --color-cloud                  7.39
+     --color-signal-700  #0F49B8 on --color-signal-100             6.38
+     #FFFFFF             on --color-signal-500 #1A6BFF             4.57  (primary CTA; passes, thin margin)
+     #FFFFFF             on --color-signal-600 (CTA hover)         5.94
+     --color-slate       on --color-sunset #FF7A59                 5.64  ("Book" button, price pills)
+     --color-slate       on --color-bay    #2BC4D8                 6.89  (signal chips)
+     --color-sunset-700  #B4401F on --color-cloud                  5.34  (price text without a pill)
+
+   Large text / UI components only (>= 3:1)
+     --color-signal-500  #1A6BFF on --color-cloud                  4.29  (icons, borders, 24px+ headings)
+     --color-signal-500  #1A6BFF on --color-mist                   3.84
+     --color-steel       #7A8899 on --color-cloud                  3.39  (input borders, dividers)
+
+   FAILS — never use for text
+     #FFFFFF        on --color-sunset   2.56   (do not put white text on the Book button)
+     --color-bay    on --color-cloud    1.97   (Wi-Fi graphics and glows only)
+     --color-sunset on --color-cloud    2.41
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* ---------- Primitives: brand ---------- */
+  --color-cloud: #F5F8FC;   /* page */
+  --color-mist:  #E6ECF4;   /* cards, bands */
+  --color-mist-strong: #D5DEEA;  /* borders on mist */
+  --color-slate: #1E2A3B;   /* text, headings */
+  --color-steel: #7A8899;   /* client's gray: borders, icons */
+  --color-steel-ink: #5B6878;  /* client's gray darkened to pass as secondary text */
+
+  /* Signal blue, brand value at 500. */
+  --color-signal-50:  #EEF4FF;
+  --color-signal-100: #DCE8FF;
+  --color-signal-200: #B9D0FF;
+  --color-signal-300: #8AB2FF;
+  --color-signal-400: #5590FF;
+  --color-signal-500: #1A6BFF;  /* primary CTA */
+  --color-signal-600: #1259E0;
+  --color-signal-700: #0F49B8;
+  --color-signal-800: #0E3B8F;
+  --color-signal-900: #0D2E6B;
+
+  --color-bay:        #2BC4D8;  /* Biscayne cyan: Wi-Fi / signal visuals only */
+  --color-bay-100:    #D9F5F9;
+  --color-sunset:     #FF7A59;  /* "Book" button and price pills only */
+  --color-sunset-100: #FFE6DE;
+  --color-sunset-700: #B4401F;  /* sunset that is allowed to be text */
+
+  /* ---------- Roles ---------- */
+  --color-bg:             var(--color-cloud);
+  --color-surface:        #FFFFFF;
+  --color-surface-sunken: var(--color-mist);
+  --color-surface-tint:   var(--color-signal-50);
+  --color-text:           var(--color-slate);
+  --color-text-muted:     var(--color-steel-ink);
+  --color-heading:        var(--color-slate);
+  --color-link:           var(--color-signal-600);
+  --color-link-hover:     var(--color-signal-700);
+  --color-accent:         var(--color-signal-500);
+  --color-accent-hover:   var(--color-signal-600);
+  --color-accent-active:  var(--color-signal-700);
+  --color-on-accent:      #FFFFFF;
+  --color-book:           var(--color-sunset);
+  --color-book-hover:     #FF6A44;
+  --color-on-book:        var(--color-slate);
+  --color-price:          var(--color-sunset-700);
+  --color-border:         var(--color-mist-strong);
+  --color-border-strong:  var(--color-steel);
+  --color-signal:         var(--color-bay);
+  --color-focus:          var(--color-signal-500);
+  --color-error:          #B42318;   /* 6.17:1 on cloud */
+  --color-success:        #13774A;   /* 5.23:1 on cloud */
+
+  /* ---------- Type ---------- */
+  --font-sans: "Geist Variable", "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono Variable", "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-weight-display: 650;
+  --font-weight-heading: 600;
+  --font-weight-body: 400;
+  --font-weight-label: 500;
+
+  /* Fluid scale: min at 360px viewport, max at 1440px. */
+  --text-xs:   clamp(0.75rem,   0.7292rem + 0.0926vw, 0.8125rem);
+  --text-sm:   clamp(0.8125rem, 0.7917rem + 0.0926vw, 0.875rem);
+  --text-base: clamp(1rem,      0.9583rem + 0.1852vw, 1.125rem);
+  --text-lg:   clamp(1.125rem,  1.0417rem + 0.3704vw, 1.375rem);
+  --text-xl:   clamp(1.375rem,  1.25rem   + 0.5556vw, 1.75rem);
+  --text-2xl:  clamp(1.625rem,  1.4167rem + 0.9259vw, 2.25rem);
+  --text-3xl:  clamp(2rem,      1.5rem    + 2.2222vw, 3.5rem);
+  --text-4xl:  clamp(2.5rem,    1.75rem   + 3.3333vw, 4.75rem);   /* hero display */
+
+  --leading-display: 1.02;
+  --leading-heading: 1.15;
+  --leading-body: 1.55;
+  --tracking-display: -0.035em;  /* Geist tightens well at display sizes */
+  --tracking-heading: -0.02em;
+  --tracking-label: 0.04em;
+  --measure: 64ch;
+
+  /* ---------- Space (4px base) ---------- */
+  --spacing: 0.25rem;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+  --space-10: 8rem;
+  --space-gutter:  clamp(1rem, 0.6667rem + 1.4815vw, 2rem);
+  --space-section: clamp(3.5rem, 2.3333rem + 5.1852vw, 7rem);
+  --container-max: 76rem;          /* 1216px */
+  --mobile-bar-height: 4.5rem;     /* sticky Call / Text / Book; pad page bottom by this on mobile */
+
+  /* ---------- Radius (friendly, consistent with the bracket mark: r20/100) ---------- */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-pill: 999px;
+
+  /* ---------- Elevation (slate + signal tinted, layered; no grey) ---------- */
+  --shadow-xs: 0 1px 2px rgb(30 42 59 / 0.06);
+  --shadow-sm: 0 1px 2px rgb(30 42 59 / 0.05), 0 2px 8px -2px rgb(26 107 255 / 0.08);
+  --shadow-md: 0 1px 2px rgb(30 42 59 / 0.05), 0 6px 14px -4px rgb(30 42 59 / 0.08),
+               0 14px 28px -12px rgb(26 107 255 / 0.16);
+  --shadow-lg: 0 2px 4px rgb(30 42 59 / 0.04), 0 14px 28px -8px rgb(30 42 59 / 0.10),
+               0 32px 64px -20px rgb(26 107 255 / 0.22);
+  --shadow-cta: 0 1px 1px rgb(13 46 107 / 0.20), 0 8px 20px -6px rgb(26 107 255 / 0.50);
+  --shadow-book: 0 1px 1px rgb(180 64 31 / 0.20), 0 8px 20px -6px rgb(255 122 89 / 0.55);
+  --shadow-signal-glow: 0 0 0 1px rgb(43 196 216 / 0.30), 0 10px 32px -8px rgb(43 196 216 / 0.45);
+  --shadow-focus: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-focus);
+
+  /* ---------- Motion ---------- */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);     /* headline reveals, picker result */
+  --ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1);   /* price pill pop, magnetic CTA release */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);      /* before/after slider snap */
+  --ease-in: cubic-bezier(0.5, 0, 0.75, 0);
+  --duration-instant: 100ms;
+  --duration-fast: 180ms;
+  --duration-base: 280ms;
+  --duration-slow: 520ms;
+  --duration-scene: 900ms;
+
+  /* ---------- Layers ---------- */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 100;
+  --z-nav: 200;
+  --z-mobile-bar: 250;
+  --z-overlay: 300;
+  --z-ribbon: 400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 0.01ms;
+    --duration-fast: 0.01ms;
+    --duration-base: 0.01ms;
+    --duration-slow: 0.01ms;
+    --duration-scene: 0.01ms;
+    --ease-spring: var(--ease-standard);
+  }
+}

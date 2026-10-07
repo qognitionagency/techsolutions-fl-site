@@ -1,0 +1,172 @@
+---
+/**
+ * Sticky nav (cro-spec §2). Desktop: logo, anchors, phone, Book (sunset).
+ * Mobile: logo + small Book + a disclosure menu for anchors. No Text in the
+ * mobile nav; the sticky bar handles it.
+ */
+import Button from '../ui/Button.astro';
+import { nav } from '../../data/content';
+import { uiLabels } from '../../data/ui-labels';
+import { withBase } from '../../lib/url';
+---
+<a class="skip-link" href="#main">{uiLabels.skipToContent}</a>
+<header class="nav" data-nav>
+  <div class="nav-inner container-x">
+    <a class="nav-logo" href={withBase('/')} aria-label={nav.homeLabel}>
+      <img src={withBase('brand/logo-horizontal.svg')} alt={nav.logoAlt} width="438" height="58" />
+    </a>
+
+    <nav class="nav-links">
+      <ul>
+        {nav.links.map((l) => <li><a href={withBase(l.href)}>{l.label}</a></li>)}
+      </ul>
+    </nav>
+
+    <div class="nav-actions">
+      <a class="nav-phone" href={nav.phone.href} data-track={nav.phone.track} data-track-id={nav.phone.trackId} aria-label={nav.phone.ariaLabel}>
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.6 1.8 5.7 1.4l1.2 3-1.5 1A8 8 0 0 0 10.6 10.6l1-1.5 3 1.2-.4 2.1a1.6 1.6 0 0 1-1.7 1.3C6.9 13.3 2.7 9.1 2.3 3.5a1.6 1.6 0 0 1 1.3-1.7Z" /></svg>
+        {nav.phone.label}
+      </a>
+      <!-- NEEDS DATA: Jay's real phone -->
+      <Button link={nav.book} variant="book" size="sm" magnetic data-entry="nav" />
+      <button
+        type="button"
+        class="nav-menu-btn"
+        aria-expanded="false"
+        aria-controls="nav-menu"
+        data-menu-btn
+        data-label-open={nav.menuOpen}
+        data-label-close={nav.menuClose}
+        hidden
+      >
+        <span class="sr-only" data-menu-label>{nav.menuOpen}</span>
+        <span class="burger" aria-hidden="true"><span></span><span></span></span>
+      </button>
+    </div>
+  </div>
+  <div class="nav-menu" id="nav-menu" data-menu hidden>
+    <ul class="container-x">
+      {nav.links.map((l) => <li><a href={withBase(l.href)} data-menu-link>{l.label}</a></li>)}
+      <li><a href={nav.phone.href} data-track={nav.phone.track} data-track-id={nav.phone.trackId} aria-label={nav.phone.ariaLabel}>{nav.phone.label}</a></li>
+    </ul>
+  </div>
+</header>
+
+<script>
+  const header = document.querySelector<HTMLElement>('[data-nav]');
+  const btn = header?.querySelector<HTMLButtonElement>('[data-menu-btn]');
+  const menu = header?.querySelector<HTMLElement>('[data-menu]');
+  const label = btn?.querySelector<HTMLElement>('[data-menu-label]');
+
+  if (header && btn && menu && label) {
+    btn.hidden = false;
+    const set = (open: boolean) => {
+      btn.setAttribute('aria-expanded', String(open));
+      label.textContent = (open ? btn.dataset.labelClose : btn.dataset.labelOpen) ?? '';
+      menu.hidden = !open;
+      header.toggleAttribute('data-open', open);
+    };
+    btn.addEventListener('click', () => set(btn.getAttribute('aria-expanded') !== 'true'));
+    menu.addEventListener('click', (e) => (e.target as Element).closest('a') && set(false));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && btn.getAttribute('aria-expanded') === 'true') {
+        set(false);
+        btn.focus();
+      }
+    });
+    matchMedia('(min-width: 1024px)').addEventListener('change', (m) => m.matches && set(false));
+
+    // Hairline + elevation once the page has scrolled (state: "content is behind the bar").
+    const sentinel = document.createElement('div');
+    sentinel.style.cssText = 'position:absolute;top:0;height:1px;width:1px;';
+    document.body.prepend(sentinel);
+    new IntersectionObserver(([e]) => header.toggleAttribute('data-scrolled', !e!.isIntersecting)).observe(sentinel);
+  }
+</script>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-nav);
+    /* Near-opaque cloud with a blur so text stays legible over imagery as it scrolls under.
+       Functional translucency, not decoration (no-slop: glassmorphism-as-decoration). */
+    background: color-mix(in srgb, var(--color-cloud) 86%, transparent);
+    backdrop-filter: saturate(1.4) blur(14px);
+    -webkit-backdrop-filter: saturate(1.4) blur(14px);
+    border-bottom: 1px solid transparent;
+    transition: border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
+  }
+  .nav[data-scrolled] { border-bottom-color: var(--color-border); box-shadow: var(--shadow-xs); }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    min-height: calc(var(--spacing) * 16);
+  }
+  .nav-logo { flex: none; display: block; border-radius: var(--radius-sm); }
+  .nav-logo img { width: calc(var(--spacing) * 40); height: auto; }
+
+  .nav-links { display: none; margin-inline: auto; }
+  .nav-links ul { display: flex; gap: var(--space-1); list-style: none; margin: 0; padding: 0; }
+  .nav-links a {
+    display: block;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-pill);
+    color: var(--color-slate);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-label);
+    text-decoration: none;
+    transition: background-color var(--duration-fast) var(--ease-standard);
+  }
+  .nav-links a:hover { background: var(--color-mist); color: var(--color-slate); }
+
+  .nav-actions { display: flex; align-items: center; gap: var(--space-3); margin-left: auto; }
+  .nav-phone {
+    display: none;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-slate);
+    text-decoration: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .nav-phone svg { width: var(--space-4); height: var(--space-4); fill: none; stroke: var(--color-signal-500); stroke-width: 1.4; }
+  .nav-phone:hover { color: var(--color-link); }
+
+  .nav-menu-btn {
+    display: grid;
+    place-items: center;
+    width: var(--space-7);
+    height: var(--space-7);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    cursor: pointer;
+  }
+  .burger { display: grid; gap: var(--space-1); width: var(--space-4); }
+  .burger span { display: block; height: 1.5px; background: var(--color-slate); border-radius: 1px; transition: transform var(--duration-base) var(--ease-out-quart); }
+  .nav[data-open] .burger span:first-child { transform: translateY(3px) rotate(45deg); }
+  .nav[data-open] .burger span:last-child { transform: translateY(-3px) rotate(-45deg); }
+
+  .nav-menu { border-top: 1px solid var(--color-border); background: var(--color-cloud); }
+  .nav-menu ul { list-style: none; margin: 0; padding-block: var(--space-3) var(--space-5); display: grid; }
+  .nav-menu a {
+    display: block;
+    padding: var(--space-3) 0;
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-heading);
+    letter-spacing: var(--tracking-heading);
+    color: var(--color-slate);
+    text-decoration: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  @media (min-width: 1024px) {
+    .nav-links { display: block; }
+    .nav-phone { display: inline-flex; }
+    .nav-menu-btn, .nav-menu { display: none !important; }
+    .nav-logo img { width: calc(var(--spacing) * 48); }
+  }
+</style>

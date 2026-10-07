@@ -1,0 +1,93 @@
+---
+/**
+ * Sticky mobile bar, Call | Text | Book at 25/25/50 (cro-spec §2). Below 1024px only.
+ * Hidden while the hero picker is in view, while #book is >= 25% in view, and while
+ * a form field has focus. Without JS it renders as a static block at the page end.
+ */
+import { stickyBar as bar } from '../../data/content';
+import { withBase } from '../../lib/url';
+---
+<div class="sticky" data-sticky>
+  <a class="cell call" href={bar.call.href} data-track={bar.call.track} data-track-id={bar.call.trackId} aria-label={bar.call.ariaLabel}>
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.6 1.8 5.7 1.4l1.2 3-1.5 1A8 8 0 0 0 10.6 10.6l1-1.5 3 1.2-.4 2.1a1.6 1.6 0 0 1-1.7 1.3C6.9 13.3 2.7 9.1 2.3 3.5a1.6 1.6 0 0 1 1.3-1.7Z" /></svg>
+    <span>{bar.call.label}</span>
+  </a>
+  <a class="cell text" href={bar.text.href} data-track={bar.text.track} data-track-id={bar.text.trackId} aria-label={bar.text.ariaLabel} data-sticky-text>
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3.5h11v7.5h-6L4.5 13.5V11h-2z" /></svg>
+    <span>{bar.text.label}</span>
+  </a>
+  <a class="cell book" href={withBase(bar.book.href)} data-track={bar.book.track} data-track-id={bar.book.trackId} data-entry="sticky">
+    <span>{bar.book.label}</span>
+  </a>
+  <!-- NEEDS DATA: Jay's real phone/mobile -->
+</div>
+
+<script>
+  const bar = document.querySelector<HTMLElement>('[data-sticky]');
+  if (bar) {
+    bar.dataset.enhanced = '';
+    const state = { hero: true, book: false, focus: false };
+    const apply = () => {
+      const hide = state.hero || state.book || state.focus;
+      bar.toggleAttribute('data-hidden', hide);
+      bar.inert = hide;
+      document.documentElement.toggleAttribute('data-sticky-on', !hide);
+    };
+    const picker = document.querySelector('[data-picker]');
+    const book = document.getElementById('book');
+    if (picker) new IntersectionObserver(([e]) => ((state.hero = e!.isIntersecting), apply())).observe(picker);
+    else state.hero = false;
+    // "#book at least 25% in view": the section is taller than several viewports on mobile, so its
+    // own intersection ratio never reaches 0.25. Instead: hidden while it covers the middle half of the screen.
+    if (book) new IntersectionObserver(([e]) => ((state.book = e!.isIntersecting), apply()), { rootMargin: '-25% 0px -25% 0px' }).observe(book);
+    document.addEventListener('focusin', (e) => {
+      state.focus = (e.target as Element).matches?.('input,select,textarea') ?? false;
+      apply();
+    });
+    // Defer: moving focus between two fields fires focusout then focusin; never flash the bar in between.
+    document.addEventListener('focusout', () =>
+      setTimeout(() => {
+        state.focus = document.activeElement?.matches?.('input,select,textarea') ?? false;
+        apply();
+      }, 0),
+    );
+    apply();
+  }
+</script>
+
+<style>
+  .sticky {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-gutter) calc(var(--space-2) + env(safe-area-inset-bottom));
+    background: var(--color-cloud);
+    border-top: 1px solid var(--color-mist);
+  }
+  .sticky[data-enhanced] {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-mobile-bar);
+    transition: transform var(--duration-base) var(--ease-out-quart);
+  }
+  .sticky[data-hidden] { transform: translateY(110%); }
+  .cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: calc(var(--spacing) * 12);
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-label);
+    font-size: var(--text-sm);
+    text-decoration: none;
+  }
+  .cell svg { width: var(--space-4); height: var(--space-4); fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linejoin: round; }
+  .call { color: var(--color-slate); box-shadow: inset 0 0 0 1px var(--color-border-strong); }
+  .text { color: var(--color-signal-700); box-shadow: inset 0 0 0 1.5px var(--color-signal-500); background: var(--color-surface); }
+  .book { background: var(--color-book); color: var(--color-on-book); box-shadow: var(--shadow-book); }
+  .cell:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+  @media (min-width: 1024px) { .sticky { display: none; } }
+</style>

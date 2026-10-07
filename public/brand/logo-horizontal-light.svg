@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -11 438 58" width="438" height="58" role="img" aria-labelledby="tsf-hl-title">
+  <title id="tsf-hl-title">TechSolutions FL</title>
+  <!--
+    Reversed (white) lockup for photo/video backgrounds and the signal-blue band.
+    The FL badge keeps its sunset fill and slate letters; it is the one colour note that survives.
+    Over photography, place on a slate scrim of rgb(30 42 59 / .35) minimum, or on signal-blue-600+.
+  -->
+  <g transform="translate(-3 -12) scale(0.6)" fill="none" stroke="#FFFFFF">
+    <g stroke-width="6">
+      <path d="M56 8H28A20 20 0 0 0 8 28V72A20 20 0 0 0 28 92H72A20 20 0 0 0 92 72V44"/>
+      <path d="M57.808 34.808A13 13 0 0 1 76.192 34.808"/>
+      <path d="M51.444 28.444A22 22 0 0 1 82.556 28.444"/>
+    </g>
+    <g stroke-width="8">
+      <path d="M19 44H47M33 44V80"/>
+      <path d="M81 44H64.75A7.75 7.75 0 0 0 57 51.75A7.75 7.75 0 0 0 64.75 59.5H68.75A8.25 8.25 0 0 1 77 67.75A8.25 8.25 0 0 1 68.75 76H53"/>
+    </g>
+  </g>
+
+  <g transform="translate(70 0)">
+    <g fill="none" stroke="#FFFFFF" stroke-width="5.4">
+      <path d="M0 2.7H26M13 2.7V36"/>
+      <path d="M24.3 22.5H51.7M49.3 22.5A11.3 11.3 0 1 0 45.99 30.49"/>
+      <path d="M77.19 14.51A11.3 11.3 0 1 0 77.19 30.49"/>
+      <path d="M85.8 0V36M85.8 19.7A8.5 8.5 0 0 1 102.8 19.7V36"/>
+      <path d="M135.5 2.7H120.7A7.5 7.5 0 0 0 113.2 10.2A7.5 7.5 0 0 0 120.7 17.7H126A7.8 7.8 0 0 1 133.8 25.5A7.8 7.8 0 0 1 126 33.3H111.5"/>
+      <circle cx="154" cy="22.5" r="11.3"/>
+      <path d="M175.2 0V36"/>
+      <path d="M186.1 9V25.3A8.5 8.5 0 0 0 203.1 25.3M203.1 9V36"/>
+      <path d="M215.5 3V36M209.5 11.7H222.5"/>
+      <path d="M229.2 9V36"/>
+      <circle cx="250.4" cy="22.5" r="11.3"/>
+      <path d="M271.6 9V36M271.6 19.7A8.5 8.5 0 0 1 288.6 19.7V36"/>
+      <path d="M314.6 11.7H304.15A5.35 5.35 0 0 0 298.8 17.05A5.35 5.35 0 0 0 304.15 22.4H307.85A5.45 5.45 0 0 1 313.3 27.85A5.45 5.45 0 0 1 307.85 33.3H297.6"/>
+    </g>
+    <circle cx="229.2" cy="2.4" r="3.1" fill="#FFFFFF"/>
+
+    <rect x="323" y="5" width="40.5" height="26" rx="13" fill="#FF7A59"/>
+    <g fill="none" stroke="#1E2A3B" stroke-width="3">
+      <path d="M333.5 11.5V24.5M333.5 13H342M333.5 17.8H340.5"/>
+      <path d="M346.5 11.5V23H354.5"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,31 @@
+---
+/** "from $129 per TV" with the sunset price pill (tokens: slate on sunset 5.64:1). */
+import type { Price } from '../../data/content';
+interface Props { price: Price; size?: 'md' | 'lg' }
+const { price, size = 'md' } = Astro.props;
+const amount = `$${price.amount.toLocaleString('en-US')}`;
+---
+<p class:list={['price', `price-${size}`]}>
+  <span class="price-from">{price.prefix}</span>
+  <span class="price-pill">{amount}</span>
+  {price.unit && <span class="price-unit">{price.unit}</span>}
+</p>
+<!-- NEEDS DATA: sample price until Jay confirms -->
+
+<style>
+  .price { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
+  .price-from, .price-unit { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .price-pill {
+    font-family: var(--font-mono);
+    font-weight: var(--font-weight-heading);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+    background: var(--color-sunset);
+    color: var(--color-slate);
+    border-radius: var(--radius-pill);
+    padding: var(--space-1) var(--space-3);
+    line-height: 1.2;
+  }
+  .price-lg .price-pill { font-size: var(--text-xl); padding: var(--space-1) var(--space-4); }
+  .price-md .price-pill { font-size: var(--text-base); }
+</style>

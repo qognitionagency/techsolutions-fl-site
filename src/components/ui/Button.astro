@@ -1,0 +1,81 @@
+---
+/**
+ * CTA link. Variants carry the CTA hierarchy (cro-spec §2):
+ * book = sunset (the only sunset element), primary = signal, outline = secondary, ghost = tertiary.
+ * Takes a content.ts Link so label, href and tracking stay in one place.
+ */
+import type { Link } from '../../data/content';
+import { withBase } from '../../lib/url';
+
+interface Props {
+  link: Link;
+  variant?: 'book' | 'primary' | 'outline' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  /** form.ts prefill contract: { services: 'tv', wires: 'in_wall' } → data-prefill-services … */
+  prefill?: Record<string, string>;
+  service?: string;
+  magnetic?: boolean;
+  block?: boolean;
+  class?: string;
+  [key: `data-${string}`]: string | undefined;
+}
+const { link, variant = 'primary', size = 'md', prefill = {}, service, magnetic = false, block = false, class: cls, ...rest } = Astro.props;
+const href = link.href.startsWith('#') ? withBase(link.href) : link.href;
+const prefillAttrs = Object.fromEntries(Object.entries(prefill).map(([k, v]) => [`data-prefill-${k.replace(/_/g, '-')}`, v]));
+---
+<a
+  href={href}
+  class:list={['btn', `btn-${variant}`, `btn-${size}`, { 'btn-block': block }, cls]}
+  data-track={link.track}
+  data-track-id={link.trackId}
+  data-service={service}
+  data-magnetic={magnetic ? '' : undefined}
+  aria-label={link.ariaLabel}
+  target={link.external ? '_blank' : undefined}
+  rel={link.external ? 'noopener' : undefined}
+  {...prefillAttrs}
+  {...rest}
+><span class="btn-label" data-magnetic-inner={magnetic ? '' : undefined}><slot name="icon" />{link.label}<slot /></span></a>
+
+<style>
+  .btn {
+    --btn-h: var(--space-7);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--btn-h);
+    padding-inline: var(--space-5);
+    border-radius: var(--radius-pill);
+    font-weight: var(--font-weight-label);
+    font-size: var(--text-base);
+    line-height: 1.1;
+    text-decoration: none;
+    text-align: center;
+    white-space: nowrap;
+    transition:
+      background-color var(--duration-fast) var(--ease-standard),
+      box-shadow var(--duration-base) var(--ease-standard),
+      color var(--duration-fast) var(--ease-standard),
+      transform var(--duration-base) var(--ease-out-quart);
+    will-change: transform;
+  }
+  .btn-label { display: inline-flex; align-items: center; gap: var(--space-2); }
+  .btn:active { transform: translateY(1px); }
+  .btn-sm { --btn-h: calc(var(--spacing) * 10); padding-inline: var(--space-4); font-size: var(--text-sm); }
+  .btn-lg { --btn-h: calc(var(--spacing) * 14); padding-inline: var(--space-6); font-size: var(--text-lg); }
+  .btn-block { display: flex; width: 100%; white-space: normal; }
+
+  .btn-book { background: var(--color-book); color: var(--color-on-book); box-shadow: var(--shadow-book); }
+  .btn-book:hover { background: var(--color-book-hover); color: var(--color-on-book); }
+
+  .btn-primary { background: var(--color-accent); color: var(--color-on-accent); box-shadow: var(--shadow-cta); }
+  .btn-primary:hover { background: var(--color-accent-hover); color: var(--color-on-accent); }
+
+  .btn-outline { background: var(--color-surface); color: var(--color-signal-700); box-shadow: inset 0 0 0 1.5px var(--color-signal-500); }
+  .btn-outline:hover { background: var(--color-signal-50); color: var(--color-signal-700); }
+
+  .btn-ghost { background: transparent; color: var(--color-slate); box-shadow: inset 0 0 0 1px var(--color-border-strong); }
+  .btn-ghost:hover { background: var(--color-mist); color: var(--color-slate); }
+
+  .btn:focus-visible { outline: none; box-shadow: var(--shadow-focus); border-radius: var(--radius-pill); }
+</style>

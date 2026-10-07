@@ -1,0 +1,42 @@
+---
+/** Composes sections only. No copy, no logic (ADR §2). */
+import Base from '../layouts/Base.astro';
+import Nav from '../components/sections/Nav.astro';
+import Hero from '../components/sections/Hero.astro';
+import Promises from '../components/sections/Promises.astro';
+import Services from '../components/sections/Services.astro';
+import Band from '../components/sections/Band.astro';
+import BeforeAfter from '../components/sections/BeforeAfter.astro';
+import HowItWorks from '../components/sections/HowItWorks.astro';
+import RecentWork from '../components/sections/RecentWork.astro';
+import Reviews from '../components/sections/Reviews.astro';
+import ServiceArea from '../components/sections/ServiceArea.astro';
+import Faq from '../components/sections/Faq.astro';
+import Booking from '../components/sections/Booking.astro';
+import Footer from '../components/sections/Footer.astro';
+import StickyBar from '../components/sections/StickyBar.astro';
+import { getImage } from 'astro:assets';
+import { poster } from '../lib/media';
+
+// Preload the LCP poster with the same params <Img> uses, so the URLs match the <picture> AVIF source.
+const lcp = await getImage({ src: poster('hero-tv-wall'), format: 'avif', widths: [480, 768, 1080, 1440, 1920] });
+const preloadImage = { srcset: lcp.srcSet.attribute, sizes: '(min-width: 1024px) 58vw, 100vw', type: 'image/avif' };
+---
+<Base preloadImage={preloadImage}>
+  <Nav />
+  <main id="main" tabindex="-1">
+    <Hero />
+    <Promises />
+    <Services />
+    <Band slot="band-bay" position="50% 55%" />
+    <BeforeAfter />
+    <HowItWorks />
+    <RecentWork />
+    <Reviews />
+    <ServiceArea />
+    <Faq />
+    <Booking />
+  </main>
+  <Footer />
+  <StickyBar />
+</Base>

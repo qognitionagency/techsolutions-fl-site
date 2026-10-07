@@ -1,0 +1,72 @@
+---
+/** How it works: 3 steps, no time promises (seo-spec §3). Book + "or text Jay" (cro-spec §2 row 6). */
+import Button from '../ui/Button.astro';
+import { howItWorks as how } from '../../data/content';
+---
+<section class="how section-y" id={how.id} aria-labelledby="how-h2">
+  <div class="container-x">
+    <h2 id="how-h2" class="h-section" data-split>{how.h2}</h2>
+    <ol class="steps" data-reveal-group>
+      {how.steps.map((s) => (
+        <li class="step" data-reveal>
+          <span class="step-n" aria-hidden="true">{String(s.n).padStart(2, '0')}</span>
+          <h3 class="step-title">{s.h3}</h3>
+          <p class="step-body">{s.body}</p>
+        </li>
+      ))}
+    </ol>
+    <!-- NEEDS DATA: does Jay confirm by text, give time windows, test before leaving -->
+    <div class="how-cta">
+      <Button link={how.cta} variant="book" size="lg" magnetic data-entry="section" />
+      <a class="text-link" href={how.textLink.href} data-track={how.textLink.track} data-track-id={how.textLink.trackId}>{how.textLink.label}</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .steps {
+    list-style: none;
+    margin: var(--space-7) 0 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-4);
+    counter-reset: step;
+  }
+  .step {
+    position: relative;
+    display: grid;
+    gap: var(--space-3);
+    align-content: start;
+    padding: var(--space-6) var(--space-5) var(--space-5);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xs);
+  }
+  .step-n {
+    font-family: var(--font-mono);
+    font-size: var(--text-3xl);
+    font-weight: var(--font-weight-label);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--color-signal-500);
+  }
+  .step-title { margin: 0; font-size: var(--text-xl); }
+  .step-body { margin: 0; color: var(--color-text-muted); font-size: var(--text-sm); }
+  .how-cta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-5); margin-top: var(--space-7); }
+  .text-link { font-weight: var(--font-weight-label); }
+
+  @media (min-width: 768px) {
+    .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); }
+    /* A hairline joins the steps: the order is the point of the section. */
+    .step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: calc(var(--space-6) + 1.1rem);
+      right: calc(-1 * var(--space-5));
+      width: var(--space-5);
+      height: 1px;
+      background: var(--color-signal-300);
+    }
+  }
+</style>

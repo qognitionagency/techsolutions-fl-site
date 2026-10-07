@@ -1,0 +1,83 @@
+---
+/**
+ * Service area. Neighborhoods appear only here (seo-spec §2). Rendered as a
+ * styled list, not a drawn map: an invented map would imply a confirmed radius.
+ * Only "Downtown Miami" is observed (IG highlight); the rest are samples.
+ */
+import Button from '../ui/Button.astro';
+import VideoBand from '../ui/VideoBand.astro';
+import { serviceArea as area } from '../../data/content';
+import { uiLabels } from '../../data/ui-labels';
+---
+<section class="area section-y" id={area.id} aria-labelledby="area-h2">
+  <div class="container-x">
+    <VideoBand slot="band-miami" sizes="(min-width: 1440px) 1216px, 100vw" position="50% 60%" parallax={10} class="area-band" />
+    <div class="area-card">
+      <div class="area-copy">
+        <h2 id="area-h2" class="h-section" data-split>{area.h2}</h2>
+        <p class="lede">{area.body}</p>
+        <p class="area-note">{area.outOfAreaNote}</p>
+        <Button link={area.cta} variant="book" size="lg" magnetic data-entry="section" />
+      </div>
+      <div class="area-list">
+        <p class="area-label">
+          <span>{area.neighborhoodsLabel}</span>
+          <span class="sample-tag">{uiLabels.sample}</span>
+        </p>
+        <!-- NEEDS DATA: service radius, Broward yes/no, ZIP list, travel fee -->
+        <ul data-reveal-group>
+          {area.neighborhoods.map((n, i) => (
+            <li data-reveal class:list={{ observed: i === 0 }}>
+              <span class="pin" aria-hidden="true"></span>{n}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .area :global(.area-band) { aspect-ratio: 16 / 10; border-radius: var(--radius-xl); box-shadow: var(--shadow-md); }
+  .area-card {
+    position: relative;
+    z-index: var(--z-raised);
+    margin: calc(-1 * var(--space-8)) var(--space-2) 0;
+    display: grid;
+    gap: var(--space-7);
+    padding: var(--space-6) var(--space-5);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+  }
+  .area-copy { display: grid; gap: var(--space-4); align-content: start; justify-items: start; }
+  .area-copy .lede, .area-note { margin: 0; }
+  .area-note { font-size: var(--text-sm); color: var(--color-text-muted); max-width: 44ch; }
+
+  .area-label { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin: 0 0 var(--space-4); font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-text-muted); }
+  .area-list ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+  .area-list li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--color-cloud);
+    border: 1px solid var(--color-border);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-label);
+  }
+  .pin { width: var(--space-2); height: var(--space-2); border-radius: var(--radius-pill); background: var(--color-steel); flex: none; }
+  .area-list li.observed { background: var(--color-bay-100); border-color: var(--color-bay); }
+  .area-list li.observed .pin { background: var(--color-bay); box-shadow: var(--shadow-signal-glow); }
+
+  @media (min-width: 768px) {
+    .area :global(.area-band) { aspect-ratio: 21 / 9; border-radius: var(--radius-2xl); }
+    .area-card { margin: calc(-1 * var(--space-9)) var(--space-7) 0; padding: var(--space-7); }
+    .area-list ul { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .area-card { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); column-gap: var(--space-8); }
+  }
+</style>

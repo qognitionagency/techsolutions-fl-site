@@ -1,0 +1,88 @@
+# Deploys to GitHub Pages. ADR 0001 section 5. Same file in both pitch-site repos.
+# base path and site URL are derived from the repo, so a rename needs no code change.
+# This workflow holds no Pexels key and must never be given one (ADR section 4).
+name: Deploy to GitHub Pages
+
+# Hosting is Vercel (operator decision 2026-10-07: repos private, Pages not on plan).
+# Kept as a manual fallback only; re-add the push trigger if the repo goes public.
+on:
+  workflow_dispatch:
+
+# Default is read-only. Only the deploy job gets pages/id-token write.
+permissions:
+  contents: read
+
+# One Pages deploy at a time. Queue, never cancel a deploy that is mid-flight.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SITE_URL: https://${{ github.repository_owner }}.github.io
+      BASE_PATH: /${{ github.event.repository.name }}
+      # Public by design (ADR section 6). Empty means the form runs in demo mode.
+      PUBLIC_FORM_ENDPOINT: ${{ vars.PUBLIC_FORM_ENDPOINT }}
+      PUBLIC_FORM_ACCESS_KEY: ${{ vars.PUBLIC_FORM_ACCESS_KEY }}
+      # Leave unset. "true" removes noindex, and the build fails while NEEDS DATA items remain.
+      PUBLIC_INDEXABLE: ${{ vars.PUBLIC_INDEXABLE }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # Installs, runs `npm run build` (which runs the postbuild PEXELS check),
+      # then uploads dist/ as the Pages artifact.
+      - name: Build with Astro
+        uses: withastro/action@v6
+
+      # Defence in depth on top of scripts/check-dist.mjs. Runs in the build job, so
+      # a failure here means the deploy job never starts. Prints file names only,
+      # never matched content, so a real key cannot reach the log.
+      - name: Guard - no Pexels key in dist
+        shell: bash
+        run: |
+          set -uo pipefail
+          export LC_ALL=C
+          if [ ! -d dist ]; then
+            echo "::error::dist/ not found, so the guard cannot run"
+            exit 1
+          fi
+          status=0
+          check() {
+            local label="$1"; shift
+            local out rc=0
+            out=$(grep -rIl "$@" dist) || rc=$?
+            if [ "$rc" -eq 0 ]; then
+              echo "::error::${label} found in dist/. Files:"
+              echo "$out"
+              status=1
+            elif [ "$rc" -ne 1 ]; then
+              echo "::error::grep failed (exit ${rc}) while checking for ${label}"
+              status=1
+            fi
+          }
+          check "variable name PEXELS_API_KEY" -iE 'pexels_api_key'
+          check "56-character key-shaped token" -E '(^|[^A-Za-z0-9])[A-Za-z0-9]{56}([^A-Za-z0-9]|$)'
+          if [ "$status" -ne 0 ]; then
+            echo "Do not deploy. Inspect LOCALLY (never in CI): grep -rIlE '[A-Za-z0-9]{56}' dist"
+            exit 1
+          fi
+          echo "Guard passed: no PEXELS_API_KEY name and no 56-character token in dist/"
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

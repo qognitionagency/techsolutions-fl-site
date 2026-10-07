@@ -1,0 +1,128 @@
+[
+  {
+    "slot": "hero-tv-wall",
+    "type": "video",
+    "pexelsId": 34874524,
+    "pageUrl": "https://www.pexels.com/video/modern-minimalist-villa-living-room-interior-34874524/",
+    "author": "Rene Strgar",
+    "authorUrl": "https://www.pexels.com/@renestrgar",
+    "file": "public/media/hero-tv-wall.mp4"
+  },
+  {
+    "slot": "signature-tv-wall-after",
+    "type": "photo",
+    "pexelsId": 6020432,
+    "pageUrl": "https://www.pexels.com/photo/a-flat-screen-tv-mounted-on-wall-over-a-wooden-console-6020432/",
+    "author": "yair elgazar",
+    "authorUrl": "https://www.pexels.com/@yair-elgazar-7861228",
+    "file": "src/assets/media/signature-tv-wall-after.jpg"
+  },
+  {
+    "slot": "svc-tv-mounting",
+    "type": "photo",
+    "pexelsId": 37748259,
+    "pageUrl": "https://www.pexels.com/photo/modern-minimalist-living-room-with-tv-setup-37748259/",
+    "author": "Misbaa eri",
+    "authorUrl": "https://www.pexels.com/@misbaa-eri-426041722",
+    "file": "src/assets/media/svc-tv-mounting.jpg"
+  },
+  {
+    "slot": "svc-wifi",
+    "type": "photo",
+    "pexelsId": 159304,
+    "pageUrl": "https://www.pexels.com/photo/white-switch-hub-turned-on-159304/",
+    "author": "Pixabay",
+    "authorUrl": "https://www.pexels.com/@pixabay",
+    "file": "src/assets/media/svc-wifi.jpg"
+  },
+  {
+    "slot": "svc-cameras",
+    "type": "photo",
+    "pexelsId": 18435554,
+    "pageUrl": "https://www.pexels.com/photo/industrial-camcorders-on-wall-18435554/",
+    "author": "aboodi vesakaran",
+    "authorUrl": "https://www.pexels.com/@aboodi",
+    "file": "src/assets/media/svc-cameras.jpg"
+  },
+  {
+    "slot": "svc-smart-home",
+    "type": "photo",
+    "pexelsId": 20901468,
+    "pageUrl": "https://www.pexels.com/photo/close-up-of-a-door-knob-20901468/",
+    "author": "Sucipta Mahendra",
+    "authorUrl": "https://www.pexels.com/@sucipta-mahendra-807856837",
+    "file": "src/assets/media/svc-smart-home.jpg"
+  },
+  {
+    "slot": "band-bay",
+    "type": "video",
+    "pexelsId": 11610250,
+    "pageUrl": "https://www.pexels.com/video/motorboat-and-city-11610250/",
+    "author": "Doug G. Innocent",
+    "authorUrl": "https://www.pexels.com/@doug-g-innocent-202981292",
+    "file": "public/media/band-bay.mp4"
+  },
+  {
+    "slot": "band-miami",
+    "type": "video",
+    "pexelsId": 18293620,
+    "pageUrl": "https://www.pexels.com/video/drone-en-miami-18293620/",
+    "author": "Foster",
+    "authorUrl": "https://www.pexels.com/@foster-326725638",
+    "file": "public/media/band-miami.mp4"
+  },
+  {
+    "slot": "tv-mounted-hidden-cables",
+    "type": "photo",
+    "pexelsId": 34992777,
+    "pageUrl": "https://www.pexels.com/photo/modern-minimalist-living-room-interior-design-34992777/",
+    "author": "Liuuu _61",
+    "authorUrl": "https://www.pexels.com/@liuuu-_61-2383408",
+    "file": "src/assets/media/tv-mounted-hidden-cables.jpg"
+  },
+  {
+    "slot": "tv-concrete-raceway",
+    "type": "photo",
+    "pexelsId": 14129562,
+    "pageUrl": "https://www.pexels.com/photo/electric-switches-mounted-on-white-wall-14129562/",
+    "author": "Bimbim Sindu",
+    "authorUrl": "https://www.pexels.com/@bimbim-sindu-96724782",
+    "file": "src/assets/media/tv-concrete-raceway.jpg"
+  },
+  {
+    "slot": "soundbar-under-tv",
+    "type": "photo",
+    "pexelsId": 6316063,
+    "pageUrl": "https://www.pexels.com/photo/modern-tv-set-hanging-on-wall-6316063/",
+    "author": "Max Vakhtbovych",
+    "authorUrl": "https://www.pexels.com/@artbovich",
+    "file": "src/assets/media/soundbar-under-tv.jpg"
+  },
+  {
+    "slot": "mesh-wifi-node-shelf",
+    "type": "photo",
+    "pexelsId": 4790267,
+    "pageUrl": "https://www.pexels.com/photo/white-smart-speaker-on-the-table-4790267/",
+    "author": "Anete Lusina",
+    "authorUrl": "https://www.pexels.com/@anete-lusina",
+    "file": "src/assets/media/mesh-wifi-node-shelf.jpg"
+  },
+  {
+    "slot": "outdoor-camera-eave",
+    "type": "photo",
+    "pexelsId": 13646859,
+    "pageUrl": "https://www.pexels.com/photo/surveillance-camera-on-a-concrete-wall-13646859/",
+    "author": "Zhengdong Hu",
+    "authorUrl": "https://www.pexels.com/@zhengdong-hu-297240489",
+    "file": "src/assets/media/outdoor-camera-eave.jpg"
+  },
+  {
+    "slot": "smart-lock-door",
+    "type": "photo",
+    "pexelsId": 15885484,
+    "pageUrl": "https://www.pexels.com/photo/gray-locked-doors-15885484/",
+    "author": "Joaquin Carfagna",
+    "authorUrl": "https://www.pexels.com/@joaquin-carfagna-3131171",
+    "file": "src/assets/media/smart-lock-door.jpg"
+  }
+]

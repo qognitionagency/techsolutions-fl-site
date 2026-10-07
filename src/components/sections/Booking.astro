@@ -1,0 +1,434 @@
+---
+/**
+ * Booking form (#book), cro-spec §4, built on Luke's form.ts (docs/form-module.md).
+ * Without JS all four steps render and the form posts natively.
+ * States: idle, invalid (inline + summary), submitting, success, error.
+ */
+import ChoiceGroup from '../ui/ChoiceGroup.astro';
+import { booking as b, contact, formConsent } from '../../data/content';
+
+// Native (no-JS) post only to an https endpoint, matching form.ts's live-mode rule (Anton, 2026-10-07).
+const rawEndpoint = (import.meta.env.PUBLIC_FORM_ENDPOINT ?? '').trim();
+const endpoint = /^https:\/\//i.test(rawEndpoint) ? rawEndpoint : undefined;
+const s2 = b.step2;
+const stepKeys = ['service', 'details', 'when', 'contact'] as const;
+const progress = (i: number) => b.progress.replace('{n}', String(i + 1)).replace('{stepName}', b.stepNames[stepKeys[i]!]);
+/** Splits "Got it, {firstName}." into text and token parts so tokens become fillable spans. */
+const parts = (s: string) => s.split(/(\{\w+\})/).filter(Boolean);
+const mailto = `mailto:${contact.email}?subject=${encodeURIComponent(b.error.mailtoSubject)}`;
+---
+<section class="booking section-y" id={b.id} aria-labelledby="book-h2">
+  <div class="container-x booking-grid">
+    <header class="booking-head">
+      <h2 id="book-h2" class="h-section" data-split>{b.h2}</h2>
+      <p class="lede">{b.intro}</p>
+      <ul class="booking-alt">
+        <li><a href={b.belowSubmit.textLink.href} data-track={b.belowSubmit.textLink.track} data-track-id={b.belowSubmit.textLink.trackId}>{b.belowSubmit.textLink.label}</a></li>
+        <li><a href={b.belowSubmit.callLink.href} data-track={b.belowSubmit.callLink.track} data-track-id={b.belowSubmit.callLink.trackId}>{b.belowSubmit.callLink.label}</a></li>
+      </ul>
+      <!-- NEEDS DATA: Jay's real phone/mobile -->
+    </header>
+
+    <form class="form" id="book-form" action={endpoint} method="post" novalidate data-form>
+      <div class="form-progress" data-js-only hidden>
+        <div class="bar" data-progress aria-hidden="true"><span></span></div>
+      </div>
+      <p class="sr-only" data-live aria-live="polite" data-live-step={b.progress.replace("{stepName}", "{title}")} data-live-errors={b.errorSummary}></p>
+
+      <input type="hidden" name="submission_id" />
+      <input type="hidden" name="entry_point" />
+      <input type="hidden" name="page_variant" value="control" />
+      <input type="hidden" name="utm_source" /><input type="hidden" name="utm_medium" /><input type="hidden" name="utm_campaign" />
+      <div class="hp" aria-hidden="true">
+        <label>{b.step4.honeypot.label} <input name={b.step4.honeypot.name} tabindex="-1" autocomplete="off" /></label>
+      </div>
+
+      <!-- Step 1: Service -->
+      <fieldset class="step" data-step="service">
+        <legend class="step-title">{b.step1.heading}</legend>
+        <p class="step-meta">{progress(0)}</p>
+        <ul class="err-summary" data-error-summary role="alert" hidden></ul>
+        <p class="step-micro">{b.step1.microcopy}</p>
+        <ChoiceGroup field={b.step1.services} type="checkbox" required />
+        <div class="field" data-field data-show-if="services=other">
+          <label class="field-label" for="f-other_desc">{b.step1.otherDesc.label}</label>
+          <textarea id="f-other_desc" name={b.step1.otherDesc.name} rows="3" required minlength="10" maxlength="500"
+            data-error-required={b.step1.otherDesc.errors?.required} data-error-length={b.step1.otherDesc.errors?.range}></textarea>
+        </div>
+        <div class="step-nav"><button type="button" class="next" data-next data-js-only hidden>{b.buttons.next}</button></div>
+      </fieldset>
+
+      <!-- Step 2: Details -->
+      <fieldset class="step" data-step="details">
+        <legend class="step-title">{s2.heading}</legend>
+        <p class="step-meta">{progress(1)}</p>
+        <ul class="err-summary" data-error-summary role="alert" hidden></ul>
+        <ChoiceGroup field={s2.propertyType} type="radio" required />
+        <!-- NEEDS DATA: remove coi_needed if Jay cannot issue a COI -->
+        <ChoiceGroup field={s2.coiNeeded} type="radio" showIf="property_type=condo" />
+
+        <div class="group" data-show-if="services=tv">
+          <div class="field field-narrow">
+            <label class="field-label" for="f-tv_count">{s2.tv.tvCount.label}</label>
+            <input id="f-tv_count" name={s2.tv.tvCount.name} type="number" inputmode="numeric" min="1" max="5" value="1" />
+          </div>
+          <div class="field">
+            <label class="field-label" for="f-tv_size">{s2.tv.tvSize.label}</label>
+            <select id="f-tv_size" name={s2.tv.tvSize.name}>
+              {s2.tv.tvSize.options?.map((o) => <option value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          <ChoiceGroup field={s2.tv.wallType} type="radio" />
+          <ChoiceGroup field={s2.tv.wires} type="radio" />
+          <ChoiceGroup field={s2.tv.hasMount} type="radio" />
+          <label class="check"><input type="checkbox" name={s2.tv.soundbar.name} value="yes" /> <span>{s2.tv.soundbar.label}</span></label>
+        </div>
+
+        <div class="group" data-show-if="services=wifi">
+          <ChoiceGroup field={s2.wifi.homeSize} type="radio" />
+          <ChoiceGroup field={s2.wifi.wifiIssue} type="checkbox" />
+        </div>
+
+        <div class="group" data-show-if="services=cameras">
+          <ChoiceGroup field={s2.cameras.cameraCount} type="radio" />
+          <ChoiceGroup field={s2.cameras.cameraLocation} type="radio" />
+          <ChoiceGroup field={s2.cameras.cameraEquipment} type="radio" layout="stack" />
+        </div>
+
+        <div class="group" data-show-if="services=smart">
+          <ChoiceGroup field={s2.smart.smartDevices} type="checkbox" />
+          <label class="check"><input type="checkbox" name={s2.smart.rental.name} value="yes" /> <span>{s2.smart.rental.label}</span></label>
+        </div>
+
+        <div class="field" data-field>
+          <label class="field-label" for="f-notes">{s2.notes.label}</label>
+          <textarea id="f-notes" name={s2.notes.name} rows="3" maxlength="500" data-counter-for="f-notes-count" data-error-length={s2.notes.errors?.range} aria-describedby="f-notes-count"></textarea>
+          <p class="field-help counter" id="f-notes-count" data-template={s2.notes.counter}>{s2.notes.counter.replace('{n}', '0')}</p>
+        </div>
+        <div class="step-nav">
+          <button type="button" class="back" data-back data-js-only hidden>{b.buttons.back}</button>
+          <button type="button" class="next" data-next data-js-only hidden>{b.buttons.next}</button>
+        </div>
+      </fieldset>
+
+      <!-- Step 3: When -->
+      <fieldset class="step" data-step="when">
+        <legend class="step-title">{b.step3.heading}</legend>
+        <p class="step-meta">{progress(2)}</p>
+        <ul class="err-summary" data-error-summary role="alert" hidden></ul>
+        <p class="step-micro">{b.step3.microcopy}</p>
+        <div class="field field-narrow" data-field>
+          <label class="field-label" for="f-zip">{b.step3.zip.label}</label>
+          <input id="f-zip" name={b.step3.zip.name} type="text" inputmode="numeric" autocomplete="postal-code" maxlength="5" pattern="[0-9]{5}" required
+            data-error-required={b.step3.zip.errors?.required} data-error-format={b.step3.zip.errors?.format} />
+        </div>
+        <!-- NEEDS DATA: service-area ZIP list for the soft out-of-area warning -->
+        <ChoiceGroup field={b.step3.timing} type="radio" required />
+        <div class="field field-narrow" data-field data-show-if="timing=date">
+          <label class="field-label" for="f-date">{b.step3.date.label}</label>
+          <input id="f-date" name={b.step3.date.name} type="date" required data-date-range
+            data-error-required={b.step3.date.errors?.required} data-error-range={b.step3.date.errors?.range} />
+        </div>
+        <ChoiceGroup field={b.step3.window} type="radio" />
+        <div class="step-nav">
+          <button type="button" class="back" data-back data-js-only hidden>{b.buttons.back}</button>
+          <button type="button" class="next" data-next data-js-only hidden>{b.buttons.next}</button>
+        </div>
+      </fieldset>
+
+      <!-- Step 4: Contact -->
+      <fieldset class="step" data-step="contact">
+        <legend class="step-title">{b.step4.heading}</legend>
+        <p class="step-meta">{progress(3)}</p>
+        <ul class="err-summary" data-error-summary role="alert" hidden></ul>
+        <div class="field-row">
+          <div class="field" data-field>
+            <label class="field-label" for="f-first_name">{b.step4.firstName.label}</label>
+            <input id="f-first_name" name={b.step4.firstName.name} autocomplete="given-name" required maxlength="50"
+              data-error-required={b.step4.firstName.errors?.required} />
+          </div>
+          <div class="field" data-field>
+            <label class="field-label" for="f-phone">{b.step4.phone.label}</label>
+            <input id="f-phone" name={b.step4.phone.name} type="tel" inputmode="tel" autocomplete="tel-national" required data-validate="phone" data-phone-mask
+              data-error-required={b.step4.phone.errors?.required} data-error-format={b.step4.phone.errors?.format} />
+          </div>
+        </div>
+        <div class="field" data-field>
+          <label class="field-label" for="f-email">{b.step4.email.label}</label>
+          <input id="f-email" name={b.step4.email.name} type="email" autocomplete="email" data-required-if="contact_pref=email"
+            data-error-required={b.step4.email.errors?.required} data-error-format={b.step4.email.errors?.format} />
+        </div>
+        <ChoiceGroup field={b.step4.contactPref} type="radio" checked="text" />
+        <div class="consents">
+          <!-- NEEDS DATA: legal review of consent wording before live -->
+          <label class="check"><input type="checkbox" name={formConsent.sms.name} value="yes" /> <span>{formConsent.sms.label}</span></label>
+          <label class="check"><input type="checkbox" name={formConsent.email.name} value="yes" /> <span>{formConsent.email.label}</span></label>
+        </div>
+
+        <div class="err-panel" data-error-panel role="alert" hidden>
+          <p>{b.error.banner}</p>
+          <div class="err-actions">
+            <button type="button" class="next" data-retry>{b.error.retry}</button>
+            <a href={b.belowSubmit.textLink.href} data-sms-fallback>{b.error.textInstead}</a>
+            <a href={mailto} data-mailto-fallback data-mailto-base={mailto}>{b.error.emailInstead}</a>
+          </div>
+        </div>
+
+        <div class="step-nav">
+          <button type="button" class="back" data-back data-js-only hidden>{b.buttons.back}</button>
+          <button type="submit" class="submit" data-busy-label={b.buttons.submitting}>
+            <span class="spinner" aria-hidden="true"></span><span data-label>{b.buttons.submit}</span>
+          </button>
+        </div>
+        <p class="consent-line">{b.step4.consent}</p>
+        <p class="reply-line">{b.belowSubmit.reply}</p>
+      </fieldset>
+
+      <!-- Success -->
+      <div class="success" data-success hidden>
+        <h3 class="success-title" data-success-heading tabindex="-1">
+          {parts(b.success.heading).map((p) => (p === '{firstName}' ? <span data-fill="first_name"></span> : p))}
+        </h3>
+        {(['text', 'call', 'email'] as const).map((pref) => (
+          <p class="success-line" data-pref={pref} hidden>
+            {parts(b.success.byPref[pref]).map((p) =>
+              p === '{last4}' ? <span data-last4></span> : p === '{email}' ? <span data-fill="email"></span> : p,
+            )}
+          </p>
+        ))}
+        <div class="demo" data-demo-notice hidden>
+          <p><strong>{b.success.demoNotice}</strong></p>
+          <p>{b.success.demoDetail}</p>
+        </div>
+        <h4>{b.success.summaryHeading}</h4>
+        <dl class="summary">
+          <div><dt>{b.success.summaryLabels.services}</dt><dd data-fill="services"></dd></div>
+          <div><dt>{b.success.summaryLabels.zip}</dt><dd data-fill="zip"></dd></div>
+          <div><dt>{b.success.summaryLabels.when}</dt><dd data-fill="timing"></dd></div>
+        </dl>
+        <p><a class="photo-link" href={contact.smsBase} data-photo-link data-sms-base={contact.smsBase} data-body={b.success.photoLink.smsBody}>{b.success.photoLink.label}</a></p>
+        <h4>{b.success.nextHeading}</h4>
+        <ol class="next-steps">{b.success.next.map((n) => <li>{n}</li>)}</ol>
+      </div>
+    </form>
+  </div>
+</section>
+
+<script>
+  import { initMultiStepForm } from '../../scripts/form';
+
+  const form = document.querySelector<HTMLFormElement>('[data-form]');
+  if (form) {
+    // Date bounds: today .. today + 60 days (cro-spec §4).
+    const date = form.querySelector<HTMLInputElement>('[data-date-range]');
+    if (date) {
+      const iso = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      const now = new Date();
+      date.min = iso(now);
+      date.max = iso(new Date(now.getTime() + 60 * 864e5));
+    }
+
+    // Notes counter.
+    for (const ta of form.querySelectorAll<HTMLTextAreaElement>('[data-counter-for]')) {
+      const out = document.getElementById(ta.dataset.counterFor!);
+      const tpl = out?.dataset.template ?? '{n}';
+      ta.addEventListener('input', () => out && (out.textContent = tpl.replace('{n}', String(ta.value.length))));
+    }
+
+    // Phone display mask on blur, never while typing: (305) 555-0123.
+    const phone = form.querySelector<HTMLInputElement>('[data-phone-mask]');
+    phone?.addEventListener('blur', () => {
+      const d = phone.value.replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '');
+      if (d.length === 10) phone.value = `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+    });
+
+    // Native fragment navigation to #book (no Lenis on mobile / reduced motion) resets focus to <body>
+    // after form.ts has focused the step heading. Put it back on the current step's legend.
+    document.addEventListener('click', (e) => {
+      const a = (e.target as Element | null)?.closest?.('a[href$="#book"]');
+      if (!a) return;
+      setTimeout(() => {
+        if (document.activeElement && document.activeElement !== document.body) return;
+        const step = Array.from(form.querySelectorAll<HTMLElement>('[data-step]')).find((s) => !s.hidden);
+        step?.querySelector<HTMLElement>('legend')?.focus({ preventScroll: true });
+      }, 50);
+    });
+
+    const get = (data: FormData, k: string) => String(data.get(k) ?? '');
+
+    initMultiStepForm(form, {
+      names: { id: 'submission_id', entry: 'entry_point', field: 'field', submitFail: 'form_submit_fail' },
+      skipPrefilledSteps: true,
+      minFillMs: 3000, // time trap (Anton): a submit < 3 s after form_start is a bot; fake success, no POST, no event
+      urlParams: { service: 'services' },
+      params: (event, d) => {
+        const services = d.getAll('services').map(String).sort().join(',');
+        if (event === 'form_step') return { services };
+        if (event === 'form_submit')
+          return {
+            services,
+            property_type: get(d, 'property_type'),
+            timing: get(d, 'timing'),
+            coi_needed: get(d, 'coi_needed') || 'na',
+            contact_pref: get(d, 'contact_pref'),
+            page_variant: 'control',
+          };
+        return {};
+      },
+      onState: (state, data) => {
+        if (state === 'success') {
+          const pref = get(data, 'contact_pref') || 'text';
+          form.querySelectorAll<HTMLElement>('[data-pref]').forEach((p) => (p.hidden = p.dataset.pref !== pref));
+          const last4 = get(data, 'phone').replace(/\D/g, '').slice(-4);
+          form.querySelectorAll('[data-last4]').forEach((s) => (s.textContent = last4));
+          const photo = form.querySelector<HTMLAnchorElement>('[data-photo-link]');
+          if (photo) {
+            const ref = get(data, 'submission_id').slice(0, 6);
+            photo.href = (photo.dataset.smsBase ?? '') + encodeURIComponent((photo.dataset.body ?? '').replace('{ref}', ref));
+          }
+        }
+        if (state === 'error') {
+          // mailto: fallback carries the visitor's own answers; it stays in their mail client and is not tracked.
+          const a = form.querySelector<HTMLAnchorElement>('[data-mailto-fallback]');
+          if (a) {
+            const lines = ['services', 'property_type', 'zip', 'timing', 'date', 'first_name', 'phone', 'notes']
+              .map((k) => [k, data.getAll(k).map(String).filter(Boolean).join(', ')] as const)
+              .filter(([, v]) => v)
+              .map(([k, v]) => `${k}: ${v}`);
+            a.href = `${a.dataset.mailtoBase}&body=${encodeURIComponent(lines.join('\n'))}`;
+          }
+        }
+      },
+    });
+  }
+</script>
+
+<style>
+  .booking { background: var(--color-surface); border-top: 1px solid var(--color-border); }
+  .booking-grid { display: grid; gap: var(--space-7); }
+  .booking-head { display: grid; gap: var(--space-4); align-content: start; }
+  .booking-head .lede { margin: 0; }
+  .booking-alt { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); font-weight: var(--font-weight-label); }
+
+  .form {
+    position: relative;
+    background: var(--color-cloud);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-5);
+    box-shadow: var(--shadow-md);
+  }
+  .form-progress { margin-bottom: var(--space-5); }
+  .bar { height: var(--space-1); border-radius: var(--radius-pill); background: var(--color-mist); overflow: hidden; }
+  .bar span { display: block; height: 100%; width: calc(var(--progress, 0.25) * 100%); background: var(--color-signal-500); border-radius: inherit; transition: width var(--duration-slow) var(--ease-out-expo); }
+
+  .step { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: var(--space-5); }
+  .step + .step { margin-top: var(--space-8); }
+  .form[data-state] .step + .step { margin-top: 0; }
+  .step-meta { margin: 0; font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--color-signal-600); }
+  .step-title { padding: 0; margin-bottom: var(--space-2); font-size: var(--text-2xl); font-weight: var(--font-weight-heading); letter-spacing: var(--tracking-heading); color: var(--color-heading); }
+  .step-title:focus { outline: none; }
+  .step-micro { margin: 0; color: var(--color-text-muted); font-size: var(--text-sm); }
+
+  .group { display: grid; gap: var(--space-5); padding: var(--space-5); border-radius: var(--radius-lg); background: var(--color-surface); border: 1px solid var(--color-border); }
+  .field { display: grid; gap: var(--space-2); }
+  .field-row { display: grid; gap: var(--space-5); }
+  .form :global(.field-label) { padding: 0; font-weight: var(--font-weight-label); font-size: var(--text-sm); color: var(--color-slate); }
+  .form :global(.field-help) { margin: 0; font-size: var(--text-xs); color: var(--color-text-muted); }
+
+  .form input:not([type='radio'], [type='checkbox'], [type='hidden']), .form select, .form textarea {
+    width: 100%;
+    min-height: calc(var(--spacing) * 12);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-strong);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    font-size: max(16px, var(--text-base));
+    transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+  }
+  .form textarea { resize: vertical; min-height: calc(var(--spacing) * 24); }
+  .field-narrow { max-width: calc(var(--spacing) * 56); }
+  .form input:focus-visible, .form select:focus-visible, .form textarea:focus-visible { outline: none; border-color: var(--color-signal-500); box-shadow: 0 0 0 3px var(--color-signal-100); }
+  .form [aria-invalid='true']:not([type='radio'], [type='checkbox']) { border-color: var(--color-error); }
+
+  .form :global(.choice) { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: var(--space-2); }
+  .form :global(.choice-options) { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .form :global(.choice-stack .choice-options) { flex-direction: column; align-items: stretch; }
+  .form :global(.opt) {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: calc(var(--spacing) * 12);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border-strong);
+    background: var(--color-surface);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+  }
+  .form :global(.choice-stack .opt) { border-radius: var(--radius-md); }
+  .form :global(.opt input) { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+  .form :global(.opt:hover) { border-color: var(--color-signal-400); }
+  .form :global(.opt:has(input:checked)) { background: var(--color-signal-50); border-color: var(--color-signal-500); box-shadow: inset 0 0 0 1px var(--color-signal-500); color: var(--color-signal-800); }
+  .form :global(.opt:has(input:focus-visible)) { box-shadow: var(--shadow-focus); }
+  .form :global(.opt:has(input[aria-invalid='true'])) { border-color: var(--color-error); }
+
+  .check { display: flex; align-items: flex-start; gap: var(--space-3); font-size: var(--text-sm); cursor: pointer; }
+  .check input { flex: none; width: var(--space-5); height: var(--space-5); margin-top: 0.1em; accent-color: var(--color-signal-500); }
+  .consents { display: grid; gap: var(--space-3); }
+
+  .form :global([data-error-for]) { display: flex; gap: var(--space-2); align-items: baseline; margin: 0; color: var(--color-error); font-size: var(--text-sm); font-weight: var(--font-weight-label); }
+  .form :global([data-error-for])::before { content: "!"; display: inline-grid; place-items: center; flex: none; width: 1.1em; height: 1.1em; border-radius: var(--radius-pill); background: var(--color-error); color: var(--color-surface); font-size: 0.75em; font-weight: var(--font-weight-heading); }
+  .err-summary { margin: 0; padding: var(--space-4) var(--space-4) var(--space-4) var(--space-7); border-radius: var(--radius-md); background: var(--color-surface); border: 1px solid var(--color-error); color: var(--color-error); font-size: var(--text-sm); }
+  .err-summary :global(a) { color: var(--color-error); }
+
+  .step-nav { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-3); padding-top: var(--space-2); }
+  .step-nav button { min-height: calc(var(--spacing) * 12); padding-inline: var(--space-6); border-radius: var(--radius-pill); font: inherit; font-weight: var(--font-weight-label); cursor: pointer; border: 0; }
+  .next { margin-left: auto; background: var(--color-accent); color: var(--color-on-accent); box-shadow: var(--shadow-cta); }
+  .next:hover { background: var(--color-accent-hover); }
+  .back { background: transparent; color: var(--color-slate); box-shadow: inset 0 0 0 1px var(--color-border-strong) !important; }
+  .back:hover { background: var(--color-mist); }
+  .submit { margin-left: auto; display: inline-flex; align-items: center; gap: var(--space-2); background: var(--color-book); color: var(--color-on-book); box-shadow: var(--shadow-book); flex: 1 1 auto; justify-content: center; }
+  .submit:hover { background: var(--color-book-hover); }
+  .submit:disabled { cursor: progress; opacity: 0.8; }
+  .spinner { display: none; width: 1em; height: 1em; border-radius: var(--radius-pill); border: 2px solid currentColor; border-right-color: transparent; animation: spin 0.8s linear infinite; }
+  .form[data-state='submitting'] .spinner { display: inline-block; }
+  @media (prefers-reduced-motion: reduce) { .form[data-state='submitting'] .spinner { display: none; } }
+  @keyframes spin { to { transform: rotate(1turn); } }
+  .step-nav button:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+  .consent-line, .reply-line { margin: 0; font-size: var(--text-xs); color: var(--color-text-muted); }
+
+  .err-panel { padding: var(--space-4); border-radius: var(--radius-md); background: var(--color-surface); border: 1px solid var(--color-error); }
+  .err-panel p { margin: 0 0 var(--space-3); color: var(--color-error); font-weight: var(--font-weight-label); }
+  .err-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); }
+  .err-actions .next { margin: 0; min-height: calc(var(--spacing) * 11); padding-inline: var(--space-5); border: 0; border-radius: var(--radius-pill); font: inherit; cursor: pointer; }
+
+  .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+
+  .success { display: grid; gap: var(--space-4); }
+  .success-title { margin: 0; font-size: var(--text-2xl); }
+  .success-title:focus { outline: none; }
+  .success-line { margin: 0; font-size: var(--text-lg); }
+  .success h4 { margin: var(--space-3) 0 0; font-size: var(--text-sm); text-transform: uppercase; letter-spacing: var(--tracking-label); font-family: var(--font-mono); color: var(--color-text-muted); font-weight: var(--font-weight-label); }
+  .demo { padding: var(--space-4); border-radius: var(--radius-md); background: var(--color-sunset-100); border: 1px dashed var(--color-sunset-700); }
+  .demo p { margin: 0; font-size: var(--text-sm); }
+  .demo p + p { margin-top: var(--space-1); }
+  .summary { margin: 0; display: grid; gap: var(--space-2); }
+  .summary div { display: grid; grid-template-columns: calc(var(--spacing) * 24) 1fr; gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .summary dt { color: var(--color-text-muted); }
+  .summary dd { margin: 0; overflow-wrap: anywhere; }
+  .next-steps { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-1); font-size: var(--text-sm); }
+  .photo-link { font-weight: var(--font-weight-label); }
+
+  @media (min-width: 640px) {
+    .form { padding: var(--space-7); }
+    .field-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .booking-grid { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: var(--space-8); }
+    .booking-head { position: sticky; top: calc(var(--spacing) * 28); align-self: start; }
+  }
+</style>

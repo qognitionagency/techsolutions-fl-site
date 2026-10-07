@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!--
+    Favicon. The tile replaces the bracket. Small-size cut: letters stroke 9 (not 8),
+    arcs stroke 7 (not 6) at r 14.5 / 25, gaps 3.5+, so the signal arcs stay separate at 32px.
+    Tile: signal-blue, radius 22%.
+  -->
+  <rect width="100" height="100" rx="22" fill="#1A6BFF"/>
+  <g transform="translate(50 50) scale(1.05) translate(-53.1 -47.75)" fill="none" stroke="#FFFFFF">
+    <g stroke-width="7">
+      <path d="M56.747 33.747A14.5 14.5 0 0 1 77.253 33.747"/>
+      <path d="M49.322 26.322A25 25 0 0 1 84.678 26.322"/>
+    </g>
+    <g stroke-width="9">
+      <path d="M19 44.5H47M33 44.5V80"/>
+      <path d="M81 44.5H65.125A7.625 7.625 0 0 0 57.5 52.125A7.625 7.625 0 0 0 65.125 59.75H68.625A7.875 7.875 0 0 1 76.5 67.625A7.875 7.875 0 0 1 68.625 75.5H53"/>
+    </g>
+  </g>
+</svg>
